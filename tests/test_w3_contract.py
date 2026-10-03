@@ -104,6 +104,15 @@ class ClockTests(unittest.TestCase):
 
 
 class RuntimeTests(unittest.TestCase):
+    def test_missing_docker_reports_host_setup_without_state_change(self):
+        self.prepare()
+        before = (self.runtime.directory / 'codex/state.json').read_bytes()
+        with patch('subprocess.run', side_effect=FileNotFoundError('docker')), self.assertRaises(FlowError) as error:
+            DockerBackend().check(self.runtime, 'codex')
+        self.assertEqual(error.exception.code, 'HOST_DEPENDENCY_UNAVAILABLE')
+        self.assertIn('docker --version', str(error.exception))
+        self.assertEqual(before, (self.runtime.directory / 'codex/state.json').read_bytes())
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix="autoresearch-w3-")
         self.addCleanup(self.temp.cleanup)
@@ -122,15 +131,27 @@ class RuntimeTests(unittest.TestCase):
                        "resources": {"cpus": 1, "memory": "1g", "gpus": {"codex": None, "seed": None}},
                        "tracks": {"codex": copy.deepcopy(track), "seed": copy.deepcopy(track)}}
         self.backend = FakeBackend()
-        self.runtime = Runtime(self.root, self.backend)
+        self.profiles = self.root / "profiles"
+        self.runtime = Runtime(self.root, self.backend, profiles_dir=self.profiles)
 
     def ref(self, name, value):
         path = self.root / name
         path.write_text(value)
         return {"path": name, "sha256": _sha256(path)}
 
-    def prepare(self):
-        self.runtime.prepare(self.config)
+    def write_profiles(self, tracks):
+        self.profiles.mkdir(exist_ok=True)
+        for name, track in tracks.items():
+            lines = ["schema_version = 1"]
+            lines.extend(f"{key} = {json.dumps(value)}" for key, value in track.items() if key != "auth_ref")
+            lines.append("[auth_ref]")
+            lines.extend(f"{key} = {json.dumps(value)}" for key, value in track["auth_ref"].items())
+            (self.profiles / f"{name}.toml").write_text("\n".join(lines) + "\n")
+
+    def prepare(self, config=None):
+        requested = copy.deepcopy(self.config if config is None else config)
+        self.write_profiles(requested.pop("tracks"))
+        return self.runtime.prepare(requested)
 
     def test_prepare_separate_workspaces(self):
         self.prepare()
@@ -139,6 +160,37 @@ class RuntimeTests(unittest.TestCase):
         a.write_text("changed")
         self.assertEqual(b.read_text(), "# starter")
         self.assertFalse((self.runtime.directory / "public/private-auth.json").exists())
+
+    def test_inline_tracks_cannot_bypass_local_profiles(self):
+        with self.assertRaises(FlowError) as caught:
+            self.runtime.prepare(self.config)
+        self.assertEqual(caught.exception.code, "INLINE_MODEL_CONFIG_UNSUPPORTED")
+        self.assertFalse(self.runtime.directory.exists())
+
+    def test_prepare_freezes_parsed_parameters_not_private_toml_comments(self):
+        self.write_profiles(self.config["tracks"])
+        profile = self.profiles / "seed.toml"
+        profile.write_text(profile.read_text() + "\n# DO_NOT_COPY_PRIVATE_COMMENT\n")
+        requested = copy.deepcopy(self.config)
+        requested.pop("tracks")
+        self.runtime.prepare(requested)
+        for path in self.runtime.directory.rglob("*"):
+            if path.is_file():
+                self.assertNotIn(b"DO_NOT_COPY_PRIVATE_COMMENT", path.read_bytes(), str(path))
+        manifest = json.loads((self.runtime.directory / "manifest.json").read_text())
+        self.assertEqual(manifest["profile_sources"]["seed"]["sha256"], _sha256(profile))
+
+    def test_missing_duration_snapshot_is_rejected_without_legacy_fallback(self):
+        self.prepare()
+        path = self.runtime.directory / "manifest.json"
+        manifest = json.loads(path.read_text())
+        del manifest["duration_snapshot"]
+        path.write_text(json.dumps(manifest))
+        before = path.read_bytes()
+        with self.assertRaises(FlowError) as caught:
+            self.runtime.status("seed")
+        self.assertEqual(caught.exception.code, "DURATION_DRIFT")
+        self.assertEqual(path.read_bytes(), before)
 
     def test_requires_explicit_live_consent(self):
         self.prepare()
@@ -276,7 +328,7 @@ class RuntimeTests(unittest.TestCase):
         config["docker_security"].update(
             approval=self.ref("approval.md", "User explicitly authorized this isolated pilot."),
             seccomp=self.ref("seccomp.json", json.dumps({"defaultAction": "SCMP_ACT_ERRNO", "syscalls": []})))
-        self.runtime.prepare(config)
+        self.prepare(config)
         command = DockerBackend().command(self.runtime, "seed", "formal", "probe", ["true"])
         self.assertIn("apparmor=unconfined", command)
         self.assertIn("seccomp=" + str(self.runtime.directory / "security/seccomp.json"), command)
@@ -315,17 +367,25 @@ class RuntimeTests(unittest.TestCase):
     def test_default_profiles_prepare(self):
         config = copy.deepcopy(self.config)
         config.pop("tracks")
+        templates = Path(__file__).resolve().parents[1] / "model_profiles"
+        tracks = {}
+        for name in ("codex", "seed"):
+            tracks[name] = tomllib.loads((templates / f"{name}.example.toml").read_text())
+            tracks[name].pop("schema_version")
+            tracks[name]["auth_ref"]["path"] = str(self.auth)
+        self.write_profiles(tracks)
         self.runtime.prepare(config)
         self.runtime.status("seed")
         self.assertEqual(self.runtime.config["tracks"]["seed"]["model"], "doubao-seed-2.1-turbo")
         self.assertEqual(self.runtime.config["tracks"]["seed"]["max_output_tokens"], 65536)
         self.assertEqual(self.runtime.config["tracks"]["codex"]["model"], "gpt-5.6-sol")
-        self.assertEqual(set((self.runtime.directory / "profiles").iterdir()),
-                         {self.runtime.directory / "profiles/codex.toml", self.runtime.directory / "profiles/seed.toml"})
+        self.assertEqual(set(json.loads((self.runtime.directory / "manifest.json").read_text())["profile_sources"]),
+                         {"codex", "seed"})
+        self.assertFalse((self.runtime.directory / "profiles").exists())
 
     def test_fixed_seed_profile_is_self_contained(self):
         # The root config.toml was an import source, not a deployment dependency.
-        profile = tomllib.loads((Path(__file__).resolve().parents[1] / "model_profiles/seed.toml").read_text())
+        profile = tomllib.loads((Path(__file__).resolve().parents[1] / "model_profiles/seed.example.toml").read_text())
         rendered = tomllib.loads(model_config(profile))
         self.assertEqual(rendered["model"], "doubao-seed-2.1-turbo")
         self.assertEqual(rendered["model_providers"]["autoresearch"]["base_url"],
@@ -349,12 +409,12 @@ class RuntimeTests(unittest.TestCase):
         runtime = Runtime(self.root, self.backend, profiles_dir=profiles)
         result = runtime.prepare(config)
         self.assertEqual(set(result["profile_sources"]), {"codex", "seed"})
-        snapshot = runtime.directory / "profiles/seed.toml"
-        self.assertIn('model = "seed-first"', snapshot.read_text())
+        snapshot = runtime.directory / "config.json"
+        self.assertEqual(json.loads(snapshot.read_text())["tracks"]["seed"]["model"], "seed-first")
         (profiles / "seed.toml").write_text((profiles / "seed.toml").read_text().replace("seed-first", "seed-second"))
         runtime.status("seed")
         self.assertEqual(runtime.config["tracks"]["seed"]["model"], "seed-first")
-        self.assertIn('model = "seed-first"', snapshot.read_text())
+        self.assertEqual(json.loads(snapshot.read_text())["tracks"]["seed"]["model"], "seed-first")
         self.assertEqual(runtime._state("seed")["segments"], [])
         snapshot.chmod(0o644)
         snapshot.write_text("tampered")
@@ -370,6 +430,8 @@ class RuntimeTests(unittest.TestCase):
         with self.assertRaises(FlowError):
             runtime.prepare(config)
         self.assertFalse(runtime.directory.exists())
+        self.assertEqual(runtime.store.check()["current_stage"], "1")
+        self.assertEqual(runtime.store.check()["issues"], [])
 
     def test_config_no_inherited_home(self):
         text = model_config(self.config["tracks"]["codex"])

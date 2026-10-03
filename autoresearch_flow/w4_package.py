@@ -16,7 +16,7 @@ from pathlib import Path
 from .core import FlowError, TaskStore, _atomic_json, _canonical_digest, _read_json, _require, _sha256, _utc_now
 from .experiments import ExperimentBook, evidence
 from .runtime import Runtime, TRACKS
-from .w4_evidence import DeliveryEvidence, _copy_tree, _files, _safe_tree
+from .w4_evidence import DeliveryEvidence, _copy_tree, _files, _safe_tree, _reject_local_profiles
 from .trajectory import validate_round
 from .pca_contract import check_task
 from .qa_contract import validate_qa_report, check_exposure_manifest
@@ -49,6 +49,7 @@ def check_package(root: Path) -> dict:
     _require(not candidate.is_symlink(), "PACKAGE_SYMLINK", "提交包根不能是符号链接")
     root = candidate.resolve()
     _require(root.is_dir(), "PACKAGE_MISSING", "提交包不是目录")
+    _reject_local_profiles(root)
     _tree_digest(root)
     required_roots = {"workspace", "expert_evidence", "optimization_evidence"}
     _require(required_roots <= {p.name for p in root.iterdir()},

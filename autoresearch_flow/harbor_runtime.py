@@ -13,7 +13,7 @@ import sys
 import tomllib
 import uuid
 
-from .core import _atomic_json, _read_json, _require, _sha256
+from .core import FlowError, _atomic_json, _read_json, _require, _sha256
 from .pca_contract import check_task, task_digest
 
 SEGMENT_EXEC = '''import os, pathlib, sys
@@ -108,7 +108,11 @@ def launch(runtime, track, action, budget, resume=False):
     manifest = _read_json(runtime.directory/'manifest.json')
     _require(current['task_sha256'] == manifest.get('harbor_task_sha256'),
              'HARBOR_TASK_DRIFT', '任务配置或双镜像源码改变，不能拼接旧轨迹')
-    version = subprocess.check_output([spec['executable'], '--version'], text=True, timeout=30).strip()
+    try:
+        version = subprocess.check_output([spec['executable'], '--version'], text=True, timeout=30).strip()
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise FlowError('HOST_DEPENDENCY_UNAVAILABLE',
+                        '无法调用 Harbor；请由用户核对 harness.executable 路径、执行权限及 --version 输出；流程不自动安装或改权限') from exc
     _require(version.split()[-1] == spec['version'], 'HARBOR_VERSION', 'Harbor 实际版本与锁定版本不同')
     phase = 'preflight' if action == 'preflight' else 'formal'
     directory = runtime.directory/track/'harbor'

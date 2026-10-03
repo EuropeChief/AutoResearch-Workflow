@@ -4,7 +4,7 @@
 
 ## 范围与分工
 
-专家可以在 Codex 或 Pi 中执行流程；正式双轨迹都由 **Codex CLI** 生成。两组键名为 codex、seed，分别读取固定的 [codex.toml](model_profiles/codex.toml) 与 [seed.toml](model_profiles/seed.toml)。这些文件由用户明确维护，不从当前专家会话猜测或继承。
+专家可以在 Codex 或 Pi 中执行流程；正式双轨迹都由 **Codex CLI** 生成。两组键名为 codex、seed，只读取流程根的 `local/model_profiles/codex.toml` 与 `local/model_profiles/seed.toml`。公开仓库仅提供 [Codex 模板](model_profiles/codex.example.toml) 和 [Seed 模板](model_profiles/seed.example.toml)，不携带作者账号配置，不从当前专家会话猜测或继承。
 
 底座统一负责准备、预检、启动、原会话恢复、日志、计时与错误记录。题目只提供可见文件、Starter、中文迭代 Prompt、固定镜像中的真实 Public/Dev 入口。不要求每题实现 Broker；若评测必须跨权限调用，则在题目镜像适配并预检，不通过关闭保护来绕过。
 
@@ -12,7 +12,9 @@
 
 使用 [题目运行模板](templates/runtime.example.json)。所有 path/sha256 引用均指题目根内文件及其完整 SHA-256。模型、推理档位、provider/base_url、上下文与 `auth_ref` 放在上述两份固定 TOML；题目 JSON 不再重复填写 `tracks`。`auth_ref.path` 是当前机器的绝对凭据路径，仅在授权真实运行时读取。不要将密钥值写进 TOML、JSON、Prompt 或命令行。
 
-`runtime prepare` 读取两份 TOML，验证后将原件快照和生成的 Codex 配置保存到题目的 `.autoresearch-flow/runtime/`。此后只修改源 TOML **不会热更新**已准备或正在运行的会话；新题准备时才会采用新值。不得把改配置后的运行拼接进旧轨迹。旧式题目 JSON 显式包含 `tracks` 时仍可读取，但会跳过固定 TOML；新任务请用不含 `tracks` 的模板。
+前期探索不需要账号。到正式迭代准备阶段，创建 `local/model_profiles/`，仅在目标不存在时复制对应示例并填写真实 provider、模型和鉴权引用；已有文件先审阅，不覆盖。`local/` 被 Git 和发行收集器排除，题目提交包也拒绝其中的模型配置。模板里的地址/模型是可修改的样例，不表示服务已接受；用户只需提供其真实配置，不需要改通用程序。
+
+`runtime prepare` 读取两份 TOML，验证后在 `.autoresearch-flow/runtime/config.json` 冻结解析后的参数和鉴权路径引用，manifest 记录原 TOML 路径及哈希，同时生成隔离的 Codex 配置；不复制原 TOML 注释或密钥值。此后修改源 TOML **不会热更新**已有会话，新题准备才采用新值。题目 JSON 中的 `tracks` 被明确拒绝，不再有旁路；缺少当前时长快照也不使用旧版默认值。运行配置变更不能拼接到旧轨迹。
 
 image 必须使用完整 sha256 镜像 ID 或 repo@sha256:digest。镜像需包含：
 
@@ -56,11 +58,11 @@ seccomp 要保留 `SCMP_ACT_ERRNO` 默认拒绝；这项语法检查不代替人
 以下在流程仓库根执行，替换题目目录；题目必须已显式初始化 W1 状态。
 
 ```bash
-python3 AutoResearch新流程/cli.py runtime prepare --task-root /题目目录 --file /题目目录/runtime.json
-python3 AutoResearch新流程/cli.py runtime check --task-root /题目目录 --track codex
-python3 AutoResearch新流程/cli.py runtime preflight --task-root /题目目录 --track codex --allow-live
-python3 AutoResearch新流程/cli.py runtime check --task-root /题目目录 --track seed
-python3 AutoResearch新流程/cli.py runtime preflight --task-root /题目目录 --track seed --allow-live
+python3 cli.py runtime prepare --task-root /题目目录 --file /题目目录/runtime.json
+python3 cli.py runtime check --task-root /题目目录 --track codex
+python3 cli.py runtime preflight --task-root /题目目录 --track codex --allow-live
+python3 cli.py runtime check --task-root /题目目录 --track seed
+python3 cli.py runtime preflight --task-root /题目目录 --track seed --allow-live
 ```
 
 check 不调用模型。preflight 首先在普通容器和 Codex 内层沙箱分别做无凭据、无网络的边界探针；内层失败返回 SANDBOX_FAILED，尚不会调用模型。两层通过后会真实调用模型及评测，必须事先确认成本；每组各一次，使用独立预检会话与工作区。它要求 Agent 真正执行固定评测命令一次、成功退出、返回有限数值且未改 Starter。不把预检计入正式时长。

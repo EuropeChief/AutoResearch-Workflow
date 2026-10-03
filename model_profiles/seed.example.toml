@@ -1,0 +1,15 @@
+# 复制到 local/model_profiles/seed.toml 后填写鉴权引用；不含密钥。
+# 固定模型参数来自已批准配置；实际服务与长上下文行为须单独预检。
+schema_version = 1
+model = "doubao-seed-2.1-turbo"
+reasoning_effort = "high"
+base_url = "https://ark.cn-beijing.volces.com/api/coding/v3"
+context_window = 262144
+auto_compact_token_limit = 160000
+# 仅用于压缩余量校验，不宣称设置了服务端输出上限。
+max_output_tokens = 65536
+
+[auth_ref]
+kind = "api_key_json"
+path = "/REPLACE_WITH_PRIVATE_AUTH_JSON"
+key = "OPENAI_API_KEY"

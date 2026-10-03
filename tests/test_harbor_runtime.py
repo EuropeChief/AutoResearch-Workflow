@@ -11,6 +11,15 @@ from autoresearch_flow.harbor_runtime import HarborExecBackend, compose_override
 
 
 class HarborRuntimeTests(unittest.TestCase):
+    def test_missing_harbor_reports_path_without_launch(self):
+        with patch('subprocess.check_output', side_effect=FileNotFoundError('harbor')), \
+             patch('subprocess.Popen') as spawn, self.assertRaises(FlowError) as error:
+            launch(self.runtime, 'seed', 'preflight', 10)
+        self.assertEqual(error.exception.code, 'HOST_DEPENDENCY_UNAVAILABLE')
+        self.assertIn('harness.executable', str(error.exception))
+        spawn.assert_not_called()
+        self.assertFalse((self.runtime.directory/'seed/harbor').exists())
+
     def setUp(self):
         self.fx = w3.RuntimeTests()
         self.fx.setUp()

@@ -14,6 +14,13 @@ from .trajectory import validate_round
 from .duration import snapshot as duration_snapshot, validate_roll
 
 
+def _reject_local_profiles(tree: Path) -> None:
+    """The workflow's private account configuration is not submission evidence."""
+    _require(not any(p.name == "model_profiles" and p.parent.name == "local"
+                     for p in (tree, *tree.rglob("*"))), "LOCAL_CONFIG_LEAK",
+             "提交材料包含 local/model_profiles 私有配置；请移出制作期账号配置，不将其作为任务证据")
+
+
 def _safe_tree(root: Path, value: str) -> Path:
     _require(isinstance(value, str) and value and not Path(value).is_absolute(), "INVALID_PATH", "目录须为任务内相对路径")
     relative = Path(value)
@@ -21,6 +28,7 @@ def _safe_tree(root: Path, value: str) -> Path:
     path = root / relative
     _require(path.is_dir() and not path.is_symlink() and path.resolve().is_relative_to(root.resolve()), "INVALID_DIRECTORY", "目录不存在或越界")
     _require(not any(p.is_symlink() for p in path.rglob("*")), "SYMLINK_IN_TREE", "证据目录不能包含符号链接")
+    _reject_local_profiles(path)
     return path
 
 

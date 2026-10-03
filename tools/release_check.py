@@ -131,6 +131,9 @@ def source_files(flow=None):
             path = Path(directory) / name
             if not source_name(name):
                 continue
+            if path.relative_to(flow).parts[0] == "model_profiles" and path.relative_to(flow).as_posix() not in {
+                    "model_profiles/codex.example.toml", "model_profiles/seed.example.toml"}:
+                continue
             if Path(directory) == flow and path.suffix != ".md" and name not in SPECIAL_FILES | {"cli.py"}:
                 continue
             if path.is_symlink():

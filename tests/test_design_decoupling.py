@@ -59,12 +59,14 @@ class DesignDecouplingTests(unittest.TestCase):
         module = tool("release_check")
         fixture = self.root / "source-fixture"
         include = {"cli.py", "README.md", ".gitignore", ".gitattributes",
-                   "tests/test_example.py", "pilots/cpu/probe.py"}
+                   "tests/test_example.py", "pilots/cpu/probe.py",
+                   "model_profiles/codex.example.toml", "model_profiles/seed.example.toml"}
         exclude = {".git/config.json", ".ruff_cache/report.json", "runtime/state.json",
                    ".autoresearch-flow/state.json", "pilots/cpu/runs/record.json",
                    "pilots/cpu/build/main.py", "model_profiles/auth.json",
                    "model_profiles/.env", "templates/credentials.json",
-                   "autoresearch_flow/__pycache__/trace.json"}
+                   "autoresearch_flow/__pycache__/trace.json", "local/model_profiles/codex.toml",
+                   "model_profiles/codex.toml", "model_profiles/my-private-profile.toml"}
         for relative in include | exclude:
             p = fixture / relative
             p.parent.mkdir(parents=True, exist_ok=True)

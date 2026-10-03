@@ -38,7 +38,7 @@
   .autoresearch-flow/      # CLI 生成；无需用户手建
 ```
 
-这只是制作期布局；双镜像合同见 [PCA_ENVIRONMENT.md](PCA_ENVIRONMENT.md)。模型配置集中在 `model_profiles/codex.toml`、`seed.toml`，runtime 配置升级为 schema 2。题面由 Harness 提供；本地组件预检可显式映射 instruction.md，不再要求 task.toml 公开。Agent 每轮只调用 Public/Dev，/workspace/solution 是可写候选，/workspace/starter 只读；私有 tests 不可见。Harbor 0.23.0 的有限适配见环境合同，仍须按每题实际条件预检，不能以本地 Docker 路径冒充正式启动。
+这只是制作期布局；双镜像合同见 [PCA_ENVIRONMENT.md](PCA_ENVIRONMENT.md)。模型配置只在流程根的 `local/model_profiles/codex.toml`、`seed.toml` 中填写，runtime 配置 schema 为 2，不接受题目内 tracks 旁路。题面由 Harness 提供；本地组件预检可显式映射 instruction.md，不要求 task.toml 公开。Agent 每轮只调用 Public/Dev，/workspace/solution 可写、/workspace/starter 只读，私有 tests 不可见。Harbor 0.23.0 有限适配仍须按每题实际条件预检，不能以本地 Docker 路径冒充正式启动。
 
 ## 接口对照
 

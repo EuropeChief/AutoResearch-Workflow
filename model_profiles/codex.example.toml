@@ -1,0 +1,13 @@
+# 复制到 local/model_profiles/codex.toml 后填写；不要把凭据值写进本文件。
+# 模型/档位是当前教程示例要求，真实 provider 接受情况仍须预检。
+schema_version = 1
+model = "gpt-5.6-sol"
+reasoning_effort = "max"
+base_url = "https://api.openai.com/v1"
+
+[auth_ref]
+kind = "api_key_json"
+path = "/REPLACE_WITH_PRIVATE_AUTH_JSON"
+key = "OPENAI_API_KEY"
+
+# 使用既有 Codex 登录文件时：kind 改为 codex_login，省略 base_url 和 key。

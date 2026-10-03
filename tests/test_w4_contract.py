@@ -218,6 +218,23 @@ class DeliveryTests(unittest.TestCase):
             self.package.qa_bind(package_root, report)
         self.assertEqual(caught.exception.code, "QA_PACKAGE_DRIFT")
 
+    def test_private_model_profiles_never_enter_a_submission_package(self):
+        best = self.prepare_best()
+        spec = self.prepare_package_sources()
+        local = self.root / spec["workspace_directory"] / "local/model_profiles"
+        local.mkdir(parents=True)
+        (local / "seed.toml").write_text('base_url = "https://private.example.invalid"\n')
+        with patch("autoresearch_flow.w4_evidence.ExperimentBook.report", side_effect=self.reports(best)), \
+             patch("autoresearch_flow.w4_package.ExperimentBook.report", side_effect=self.reports(best)):
+            with self.assertRaises(FlowError) as caught:
+                self.package.build(spec)
+            self.assertEqual(caught.exception.code, "LOCAL_CONFIG_LEAK")
+        package = self.root / "synthetic-package"
+        (package / "workspace/local/model_profiles").mkdir(parents=True)
+        with self.assertRaises(FlowError) as caught:
+            check_package(package)
+        self.assertEqual(caught.exception.code, "LOCAL_CONFIG_LEAK")
+
     def test_package_rejects_unlinked_br_results(self):
         best = self.prepare_best()
         spec = self.prepare_package_sources()

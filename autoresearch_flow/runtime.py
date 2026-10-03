@@ -28,7 +28,7 @@ from .trajectory import raw_public_metric
 from .duration import snapshot as duration_snapshot, prompt_text as duration_prompt
 
 TRACKS = ("codex", "seed")
-DEFAULT_PROFILE_DIR = Path(__file__).resolve().parents[1] / "model_profiles"
+DEFAULT_PROFILE_DIR = Path(__file__).resolve().parents[1] / "local" / "model_profiles"
 EVALUATE = "/workspace/evaluate"
 CONTINUE_PROMPT = (
     "请在当前同一会话中继续原任务的真实方法迭代。遵守原题面与可修改范围，"
@@ -223,7 +223,11 @@ class DockerBackend:
         return args
 
     def check(self, runtime, track):
-        result = subprocess.run(["docker", "image", "inspect", "--format", "{{.Id}}", runtime.config["image"]], capture_output=True, text=True, timeout=30)
+        try:
+            result = subprocess.run(["docker", "image", "inspect", "--format", "{{.Id}}", runtime.config["image"]], capture_output=True, text=True, timeout=30)
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            raise FlowError("HOST_DEPENDENCY_UNAVAILABLE",
+                            "无法调用 Docker；请由用户核对 PATH、docker --version 与 docker ps，补齐已有环境；流程不自动安装或改权限") from exc
         _require(result.returncode == 0, "DOCKER_UNAVAILABLE", "镜像不可用或 Docker 权限不足；请核对镜像与 docker ps 权限")
         image_id = result.stdout.strip()
         command = self.command(runtime, track, "preflight", "ar-check-" + uuid.uuid4().hex[:12], ["codex", "--version"])
@@ -276,14 +280,15 @@ class Runtime:
 
     def _resolve_config(self, requested):
         _require(isinstance(requested, dict), "INVALID_RUNTIME", "运行配置须为 JSON 对象")
-        if "tracks" in requested:
-            return copy.deepcopy(requested), {}
+        _require("tracks" not in requested, "INLINE_MODEL_CONFIG_UNSUPPORTED",
+                 "题目配置不接受 tracks；请在流程根 local/model_profiles/codex.toml 和 seed.toml 配置模型与鉴权引用")
         resolved = copy.deepcopy(requested)
         resolved["tracks"] = {}
         sources = {}
         for name in TRACKS:
             path = self.profile_dir / f"{name}.toml"
-            _require(path.is_file(), "PROFILE_MISSING", f"缺少 {name} 模型配置：{path}")
+            _require(path.is_file(), "PROFILE_MISSING",
+                     f"缺少 {name} 模型配置：{path}；从 model_profiles/{name}.example.toml 复制并填写，不覆盖已有文件")
             try:
                 raw = path.read_bytes()
                 profile = tomllib.loads(raw.decode("utf-8"))
@@ -299,17 +304,15 @@ class Runtime:
         config = _read_json(self.directory / "config.json")
         manifest = _read_json(self.directory / "manifest.json")
         _require(_canonical_digest(config) == manifest["config_sha256"], "RUNTIME_DRIFT", "运行配置发生变化；不得把改配置后的会话拼接")
-        _require(_canonical_digest(self.store._load()["rules_lock"]) == manifest["rules_lock_sha256"], "RUNTIME_DRIFT", "规则升级后须复核运行底座")
+        _require(_canonical_digest(self.store._load()["rules_lock"]) == manifest["rules_lock_sha256"], "RUNTIME_DRIFT", "运行来源锁不一致；须使用冻结版本")
         for ref in manifest["files"]:
             evidence(self.directory, ref)
         current = duration_snapshot(self.root)
-        if "duration_snapshot" in manifest:
-            _require(manifest["duration_snapshot"] == current, "DURATION_DRIFT", "运行准备后时长政策/资格证据发生变化")
-            for track in TRACKS:
-                _require(self._state(track).get("duration_sha256") == current["sha256"],
-                         "DURATION_DRIFT", "双轨冻结的时长政策不一致")
-        else:
-            _require(current["policy"]["mode"] == "default_10h", "DURATION_DRIFT", "旧运行无7h冻结证据，不能追认")
+        _require(manifest.get("duration_snapshot") == current, "DURATION_DRIFT",
+                 "缺少当前冻结时长快照，或准备后政策/资格证据发生变化；不使用旧运行兼容默认值")
+        for track in TRACKS:
+            _require(self._state(track).get("duration_sha256") == current["sha256"],
+                     "DURATION_DRIFT", "双轨冻结的时长政策不一致")
         self.config = config
         return manifest
 
@@ -361,13 +364,11 @@ class Runtime:
                     shutil.copyfile(evidence(self.root, ref), target)
                     _require(_sha256(target) == ref["sha256"], "SECURITY_DRIFT", "安全配置复制期间发生变化")
                     target.chmod(0o444)
-            if profile_sources:
-                (temporary / "profiles").mkdir()
-                for name, source in profile_sources.items():
-                    snapshot = temporary / "profiles" / f"{name}.toml"
-                    shutil.copyfile(source["path"], snapshot)
-                    _require(_sha256(snapshot) == source["sha256"], "PROFILE_DRIFT", "准备过程中模型配置已改变")
-                    snapshot.chmod(0o444)
+            # config.json freezes validated non-secret fields; raw private TOML
+            # (including comments) is never copied into an evidence snapshot.
+            for source in profile_sources.values():
+                _require(_sha256(Path(source["path"])) == source["sha256"],
+                         "PROFILE_DRIFT", "准备过程中模型配置已改变")
             for name in TRACKS:
                 track_root = temporary / name
                 track_root.mkdir()
@@ -382,7 +383,7 @@ class Runtime:
                 _atomic_json(track_root / "state.json", {"schema_version": 1, "thread_id": None, "segments": [], "exclusions": [], "active": None, "preflight": None, "duration_sha256": duration["sha256"]})
             _atomic_json(temporary / "config.json", config)
             refs = [{"path": str(p.relative_to(temporary)), "sha256": _sha256(p)}
-                    for p in sorted(temporary.rglob("*")) if p.is_file() and (p.is_relative_to(public) or p.is_relative_to(temporary / "profiles") or p.is_relative_to(temporary / "security") or p.name == "config.toml" or p.name == "prompt.md")]
+                    for p in sorted(temporary.rglob("*")) if p.is_file() and (p.is_relative_to(public) or p.is_relative_to(temporary / "security") or p.name == "config.toml" or p.name == "prompt.md")]
             _atomic_json(temporary / "manifest.json", {"config_sha256": _canonical_digest(config), "rules_lock_sha256": _canonical_digest(self.store._load()["rules_lock"]), "files": refs, "profile_sources": profile_sources, "harbor_task_sha256": harbor_task, "starter_sha256": self._tree_hash(temporary / "codex" / "formal" / "solution"), "duration_snapshot": duration})
             temporary.rename(self.directory)
         except BaseException:
