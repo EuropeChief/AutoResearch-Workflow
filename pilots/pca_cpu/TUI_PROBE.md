@@ -1,6 +1,6 @@
 # 原生 TUI 有界验收（开发中）
 
-当前只完成离线接口检查，**没有通过真实 TUI 验收**；正式 `runtime run/resume` 仍使用现有 exec JSON 路径。这里不是每题必做流程，也不产生科研轨迹或 Hidden 分数。
+离线接口检查已通过；真实 CPU 联调目前阻塞于无模型的 Codex 用户命名空间预检，**尚未通过真实 TUI 验收**。正式 `runtime run/resume` 仍使用现有 exec JSON 路径。这里不是每题必做流程，也不产生科研轨迹或 Hidden 分数。
 
 验证目标：Harbor 0.23.0 创建和管理 CPU Agent 容器，在其中以 Codex 0.147.0 原生界面执行；专属 tmux 终端可只读观察/脱离；根据原生 rollout 而非 ANSI 画面识别回合、工具与等待输入；固定中性继续指令送入同一进程；外部中断后第二次启动明确恢复原 thread。
 
