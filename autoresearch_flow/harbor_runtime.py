@@ -82,6 +82,11 @@ def final_snapshot(runtime, track):
     _require(state['active'] is None and runtime._seconds(state) >= runtime.minimum_seconds()
              and segments and segments[-1]['status'] == 'completed',
              'FINAL_NOT_READY', '须净有效时长达标且末段正常收尾；异常暂停不得评分')
+    return candidate_snapshot(runtime, track)
+
+
+def candidate_snapshot(runtime, track):
+    """Agent-authored artifacts only; reusable for closure, without scoring."""
     base = runtime.directory/track/'formal'
     best, candidate = base/'output/best_method', base/'solution'
     best_digest = task_digest(best)
@@ -92,12 +97,18 @@ def final_snapshot(runtime, track):
         _require(target.is_file() and not target.is_symlink() and _sha256(target) == _sha256(path),
                  'BEST_NOT_RESTORED', '最佳代码未恢复到候选提交面')
     from .trajectory import validate_round
-    rows = (base/'output/trajectory.jsonl').read_text().splitlines()
+    try:
+        rows = (base/'output/trajectory.jsonl').read_text(encoding='utf-8').splitlines()
+    except UnicodeError as exc:
+        raise FlowError('TRAJECTORY_PARSE', 'Agent 轨迹不是合法 UTF-8；保留原件后核查') from exc
     _require(bool(rows), 'FINAL_NOT_READY', '缺 Agent 自写轨迹')
     for number, row in enumerate(rows, 1):
-        validate_round(json.loads(row), number)
+        try:
+            validate_round(json.loads(row), number)
+        except (json.JSONDecodeError, UnicodeError) as exc:
+            raise FlowError('TRAJECTORY_PARSE', f'Agent 轨迹第 {number} 行不是合法 JSON；保留原件后核查') from exc
     return {'candidate_sha256': task_digest(candidate), 'best_method_sha256': best_digest,
-            'thread_id': state['thread_id'], 'trajectory_sha256': _sha256(base/'output/trajectory.jsonl')}
+            'thread_id': runtime._state(track)['thread_id'], 'trajectory_sha256': _sha256(base/'output/trajectory.jsonl')}
 
 
 def validate_launch(runtime):
@@ -226,10 +237,6 @@ class HarborExecBackend:
     def boundary(self, runtime, track):
         from .runtime import DockerBackend
         return DockerBackend.boundary(self, runtime, track)
-
-    def spawn(self, command, env):
-        return subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE, env=env, start_new_session=True)
 
     def stop(self, name):
         _require(bool(re.fullmatch('[a-zA-Z0-9-]+', name)), 'INVALID_PROCESS', '无效监督进程标识')

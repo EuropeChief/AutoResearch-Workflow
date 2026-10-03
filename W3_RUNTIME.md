@@ -1,6 +1,6 @@
 # W3：Agent 运行底座
 
-状态：历史 0.2.0 PCA 发布快照已验证 Harbor 0.23.0 有限适配、候选移交/独立评分及 Seed 同会话有界短测；旧 0.1.0 联调不是新版证据。当前工作树增量未重新做真实模型联调，不借用历史记录宣称已通过。双镜像接口见 [PCA_ENVIRONMENT.md](PCA_ENVIRONMENT.md)，版本及证据范围见 [发布说明](RELEASE.md)。无需设计仓库即可使用本文。
+当前实现使用 Codex 0.147.0 原生 TUI，统一监督启动、原会话恢复、日志与计时；不再使用 exec JSON 模式。TUI 有界 Seed CPU 探针已通过，正式监督接入已完成离线测试，新增真实联调待授权与验收，尚不能视为正式发布。双镜像接口见 [PCA_ENVIRONMENT.md](PCA_ENVIRONMENT.md)，证据范围见 [发布说明](RELEASE.md)。
 
 ## 范围与分工
 
@@ -89,28 +89,31 @@ runtime 配置 schema 为 2；evaluation.command 是镜像内固定程序 argv�
 
 `task` 为题目根内相对路径；可选 `docker_config` 指向本机专用 Docker 插件目录。该私有任务目录不挂载给 Agent。prepare 锁定整个任务摘要，镜像/代码/配置改变不得拼接旧轨迹；task.toml 的 Agent 镜像、CPU/内存必须与 runtime 一致。Harbor 启动容器后，有限适配器在该容器内启动非 root Codex，不另起替代容器。GPU 配置仍须在目标机器逐题验证，本轮只验证 CPU。
 
-下面是正式监督接口。无 harness 的旧 Docker 后端继续拒绝正式启动；有 harness 也必须先通过该题的真实预检：
+下面是正式监督接口。宿主需预先安装 tmux；工具不自动安装依赖或修改系统权限。正式启动必须绑定 Harness 并先通过该题的真实预检：
 
 ```bash
-python3 AutoResearch新流程/cli.py runtime run --task-root /题目目录 --track codex --budget-seconds 43200 --confirm-cost
-python3 AutoResearch新流程/cli.py runtime run --task-root /题目目录 --track seed --budget-seconds 43200 --confirm-cost
+python3 cli.py runtime run --task-root /题目目录 --track codex --budget-seconds 43200 --confirm-cost
+python3 cli.py runtime run --task-root /题目目录 --track seed --budget-seconds 43200 --confirm-cost
 ```
 
 43200 是示例单次墙钟预算，不是新的有效时长要求，也不是金额/token 上限。run 会在预算内自动继续**同一会话**，到各自累计可核活动达到冻结门槛（默认36000秒；启动前获准的非训练例外25200秒）或预算耗尽停止；不要求最终提升。须留出预检/排队/故障开销，不能把最低有效时长直接当作总墙钟预算。7h选择、Prompt生成及防热改规则见 [OP03_DURATION.md](OP03_DURATION.md)。费用仍需用户在服务端设置预算。GPU 索引分别配置，启动前由专家确认空闲。
 
+监督命令需保持运行，建议放在宿主的持久终端中。达到净时长门槛后，底座在原会话发送收口指令，要求 Agent 恢复最佳代码、执行真实 Public/Dev 评测、保存八字段轨迹与 best_method。后台工具须确认终态，评测前后与最终候选哈希须一致，之后才正常退出 TUI；仅达到时长或退出码为 0 不代表收口完成。预算耗尽或外部异常则暂停，保留原会话，不伪造完成。
+
 ## 查看与恢复
 
 ```bash
-python3 AutoResearch新流程/cli.py runtime status --task-root /题目目录 --track codex
-python3 AutoResearch新流程/cli.py runtime resume --task-root /题目目录 --track codex --budget-seconds 14400 --confirm-cost
+python3 cli.py runtime status --task-root /题目目录 --track codex
+python3 cli.py runtime attach --task-root /题目目录 --track codex
+python3 cli.py runtime resume --task-root /题目目录 --track codex --budget-seconds 14400 --confirm-cost
 ```
 
-首次用 run，已有正式 thread_id 只能 resume。异常时停止后排查，再恢复原会话；没有可恢复会话时报告阻塞，不能伪造同一轨迹。不要删除 Codex home。底座不使用 --last 或临时会话。
+attach 在另一个交互终端只读显示正在运行的 Codex 界面，用 Ctrl-b d 脱离观察；关闭观察端不会停止监督进程。不要在监督命令所在终端按 Ctrl-C，除非确实要暂停。观察端不允许输入额外研究指令。首次用 run，已有正式 thread_id 只能 resume。异常时停止后排查，再恢复原会话；没有可恢复会话时报告阻塞，不能伪造同一轨迹。不要删除 Codex home。底座不使用 --last 或临时会话，不将旧 exec 快照静默转成 TUI 轨迹。
 
 run、resume 和 preflight 的 Harbor 作业一律禁用最终 Verifier；不能因预算耗尽或时长达标自动消耗 Hidden 查询。专家确认有效时长、合法迭代、Agent 正常收尾、最终候选已恢复后，才显式执行一次：
 
 ```bash
-python3 AutoResearch新流程/cli.py runtime finalize --task-root /题目目录 --track seed --confirm-final-score
+python3 cli.py runtime finalize --task-root /题目目录 --track seed --confirm-final-score
 ```
 
 `seed` 仅为示例，应选择经过审查的最终提交轨迹；不是要求两组各查一次 Hidden。该入口要求末段 completed、达到冻结净时长门槛、八字段记录有效、best_method 代码已恢复；先进行合法 Public/Dev 复测，再由 Harbor 移交到独立 Verifier。失败或非有限 reward 返回 blocked，不把 Harbor CLI 的 exit=0 当成功。申请写入 `final_attempt.json`，禁止同轨静默重复评分或看过最终结果后继续迭代。基础设施失败也不自动清账重试，需专家核对是否已消费查询并取得适用授权。此账本是本地防误触，不代替项目方全局查询预算。
@@ -125,14 +128,17 @@ python3 AutoResearch新流程/cli.py runtime finalize --task-root /题目目录 
 |---|---|
 | manifest.json、config.json | 规则锁、镜像与非秘密配置、可见输入哈希 |
 | codex/ 或 seed/ 下 state.json | 正式会话 ID、预检状态、运行片段、扣时与活动状态 |
-| 各组 logs/片段ID/codex.jsonl | Codex 实际输出的消息、命令、文件修改、工具结果、使用量等事件 |
-| 同目录 stderr.log、events.jsonl | 标准错误及监督进程加时间戳的事件 |
-| 同目录 summary.json | 退出状态、片段计时、日志哈希 |
+| 各组 logs/片段ID/native.jsonl | 脱敏后的 Codex 原生记录：实际暴露的消息、调用、工具输出、用量与压缩事件 |
+| 同目录 events.jsonl | 原生事件与接收时间、监督指令及用于核验计时的规范事件 |
+| 同目录 screen.txt | 分段结束时的辅助画面，不用 ANSI 屏幕内容推断运行状态 |
+| 同目录 summary.json | 分段状态、计时、日志哈希及正常收口的候选/评测绑定 |
 | 各组 harbor/作业ID/ | Harness 配置、console、实际 trial/result.json 与 launch_result.json；最终申请另有 final_attempt.json |
 | 各组 formal/solution、output | 方法工作区；Agent 自行写入 `output/trajectory.jsonl` 与当前最佳 `output/best_method/` |
 | 各组 formal/codex_home | 恢复所需持久会话及可能存在的鉴权副本，不整体提交 |
 
-可用 tail -f 查看对应日志，不依赖 Agent 自报状态。正式初始 Prompt 必须要求 Agent 每轮写入该组 `output/trajectory.jsonl`，并更新当前最佳 `output/best_method/`；续跑 Prompt 会提醒这两个动作。日志记录 CLI 实际暴露的内容，不承诺内部完整推理、上游已截断输出或独立后台进程全部日志；长训练应同步等待结果，或通过题目评测入口保存并返回可定位日志。W4 从 Agent 写出的 `trajectory.jsonl` 整理最终轨迹；监督日志只用于核验操作和结论，不能替代缺失的 Agent 轨迹。
+可用 tail -f 查看对应日志，不依赖 Agent 自报状态。正式初始 Prompt 必须要求 Agent 每轮写入该组 `output/trajectory.jsonl`，并更新当前最佳 `output/best_method/`；续跑 Prompt 会提醒这两个动作。日志记录 CLI 实际暴露的内容，不承诺内部完整推理、上游已截断输出或独立后台进程全部日志。对已支持的 exec_command/write_stdin 后台协议，底座关联原命令、进程 ID 与最终结果；未知协议不猜测分数。W4 从 Agent 写出的 `trajectory.jsonl` 整理最终轨迹；监督日志只用于核验操作和结论，不能替代缺失的 Agent 轨迹。
+
+只读 `/workspace/evaluate` 在同一次实际评测结果中附加候选前后哈希，不额外运行一次评测。最终收口检查其与 Agent 最后记录及最终代码一致；评测日志、缓存和临时训练产物应放在候选提交面之外，不能在计分后换代码或把过程中变动的目录当作冻结方法。
 
 记录器对已知凭据值、常见凭据字段和 Bearer 文本脱敏；不宣称能识别任意编码后的秘密。持久 Codex home 不属于脱敏日志。达到日志上限会暂停并保留已记录部分，不能当作完整正常运行。
 
@@ -140,7 +146,7 @@ python3 AutoResearch新流程/cli.py runtime finalize --task-root /题目目录 
 
 启动等待、两次进程之间、预检、明确 API 错误之后的停滞不计；无工具运行依据的长静默列为未核实。已观察到工具运行的间隔可计，但不表示空转、重复无变化评测也合法。监督进程丢失时不推算最后事件之后的时间。
 
-status 的 effective_seconds_before_content_review 是**待内容审查的活动时间**，达到冻结的10h/合格7h门槛不自动判轨迹通过。专家仍需查独立性、真实方法迭代、合法操作与完整记录。发现额外无效区间，用 runtime exclude --task-root /题目目录 --track codex --file /题目目录/exclusion.json 追加：
+status 的 effective_seconds_before_content_review 是已收口分段的**待内容审查活动时间**；当前分段的观测另列在 active 中，未结束前不重复并入累计值。达到冻结的10h/合格7h门槛不自动判轨迹通过。专家仍需查独立性、真实方法迭代、合法操作与完整记录。发现额外无效区间，用 runtime exclude --task-root /题目目录 --track codex --file /题目目录/exclusion.json 追加：
 
 ```json
 {"start":1790000000,"end":1790000100,"reason":"示例：已证实的外部中断","evidence":[{"path":"证据文件","sha256":"完整SHA256"}]}
@@ -152,6 +158,6 @@ start/end 为 Unix 秒；重叠扣时只扣一次，原始日志不改写。最�
 
 最新离线及异路径迁移测试数以 [验收记录](release/acceptance.json) 为准。覆盖独立目录、API 秘密脱敏、实际工具结果检查、预检不计时、原会话恢复、新会话拒绝、异常扣时、宕机收口、证据漂移、Harbor 资源绑定与最终评分门禁；不调用 Docker/GPU/模型。
 
-新版 CPU pilot 使用授权 Seed 凭据执行真实 Harbor/API 预检和原会话恢复，生成一条 Agent 自写八字段记录。预算暂停时已进入下一轮，当前候选未等于最佳备份，按暂停保留而不伪造最终收尾。GPT、GPU、长上下文、十小时与十二小时未在本轮测试；具体题目预检不能省略。AppArmor 例外仅限本次 CPU pilot，不迁移到正式题目。
+原生 TUI 探针已在同一 Seed 会话完成首次启动、恢复与三次公开评测，产生 Agent 自写八字段记录，详见 [短测证据与局限](pilots/pca_cpu/TUI_PROBE.md)。正式监督入口当前只有离线回归证据，真实短联调尚待完成。GPT、GPU、真实长上下文压缩与十小时轨迹未由该 CPU 探针证明；具体题目预检不能省略。AppArmor 例外仅限获准试验，不迁移到正式题目。
 
-Codex 接口依据：[非交互运行](https://developers.openai.com/codex/noninteractive/)、[官方配置 Schema](https://developers.openai.com/codex/config-schema.json)；本次另核本机 0.147.0 的 exec/resume help。
+Codex 接口依据：[交互命令（含退出）](https://learn.chatgpt.com/docs/developer-commands?surface=cli)、[官方配置 Schema](https://developers.openai.com/codex/config-schema.json)；本实现只接受已核验的 0.147.0 原生事件格式，其他版本须先适配与验证。

@@ -11,6 +11,7 @@ from pydantic import Field
 from .core import _require, _atomic_json
 from .harbor_runtime import HarborExecBackend, final_snapshot
 from .runtime import Runtime
+from . import FLOW_VERSION
 
 
 class FlowOptions(AgentOptions):
@@ -29,7 +30,7 @@ class FlowCodexAgent(NopAgent):
         return 'autoresearch-codex'
 
     def version(self):
-        return '0.2.0'
+        return FLOW_VERSION
 
     async def setup(self, environment):
         _require(version('harbor') == '0.23.0', 'HARBOR_VERSION', '需 Harbor 0.23.0')

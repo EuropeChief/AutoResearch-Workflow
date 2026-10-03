@@ -28,6 +28,33 @@ def meta():
 
 
 class NativeEventsTests(unittest.TestCase):
+    def test_background_public_evaluation_is_bound_to_original_command_until_exit(self):
+        result = {'status': 'succeeded', 'score': .5,
+                  'raw_metric': {'name': 'error', 'direction': 'minimize', 'value': 4.5}}
+        for early_result in (False, True):
+            with self.subTest(early_result=early_result):
+                adapter, clock = NativeEvents('0.147.0'), EventClock()
+                records = [meta(), row(0, 'event_msg', type='task_started', turn_id='t'),
+                    row(1, 'response_item', type='function_call', name='exec_command', call_id='start',
+                        arguments='{"cmd":"/workspace/evaluate"}'),
+                    row(2, 'response_item', type='function_call_output', call_id='start',
+                        output='Process running with session ID 123\nFinal output:\n'+(json.dumps(result) if early_result else '')),
+                    row(700, 'response_item', type='function_call', name='write_stdin', call_id='poll',
+                        arguments='{"session_id":123,"chars":""}'),
+                    row(701, 'response_item', type='function_call_output', call_id='poll',
+                        output='Process exited with code 0\nFinal output:\n'+('' if early_result else json.dumps(result))),
+                    row(702, 'event_msg', type='task_complete', turn_id='t')]
+                results = []
+                for record in records:
+                    for event in adapter.convert(record):
+                        clock.event(event, dt.datetime.fromisoformat(record['timestamp']).timestamp())
+                        if event['type'] == 'item.completed':
+                            value = public_evaluation(event['item'], ['/workspace/evaluate'])
+                            if value is not None:
+                                results.append(value)
+                self.assertEqual(results, [result])
+                self.assertEqual(clock.summary()['observed_active_seconds'], 702)
+
     def test_public_result_needs_exact_executed_command_and_successful_exit(self):
         adapter = NativeEvents('0.147.0')
         adapter.convert(meta())
@@ -148,6 +175,15 @@ class RolloutTailTests(unittest.TestCase):
 
 
 class TerminalTests(unittest.TestCase):
+    def test_existing_terminal_does_not_create_or_retarget_another_session(self):
+        with tempfile.TemporaryDirectory(prefix='ar-tui-') as directory:
+            socket = Path(directory)/'tmux.sock'
+            socket.touch()
+            with self.assertRaises(FlowError):
+                TmuxTerminal.existing(socket)
+        with self.assertRaises(FlowError):
+            TmuxTerminal.existing('/var/run/docker.sock')
+
     def test_prepared_config_trusts_only_container_solution_without_weakening_permissions(self):
         config = tomllib.loads(model_config({'model': 'synthetic', 'reasoning_effort': 'high',
                                             'auth_ref': {'kind': 'codex_auth_json'}}))
@@ -188,6 +224,23 @@ class TerminalTests(unittest.TestCase):
         paste = next(kwargs for args, kwargs in calls if 'load-buffer' in args)
         self.assertEqual(paste['input'], '固定的继续指令\n不改变方法范围')
         self.assertTrue(any('kill-server' in args for args, _ in calls))
+
+    def test_observer_detaches_readonly_without_stopping_terminal(self):
+        calls = []
+        def run(args, **kwargs):
+            calls.append(args)
+            return SimpleNamespace(returncode=0, stdout='0|\n' if 'display-message' in args else '')
+        with patch('subprocess.run', side_effect=run):
+            terminal = TmuxTerminal()
+            try:
+                terminal.start(['synthetic'], {})
+                self.assertEqual(terminal.observe(), {'status': 'observer_detached', 'readonly': True})
+                self.assertTrue(terminal.status()['alive'])
+                self.assertFalse(any('kill-server' in args for args in calls))
+                observer = next(args for args in calls if 'attach-session' in args)
+                self.assertIn('-r', observer)
+            finally:
+                terminal.close()
 
     def test_missing_tmux_is_actionable_without_installing(self):
         with patch('subprocess.run', side_effect=FileNotFoundError), self.assertRaises(FlowError) as error:

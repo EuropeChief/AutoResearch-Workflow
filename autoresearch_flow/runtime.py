@@ -7,13 +7,11 @@ import hashlib
 import json
 import math
 import os
-import queue
 import re
 import shlex
 import shutil
 import subprocess
 import tempfile
-import threading
 import time
 import tomllib
 import uuid
@@ -24,6 +22,7 @@ from .core import (FlowError, TaskStore, _atomic_json, _canonical_digest, _read_
                    _require, _sha256, _utc_now)
 from .experiments import evidence
 from .runtime_events import EventClock, Redactor, effective_seconds, union
+from .runtime_tui import NativeEvents, RolloutTail, TmuxTerminal, codex_command
 from .trajectory import raw_public_metric
 from .duration import snapshot as duration_snapshot, prompt_text as duration_prompt
 
@@ -39,6 +38,14 @@ CONTINUE_PROMPT = (
     "中文摘要为 1 至 3 句话。最佳代码更新到 /expert_evidence/best_method/；"
     "结束前重新公开评测并把最佳代码和必需模型/配置恢复到 /workspace/solution。"
     "未提升也应如实记录；不要通过空转、重复无变化评测或等待凑时长。"
+)
+CLOSE_PROMPT = (
+    "当前可核活动时长已达到冻结门槛，请在原会话完成最后收口，不再开启新优化方向。"
+    "核对并恢复你记录的最佳代码和必需模型/配置到 /workspace/solution，"
+    "单独原样执行 /workspace/evaluate，等待真实结果。"
+    "如实补齐 /expert_evidence/trajectory.jsonl 的八字段记录（score 为 raw_metric.value），"
+    "确保 /expert_evidence/best_method/ 与恢复的最佳实现一致，再报告结果并结束本次回答。"
+    "不得伪造记录或为了收口改写失败结论；不调用 Hidden。"
 )
 
 
@@ -77,7 +84,7 @@ def validate_config(config, root):
             source = evidence(root, item["source"])
             target = _relative(item["destination"])
             _require(not (set(target.parts) | set(Path(item["source"]["path"]).parts)) & denied, "PRIVATE_ASSET", "禁止将参考解、证据、Hidden 或宿主配置映入 Agent")
-            _require(group != "public_files" or target.parts[0] not in {"solution", "starter", "evaluate", "boundary_probe.py", "_segment_exec.py"}, "RESERVED_PATH", "public 目标与底座保留路径冲突")
+            _require(group != "public_files" or target.parts[0] not in {"solution", "starter", "evaluate", "boundary_probe.py", "_segment_exec.py", "_evaluate.py", "_public_command.json"}, "RESERVED_PATH", "public 目标与底座保留路径冲突")
             key = (group, str(target))
             _require(key not in destinations, "DUPLICATE_PATH", "文件目标重复")
             destinations.add(key)
@@ -278,9 +285,6 @@ class DockerBackend:
                 self.stop(name)
         return json.dumps(report, ensure_ascii=False)
 
-    def spawn(self, command, env):
-        return subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, start_new_session=True)
-
     def stop(self, name):
         result = subprocess.run(["docker", "inspect", "--format", "{{.State.Running}}", name], capture_output=True, text=True, timeout=15)
         if result.returncode != 0:
@@ -292,13 +296,14 @@ class DockerBackend:
 
 
 class Runtime:
-    def __init__(self, task_root, backend=None, profiles_dir=None):
+    def __init__(self, task_root, backend=None, profiles_dir=None, terminal_factory=TmuxTerminal):
         self.store = TaskStore(Path(task_root))
         self.root = self.store.task_root
         self.directory = self.store.state_dir / "runtime"
         self.backend = backend or DockerBackend()
         self.profile_dir = Path(profiles_dir) if profiles_dir is not None else DEFAULT_PROFILE_DIR
         self.config = None
+        self.terminal_factory = terminal_factory
 
     def _resolve_config(self, requested):
         _require(isinstance(requested, dict), "INVALID_RUNTIME", "运行配置须为 JSON 对象")
@@ -325,6 +330,8 @@ class Runtime:
         _require(not self.store.check()["issues"], "SOURCE_DRIFT", "任务规则来源漂移")
         config = _read_json(self.directory / "config.json")
         manifest = _read_json(self.directory / "manifest.json")
+        _require(manifest.get('runtime_mode') == 'native_tui', 'RUNTIME_MODE',
+                 '该运行不是当前原生 TUI 快照；旧任务请使用其原版本，不自动切换或迁移轨迹')
         _require(_canonical_digest(config) == manifest["config_sha256"], "RUNTIME_DRIFT", "运行配置发生变化；不得把改配置后的会话拼接")
         _require(_canonical_digest(self.store._load()["rules_lock"]) == manifest["rules_lock_sha256"], "RUNTIME_DRIFT", "运行来源锁不一致；须使用冻结版本")
         for ref in manifest["files"]:
@@ -348,6 +355,7 @@ class Runtime:
         _require(not self.store.check()["issues"], "SOURCE_DRIFT", "先核对规则来源")
         config, profile_sources = self._resolve_config(config)
         validate_config(config, self.root)
+        NativeEvents(config['codex_version'])  # Reject unsupported protocols before auth or model calls.
         duration = duration_snapshot(self.root)
         harbor_task = None
         if 'harness' in config:
@@ -363,8 +371,12 @@ class Runtime:
                 self._copy(item, public / "starter", readonly=True)
             for item in config["public_files"]:
                 self._copy(item, public, readonly=True)
-            (public / "evaluate").write_text("#!/bin/sh\nexec " + shlex.join(config["evaluation"]["command"]) + ' "$@"\n')
+            (public / "evaluate").write_text('#!/bin/sh\nexec python3 -I /workspace/_evaluate.py "$@"\n')
             (public / "evaluate").chmod(0o555)
+            shutil.copyfile(Path(__file__).with_name('runtime_evaluate.py'), public/'_evaluate.py')
+            (public/'_evaluate.py').chmod(0o444)
+            _atomic_json(public/'_public_command.json', config['evaluation']['command'])
+            (public/'_public_command.json').chmod(0o444)
             (public / "boundary_probe.py").write_text(BOUNDARY_PROBE)
             (public / "boundary_probe.py").chmod(0o444)
             if harbor_task:
@@ -406,7 +418,7 @@ class Runtime:
             _atomic_json(temporary / "config.json", config)
             refs = [{"path": str(p.relative_to(temporary)), "sha256": _sha256(p)}
                     for p in sorted(temporary.rglob("*")) if p.is_file() and (p.is_relative_to(public) or p.is_relative_to(temporary / "security") or p.name == "config.toml" or p.name == "prompt.md")]
-            _atomic_json(temporary / "manifest.json", {"config_sha256": _canonical_digest(config), "rules_lock_sha256": _canonical_digest(self.store._load()["rules_lock"]), "files": refs, "profile_sources": profile_sources, "harbor_task_sha256": harbor_task, "starter_sha256": self._tree_hash(temporary / "codex" / "formal" / "solution"), "duration_snapshot": duration})
+            _atomic_json(temporary / "manifest.json", {"runtime_mode": "native_tui", "config_sha256": _canonical_digest(config), "rules_lock_sha256": _canonical_digest(self.store._load()["rules_lock"]), "files": refs, "profile_sources": profile_sources, "harbor_task_sha256": harbor_task, "starter_sha256": self._tree_hash(temporary / "codex" / "formal" / "solution"), "duration_snapshot": duration})
             temporary.rename(self.directory)
         except BaseException:
             # Staging contains only new tool-owned copies, never existing task files.
@@ -478,13 +490,6 @@ class Runtime:
             _require(secrets, "AUTH_MISSING", "登录文件中未找到可用凭据字段")
         return env, Redactor(secrets)
 
-    def _codex(self, thread=None):
-        command = ["codex", "exec"]
-        if thread:
-            command.extend(["resume", thread])
-        command.extend(["--json", "--strict-config", "--skip-git-repo-check", "-"])
-        return command
-
     def _segment(self, track, phase, state, prompt, budget, thread=None):
         env, redact = self._auth(track, phase)
         segment_id = uuid.uuid4().hex
@@ -492,116 +497,150 @@ class Runtime:
         directory.mkdir(parents=True)
         name = "ar-" + track + "-" + segment_id[:12]
         clock = EventClock(thread, self.config.get("silence_seconds", 300))
-        command = self.backend.command(self, track, phase, name, self._codex(thread), use_auth=True)
-        queue_ = queue.Queue(maxsize=64)
-        process = None
+        command = self.backend.command(self, track, phase, name, codex_command(prompt, thread), use_auth=True, tty=True)
+        terminal = None
         origin, monotonic = time.time(), time.monotonic()
         now = lambda: origin + time.monotonic() - monotonic
         start = now()
-        last_progress = start
+        tail = None
         status, error, returncode, total = "failed", None, None, 0
-        state["active"] = {"segment_id": segment_id, "container": getattr(self.backend, 'container', name), "phase": phase, "started_at": _utc_now()}
+        error_code = None
+        state["active"] = {"segment_id": segment_id, "container": getattr(self.backend, 'container', name),
+                           "phase": phase, "started_at": _utc_now(), "mode": "native_tui"}
         self._save(track, state)
         completed_items = []
-        cleanup_confirmed = True
-        streams = {key: (directory / filename).open("w", encoding="utf-8")
-                   for key, filename in (("stdout", "codex.jsonl"), ("stderr", "stderr.log"), ("events", "events.jsonl"))}
-        def reader(pipe, label):
-            try:
-                while True:
-                    line = pipe.readline(4 * 1024 * 1024 + 1)
-                    if not line:
-                        break
-                    queue_.put((label, line, now()))
-            finally:
-                queue_.put((label, None, now()))
+        cleanup_confirmed, screen_error = True, None
+        streams = {key: (directory / filename).open("x", encoding="utf-8")
+                   for key, filename in (("native", "native.jsonl"), ("events", "events.jsonl"))}
+        closing = phase == "formal" and self._seconds(state) >= self.minimum_seconds()
+        turn_results = []
+        closure = None
+        def send(text, kind):
+            streams['events'].write(json.dumps({'at': now(), 'source': 'supervisor',
+                'kind': kind, 'text': text}, ensure_ascii=False)+'\n')
+            streams['events'].flush()
+            terminal.send(text)
         try:
-            process = self.backend.spawn(command, env)
-            process.stdin.write(prompt.encode("utf-8"))
-            process.stdin.close()
-            for label, pipe in (("stdout", process.stdout), ("stderr", process.stderr)):
-                threading.Thread(target=reader, args=(pipe, label), daemon=True).start()
-            closed = set()
-            while len(closed) < 2:
+            home = self.directory / track / phase / 'codex_home'
+            tail = RolloutTail(home, self.config['codex_version'], thread)
+            terminal = self.terminal_factory()
+            terminal.start(command, {**env, 'TERM': 'xterm-256color'})
+            state['active']['terminal_socket'] = str(terminal.socket)
+            self._save(track, state)
+            while True:
                 _require(now() - start < budget, "BUDGET_EXHAUSTED", "本次运行时间预算已用尽")
-                try:
-                    label, raw, at = queue_.get(timeout=0.2)
-                except queue.Empty:
-                    continue
-                if raw is None:
-                    closed.add(label)
-                    continue
-                _require(len(raw) <= 4 * 1024 * 1024, "LOG_LINE_LIMIT", "单条输出超过记录上限，已暂停以免静默截断")
-                total += len(raw)
-                _require(total <= self.config.get("log_limit_bytes", 268435456), "LOG_LIMIT", "日志达到预算，已暂停")
-                # Two pipe reader threads may enqueue close timestamps out of order.
-                at = max(at, clock.last if clock.last is not None else at)
-                text = raw.decode("utf-8", errors="replace")
-                if label == "stdout":
-                    try:
-                        event = json.loads(text)
-                    except json.JSONDecodeError as exc:
-                        streams["stdout"].write(redact.text(text))
-                        raise FlowError("INVALID_CODEX_STREAM", "Codex stdout 不是合法 JSONL，详见日志") from exc
-                    _require(isinstance(event, dict) and isinstance(event.get("type"), str), "INVALID_CODEX_STREAM", "事件缺 type")
-                    safe = redact.value(event)
-                    streams["stdout"].write(json.dumps(safe, ensure_ascii=False) + "\n")
-                    observed = {"at": at, "source": "codex", "event": safe}
-                    clock.event(safe, at)
-                    if phase == "formal" and state["thread_id"] is None and clock.saw_thread:
-                        state["thread_id"] = clock.thread_id
-                        self._save(track, state)
-                    if phase == "preflight" and safe["type"] == "item.completed":
-                        completed_items.append(safe.get("item", {}))
-                else:
-                    safe = redact.text(text)
-                    streams["stderr"].write(safe)
-                    observed = {"at": at, "source": "stderr", "text": safe}
-                    if re.search(r"Reconnecting|Total tokens.*exceed|context length.*exceed|rate limit", safe, re.I):
-                        clock.event({"type": "error"}, at)
-                streams["events"].write(json.dumps(observed, ensure_ascii=False) + "\n")
+                observations = tail.poll()
+                for observation in observations:
+                    received = now()
+                    record = redact.value(observation['native'])
+                    text = json.dumps(record, ensure_ascii=False)+'\n'
+                    total += len(text.encode('utf-8'))
+                    _require(total <= self.config.get('log_limit_bytes', 268435456), 'LOG_LIMIT', '日志达到预算，已暂停')
+                    streams['native'].write(text)
+                    at = observation['native_at']
+                    if record['type'] == 'session_meta':
+                        at = max(start, at)  # Historical resume header is identity, not new work.
+                    else:
+                        _require(start <= at <= received + 2, 'CLOCK_ORDER', '新增原生事件超出本分段时间范围')
+                    for event in observation['events']:
+                        safe = redact.value(event)
+                        streams['events'].write(json.dumps({'received_at': received, 'at': at,
+                            'source': 'native_rollout', 'event': safe}, ensure_ascii=False)+'\n')
+                        clock.event(safe, at)
+                        if phase == 'formal' and state['thread_id'] is None and clock.saw_thread:
+                            state['thread_id'] = clock.thread_id
+                            self._save(track, state)
+                        if safe['type'] == 'item.completed':
+                            item = safe.get('item', {})
+                            if phase == 'preflight':
+                                completed_items.append(item)
+                            result = public_evaluation(item, [EVALUATE])
+                            if result is not None:
+                                turn_results.append(result)
+                        _require(safe['type'] not in {'error', 'turn.failed'}, 'TUI_FAILED',
+                                 '原生记录报告外部异常；暂停并排查后恢复原会话')
                 for stream in streams.values():
                     stream.flush()
-                if at - last_progress >= 5:
-                    state["active"]["last_event_at"] = at
-                    state["active"]["observed_active_seconds"] = clock.summary()["observed_active_seconds"]
-                    state["active"]["event_counts"] = dict(clock.counts)
+                if observations:
+                    state['active'].update(last_event_at=clock.last, waiting_input=tail.adapter.idle,
+                        observed_active_seconds=clock.summary()['observed_active_seconds'], event_counts=dict(clock.counts))
                     self._save(track, state)
-                    last_progress = at
-            returncode = process.wait(timeout=10)
-            _require(returncode == 0 and clock.saw_thread and clock.completed_turns > 0 and not clock.turn_open, "CODEX_FAILED", "Codex 未正常完成回合；请检查原始日志并恢复同一会话")
-            status = "completed"
+                _require(terminal.status()['alive'], 'TUI_EXITED', 'TUI 提前退出；不能按进程退出推断方法已完成')
+                if tail.adapter.idle:
+                    if tail.adapter.processes:
+                        send('仍有后台工具进程未确认终态。请在原会话中等待并核查这些进程的结果，'
+                             '不要启动新的优化方向；记录实际结果后再结束本回合。', 'await_background')
+                        tail.adapter.state = 'awaiting_start'
+                        continue
+                    if phase == 'preflight' or closing:
+                        if closing:
+                            _require(turn_results, 'CLOSURE_INCOMPLETE', '收口回合缺成功的真实公开复测')
+                            from .harbor_runtime import candidate_snapshot
+                            closure = candidate_snapshot(self, track)
+                            binding = turn_results[-1].get('evaluation_binding', {})
+                            _require(binding.get('candidate_before_sha256') == binding.get('candidate_after_sha256')
+                                     == closure['candidate_sha256'], 'CLOSURE_SOURCE_DRIFT',
+                                     '收口复测的可信源码哈希与最终候选不一致；须恢复后重新公开评测')
+                            rows = (self.directory/track/phase/'output/trajectory.jsonl').read_text().splitlines()
+                            last = json.loads(rows[-1])
+                            _require(last['status'] == 'ok' and last['score'] == turn_results[-1]['raw_metric']['value'],
+                                     'CLOSURE_INCOMPLETE', 'Agent 收口记录须对应最后一次真实公开复测原始指标')
+                            closure['public_result'] = turn_results[-1]
+                        send('/quit', 'terminal_quit')
+                        end = time.monotonic() + 10
+                        while terminal.status()['alive'] and time.monotonic() < end:
+                            time.sleep(.1)
+                        returncode = terminal.status()['exit_code']
+                        _require(not terminal.status()['alive'] and returncode == 0,
+                                 'TUI_EXITED', '正常回合后 TUI 未正常退出，不能标记完成')
+                        status = 'completed'
+                        break
+                    elapsed = effective_seconds(
+                        [i for s in state['segments'] if s['phase'] == 'formal' for i in s['intervals']] + clock.intervals,
+                        [[e['start'], e['end']] for e in state['exclusions']])
+                    closing = elapsed >= self.minimum_seconds()
+                    send(CLOSE_PROMPT if closing else self.continuation_prompt(), 'closure' if closing else 'continue')
+                    tail.adapter.state = 'awaiting_start'
+                    turn_results = []
+                time.sleep(.1)
         except KeyboardInterrupt:
             status, error = "interrupted", "用户中断；保留原会话"
-        except (FlowError, OSError, subprocess.SubprocessError) as exc:
+        except (FlowError, OSError, subprocess.SubprocessError, json.JSONDecodeError) as exc:
+            error_code = exc.code if isinstance(exc, FlowError) else type(exc).__name__
             status = "budget_exhausted" if isinstance(exc, FlowError) and exc.code == "BUDGET_EXHAUSTED" else "failed"
             error = redact.text(str(exc))
         finally:
-            clock.stop(now())
-            if process is not None and process.poll() is None:
-                process.terminate()
+            # An unfinished tool/turn is not evidence for the unobserved crash tail.
+            if clock.last is not None:
+                clock.stop(clock.last)
+            if terminal is not None and terminal.started:
+                try:
+                    (directory/'screen.txt').write_text(redact.text(terminal.capture()))
+                except (FlowError, OSError, subprocess.SubprocessError) as exc:
+                    screen_error = redact.text(str(exc))  # Optional diagnostic must not block cleanup.
             try:
                 self.backend.stop(name)
             except (FlowError, OSError, subprocess.SubprocessError):
                 cleanup_confirmed = False
                 error = (error or "") + "；容器清理未确认，恢复前须确认该容器已停止"
                 status = "cleanup_unconfirmed"
-            if process is not None:
+            if terminal is not None:
                 try:
-                    returncode = process.wait(timeout=10)
-                except subprocess.TimeoutExpired:
-                    process.kill()
-                    returncode = process.wait(timeout=5)
-                for pipe in (process.stdout, process.stderr):
-                    pipe.close()
+                    terminal.close()
+                except (FlowError, OSError, subprocess.SubprocessError):
+                    cleanup_confirmed = False
+                    status, error = 'cleanup_unconfirmed', (error or '')+'；专属终端清理未确认'
             for stream in streams.values():
                 stream.close()
         summary = {**clock.summary(), "segment_id": segment_id, "phase": phase, "status": status,
-                   "error": error, "exit_code": returncode, "wall_seconds": now() - start,
-                   "prompt_sha256": _canonical_digest(prompt),
+                   "error": error, "error_code": error_code, "exit_code": returncode, "wall_seconds": now() - start,
+                   "prompt_sha256": _canonical_digest(prompt), "mode": "native_tui",
+                   "closure_completed": phase == 'formal' and closing and status == 'completed',
+                   "closure": closure,
+                   "screen_error": screen_error,
                    "logs": [{"path": str(p.relative_to(self.directory)), "sha256": _sha256(p)}
                             for p in sorted(directory.iterdir())]}
-        if status == "failed" and error and ("新会话" in error or "thread" in error.lower()):
+        if status == "failed" and error_code in {'THREAD_MISSING', 'THREAD_MISMATCH', 'CODEX_VERSION'}:
             summary["intervals"] = []
             summary["observed_active_seconds"] = 0
         _atomic_json(directory / "summary.json", summary)
@@ -620,6 +659,7 @@ class Runtime:
                 return launch(self, track, 'preflight', self.config['evaluation']['timeout_seconds'])
         with self._lock(track):
             state = self._state(track)
+            _require(state['active'] is None, 'UNCLOSED_SEGMENT', '先 recover 未收口分段，不能覆盖活动状态')
             _require(state["thread_id"] is None, "FORMAL_ALREADY_STARTED", "正式会话开始后不能重建 preflight")
             self.backend.check(self, track)
             boundary = self.backend.boundary(self, track)
@@ -629,8 +669,10 @@ class Runtime:
                       "不要修改代码，不要改写或伪造结果；完成后简要报告。命令：\n" + shlex.join(exact))
             solution = self.directory / track / "preflight" / "solution"
             before = self._tree_hash(solution)
+            previous = [s for s in state['segments'] if s['phase'] == 'preflight']
             summary, items = self._segment(track, "preflight", state, prompt,
-                                           self.config["evaluation"]["timeout_seconds"])
+                                           self.config["evaluation"]["timeout_seconds"],
+                                           previous[-1]['thread_id'] if previous else None)
             results = []
             for item in items:
                 value = public_evaluation(item, exact)
@@ -667,15 +709,12 @@ class Runtime:
             if not resume:
                 manifest = _read_json(self.directory / "manifest.json")
                 _require(self._tree_hash(self.directory / track / "formal" / "solution") == manifest["starter_sha256"], "STARTER_CHANGED", "正式首次启动前 Starter 已改变")
-            deadline = time.monotonic() + budget_seconds
             formal = [s for s in state['segments'] if s['phase'] == 'formal']
             finish_pending = bool(resume and formal and formal[-1]['status'] != 'completed')
-            while (self._seconds(state) < self.minimum_seconds() or finish_pending) and time.monotonic() < deadline:
-                finish_pending = False
-                prompt = self.continuation_prompt() if state["thread_id"] else (self.directory / "prompt.md").read_text()
-                summary, _ = self._segment(track, "formal", state, prompt, deadline - time.monotonic(), state["thread_id"])
-                if summary["status"] != "completed":
-                    break
+            if self._seconds(state) < self.minimum_seconds() or finish_pending:
+                prompt = (CLOSE_PROMPT if self._seconds(state) >= self.minimum_seconds() else
+                          self.continuation_prompt() if state['thread_id'] else (self.directory/'prompt.md').read_text())
+                self._segment(track, 'formal', state, prompt, budget_seconds, state['thread_id'])
             return self.status(track)
 
     def finalize(self, track, confirm_final_score=False):
@@ -708,12 +747,22 @@ class Runtime:
                 "unverified_seconds": sum(s["unverified_seconds"] for s in state["segments"] if s["phase"] == "formal"),
                 "note": "有效性还须核真实方法迭代与合法操作；计时达标不代表整条轨迹通过"}
 
+    def attach(self, track):
+        self._load()
+        active = self._state(track)['active']
+        _require(active and active.get('terminal_socket'), 'TERMINAL_UNAVAILABLE',
+                 '当前没有已就绪的原生终端；先查 status，不创建新会话')
+        return {'track': track, **TmuxTerminal.existing(active['terminal_socket']).observe()}
+
     def recover(self, track):
         with self._lock(track):
             state = self._state(track)
             active = state["active"]
             _require(active is not None, "NO_RECOVERY_NEEDED", "没有未收口的运行")
             self.backend.stop(active["container"])
+            socket = active.get('terminal_socket')
+            if socket and Path(socket).exists():
+                TmuxTerminal.existing(socket).close()
             if not any(s["segment_id"] == active["segment_id"] for s in state["segments"]):
                 directory = self.directory / track / "logs" / active["segment_id"]
                 path = directory / "events.jsonl"
@@ -726,7 +775,7 @@ class Runtime:
                             incomplete_tail = True
                             break
                         observation = json.loads(line)
-                        if observation["source"] == "codex":
+                        if observation["source"] in {"codex", "native_rollout"}:
                             clock.event(observation["event"], observation["at"])
                         elif re.search(r"Reconnecting|Total tokens.*exceed|context length.*exceed|rate limit", observation.get("text", ""), re.I):
                             clock.event({"type": "error"}, observation["at"])

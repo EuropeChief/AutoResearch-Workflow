@@ -1,5 +1,6 @@
 """W3 synthetic contracts: no Docker, GPU, network or model charges."""
 import copy
+import datetime as dt
 import json
 import subprocess
 import tomllib
@@ -11,7 +12,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from autoresearch_flow.core import FlowError, Registry, TaskStore, _sha256
-from autoresearch_flow.runtime import Runtime, DockerBackend, validate_config, model_config
+from autoresearch_flow.runtime import CLOSE_PROMPT, Runtime, DockerBackend, validate_config, model_config
 from autoresearch_flow.runtime_events import EventClock, Redactor, effective_seconds
 
 THREAD = "11111111-1111-1111-1111-111111111111"
@@ -33,29 +34,105 @@ class FakeBackend:
     def stop(self, name):
         pass
 
-    def command(self, runtime, track, phase, name, command, use_auth=False):
+    def command(self, runtime, track, phase, name, command, use_auth=False, tty=False):
         self.commands.append(command)
-        thread = command[3] if "resume" in command else THREAD if track == "codex" else OTHER
-        if self.mode == "mismatch":
-            thread = OTHER
-        events = [{"type": "thread.started", "thread_id": thread}, {"type": "turn.started"},
-                  {"type": "item.started", "item": {"id": "tool", "type": "command_execution"}}]
-        if self.mode == "error":
-            events += [{"type": "error", "message": "provider error"}, {"type": "turn.failed"}]
-        else:
-            events += [{"type": "item.completed", "item": {"id": "tool", "type": "command_execution",
-                        "command": "/workspace/evaluate", "exit_code": 0,
-                        "aggregated_output": json.dumps({"status": "succeeded", "score": 0.5,
-                         "raw_metric": {"name": "error", "direction": "minimize", "value": 4.5}})}},
-                       {"type": "item.completed", "item": {"type": "agent_message", "text": SECRET}},
-                       {"type": "turn.completed"}]
-        script = "import sys,json,time; sys.stdin.read(); events=json.loads(sys.argv[1]); " + \
-                 "[(print(json.dumps(e),flush=True),time.sleep(.005)) for e in events]"
-        return [sys.executable, "-c", script, json.dumps(events)]
+        self.context = (runtime, track, phase)
+        return command
 
-    def spawn(self, command, env):
-        return subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE, env=env, start_new_session=True)
+    def terminal(self):
+        return FakeNativeTerminal(self)
+
+
+class FakeNativeTerminal:
+    """External TUI/rollout simulator; never starts a model, tmux or Docker."""
+    def __init__(self, backend):
+        self.backend = backend
+        runtime, track, phase = backend.context
+        self.base = runtime.directory/track/phase
+        self.socket = self.base/'synthetic.sock'
+        self.started = self.alive = False
+        self.thread = THREAD if track == 'codex' else OTHER
+        self.turns = 0
+        self.sent = []
+        self.closed = False
+        backend.last_terminal = self
+
+    def write(self, kind, **payload):
+        record = {'timestamp': dt.datetime.now(dt.timezone.utc).isoformat(), 'type': kind, 'payload': payload}
+        with self.path.open('a') as stream:
+            stream.write(json.dumps(record)+'\n')
+
+    def start(self, command, env):
+        self.started = self.alive = True
+        if 'resume' in command:
+            self.thread = command[2]
+        if self.backend.mode == 'mismatch':
+            self.thread = OTHER
+        self.path = self.base/'codex_home/sessions'/f'{self.thread}.jsonl'
+        self.path.parent.mkdir(exist_ok=True)
+        if not self.path.exists():
+            self.write('session_meta', id=self.thread, cli_version='0.147.0')
+        self.emit_turn()
+
+    def emit_turn(self):
+        self.turns += 1
+        turn = str(self.turns)
+        self.write('event_msg', type='task_started', turn_id=turn)
+        if self.backend.mode == 'background' and self.turns > 1:
+            self.write('response_item', type='function_call', name='write_stdin', call_id='poll',
+                       arguments=json.dumps({'session_id': 999}))
+            self.write('response_item', type='function_call_output', call_id='poll',
+                       output='Process exited with code 0\nFinal output:\nworker done\n')
+        self.write('response_item', type='function_call', name='exec_command', call_id=turn,
+                   arguments=json.dumps({'cmd': '/workspace/evaluate'}))
+        if self.backend.mode == 'pending':
+            return
+        if self.backend.mode == 'error':
+            self.write('event_msg', type='error', message='provider error')
+            return
+        result = {'status': 'succeeded', 'score': 0.5,
+                  'raw_metric': {'name': 'error', 'direction': 'minimize', 'value': 4.5}}
+        from autoresearch_flow.pca_contract import task_digest
+        digest = task_digest(self.base/'solution')
+        result['evaluation_binding'] = {'candidate_before_sha256': digest, 'candidate_after_sha256': digest}
+        self.write('response_item', type='function_call_output', call_id=turn,
+                   output='Process exited with code 0\n'+json.dumps(result))
+        self.write('event_msg', type='agent_message', message=SECRET)
+        if self.backend.mode == 'unscored_change':
+            (self.base/'solution/method.py').write_text('unscored changed candidate')
+        if self.backend.mode != 'missing_output':
+            best = self.base/'output/best_method'
+            best.mkdir(exist_ok=True)
+            (best/'method.py').write_bytes((self.base/'solution/method.py').read_bytes())
+            trajectory = self.base/'output/trajectory.jsonl'
+            count = len(trajectory.read_text().splitlines()) if trajectory.exists() else 0
+            with trajectory.open('a') as stream:
+                stream.write(json.dumps({'round': count+1, 'policy_name': 'synthetic',
+                    'method_summary': '合成测试，非真实方法迭代。', 'status': 'ok', 'score': 4.5,
+                    'failure_reason': None, 'retained_best': True, 'time': '2026-10-03 00:00:00'})+'\n')
+        if self.backend.mode == 'background' and self.turns == 1:
+            self.write('response_item', type='function_call', name='exec_command', call_id='worker',
+                       arguments=json.dumps({'cmd': 'python train.py'}))
+            self.write('response_item', type='function_call_output', call_id='worker',
+                       output='Process running with session ID 999\nOutput:\nworking\n')
+        self.write('event_msg', type='task_complete', turn_id=turn)
+
+    def send(self, prompt):
+        self.sent.append(prompt)
+        if prompt == '/quit':
+            self.alive = False
+        else:
+            self.emit_turn()
+
+    def status(self):
+        return {'alive': self.alive, 'exit_code': None if self.alive else 0}
+
+    def capture(self):
+        return 'synthetic screen '+SECRET
+
+    def close(self):
+        self.alive = False
+        self.closed = True
 
 
 class ClockTests(unittest.TestCase):
@@ -132,7 +209,8 @@ class RuntimeTests(unittest.TestCase):
                        "tracks": {"codex": copy.deepcopy(track), "seed": copy.deepcopy(track)}}
         self.backend = FakeBackend()
         self.profiles = self.root / "profiles"
-        self.runtime = Runtime(self.root, self.backend, profiles_dir=self.profiles)
+        self.runtime = Runtime(self.root, self.backend, profiles_dir=self.profiles,
+                               terminal_factory=self.backend.terminal)
 
     def ref(self, name, value):
         path = self.root / name
@@ -208,19 +286,37 @@ class RuntimeTests(unittest.TestCase):
         self.assertTrue(logs)
         self.assertTrue(all(SECRET not in p.read_text() for p in logs))
 
+    def test_default_preflight_uses_native_tui_and_keeps_native_records(self):
+        self.prepare()
+        self.assertEqual(self.runtime.preflight('codex', True)['status'], 'ready')
+        self.assertNotIn('exec', self.backend.commands[-1])
+        self.assertTrue(list((self.runtime.directory/'codex/logs').rglob('native.jsonl')))
+
+    def test_prepared_run_without_native_mode_cannot_silently_change_runner(self):
+        self.prepare()
+        path = self.runtime.directory/'manifest.json'
+        manifest = json.loads(path.read_text())
+        manifest.pop('runtime_mode', None)
+        path.write_text(json.dumps(manifest))
+        with self.assertRaises(FlowError) as error:
+            self.runtime.status('codex')
+        self.assertEqual(error.exception.code, 'RUNTIME_MODE')
+
     def test_formal_and_exact_resume(self):
         self.prepare()
+        self.runtime.minimum_seconds = lambda: 0
         self.runtime.preflight("codex", True)
         state = self.runtime._state("codex")
         result, _ = self.runtime._segment("codex", "formal", state, "start", 2)
         self.assertEqual(result["status"], "completed")
         self.runtime._segment("codex", "formal", state, "continue", 2, state["thread_id"])
-        self.assertEqual(self.backend.commands[-1][2:4], ["resume", THREAD])
+        self.assertEqual(self.backend.commands[-1][1:3], ["resume", THREAD])
         self.assertEqual(self.runtime.status("codex")["formal_segments"], 2)
         self.assertIsNone(self.runtime._state("seed")["thread_id"])
 
     def test_new_thread_on_resume_rejected(self):
         self.prepare()
+        self.runtime.minimum_seconds = lambda: 0
         state = self.runtime._state("codex")
         self.runtime._segment("codex", "formal", state, "start", 2)
         self.backend.mode = "mismatch"
@@ -236,10 +332,164 @@ class RuntimeTests(unittest.TestCase):
         self.assertEqual(result["status"], "failed")
         self.assertTrue(result["errors"])
 
+    def test_native_run_continues_in_one_process_then_requests_explicit_closure(self):
+        self.prepare()
+        self.runtime.preflight('codex', True)
+        self.backend.commands.clear()
+        # Boundary clock fixture: exactly two iteration turns, then closure.
+        self.runtime.minimum_seconds = lambda: (0 if hasattr(self.backend, 'last_terminal')
+            and self.backend.last_terminal.base.name == 'formal'
+            and self.backend.last_terminal.turns >= 2 else 36000)
+        result = self.runtime.run('codex', 2, confirm_cost=True)
+        terminal = self.backend.last_terminal
+        self.assertEqual(len(self.backend.commands), 1)
+        self.assertEqual(terminal.turns, 3)
+        self.assertEqual(terminal.sent, [self.runtime.continuation_prompt(), CLOSE_PROMPT, '/quit'])
+        self.assertTrue(terminal.closed)
+        self.assertIsNone(result['active'])
+        segment = self.runtime._state('codex')['segments'][-1]
+        self.assertTrue(segment['closure_completed'])
+        self.assertEqual(segment['status'], 'completed')
+
+    def test_resume_after_error_uses_same_thread_and_does_not_replay_old_work(self):
+        self.prepare()
+        self.runtime.preflight('codex', True)
+        self.backend.mode = 'error'
+        self.runtime.run('codex', 2, confirm_cost=True)
+        first = self.runtime._state('codex')['segments'][-1]
+        self.assertEqual(first['status'], 'failed')
+        self.backend.mode = 'ok'
+        self.runtime.minimum_seconds = lambda: 0
+        self.runtime.run('codex', 2, resume=True, confirm_cost=True)
+        self.assertEqual(self.backend.commands[-1][1:3], ['resume', THREAD])
+        self.assertEqual(self.runtime._state('codex')['segments'][-1]['completed_turns'], 1)
+        self.assertEqual(self.backend.commands[-1][-1], CLOSE_PROMPT)
+
+    def test_formal_closure_cannot_be_claimed_from_a_turn_without_agent_artifacts(self):
+        self.prepare()
+        self.runtime.preflight('codex', True)
+        self.backend.mode = 'missing_output'
+        self.runtime.minimum_seconds = lambda: 0
+        state = self.runtime._state('codex')
+        result, _ = self.runtime._segment('codex', 'formal', state, CLOSE_PROMPT, 2)
+        self.assertEqual(result['status'], 'failed')
+        self.assertFalse(result['closure_completed'])
+
+    def test_changing_both_best_and_candidate_after_evaluation_is_not_valid_closure(self):
+        self.prepare()
+        self.runtime.minimum_seconds = lambda: 0
+        self.backend.mode = 'unscored_change'
+        result, _ = self.runtime._segment('codex', 'formal', self.runtime._state('codex'), CLOSE_PROMPT, 2)
+        self.assertEqual(result['status'], 'failed')
+        self.assertIn('哈希', result['error'])
+        self.assertFalse(result['closure_completed'])
+
+    def test_budget_pause_does_not_count_unverified_pending_tail(self):
+        self.prepare()
+        self.runtime.preflight('codex', True)
+        self.backend.mode = 'pending'
+        state = self.runtime._state('codex')
+        result, _ = self.runtime._segment('codex', 'formal', state, 'start', .2)
+        self.assertEqual(result['status'], 'budget_exhausted')
+        self.assertFalse(result['closure_completed'])
+        self.assertEqual(result['thread_id'], THREAD)
+        self.assertLess(result['observed_active_seconds'], .05)
+        self.assertGreaterEqual(result['wall_seconds'], .2)
+        self.assertIsNone(self.runtime.status('codex')['active'])
+
+    def test_optional_screen_write_failure_cannot_skip_process_cleanup(self):
+        self.prepare()
+        original = Path.write_text
+        def write(path, *args, **kwargs):
+            if path.name == 'screen.txt':
+                raise OSError('synthetic ENOSPC')
+            return original(path, *args, **kwargs)
+        with patch.object(Path, 'write_text', write), patch.object(self.backend, 'stop') as stop:
+            self.assertEqual(self.runtime.preflight('codex', True)['status'], 'ready')
+        stop.assert_called()
+        self.assertTrue(self.backend.last_terminal.closed)
+        self.assertIsNone(self.runtime.status('codex')['active'])
+
+    def test_bad_agent_json_is_recorded_as_failure_before_recovery(self):
+        self.prepare()
+        self.runtime.minimum_seconds = lambda: 0
+        original = Path.read_text
+        def read(path, *args, **kwargs):
+            if path.name == 'trajectory.jsonl':
+                return '{not json}\n'
+            return original(path, *args, **kwargs)
+        with patch.object(Path, 'read_text', read):
+            result, _ = self.runtime._segment('codex', 'formal', self.runtime._state('codex'), CLOSE_PROMPT, 2)
+        self.assertEqual(result['status'], 'failed')
+        self.assertIn('轨迹', result['error'])
+        self.assertIsNone(self.runtime.status('codex')['active'])
+
+    def test_invalid_utf8_trajectory_is_recorded_as_failure(self):
+        self.prepare()
+        self.runtime.minimum_seconds = lambda: 0
+        original = FakeNativeTerminal.emit_turn
+        def corrupt(terminal):
+            original(terminal)
+            (terminal.base/'output/trajectory.jsonl').write_bytes(b'\xff\n')
+        with patch.object(FakeNativeTerminal, 'emit_turn', corrupt):
+            result, _ = self.runtime._segment('codex', 'formal', self.runtime._state('codex'), 'test', 5)
+        self.assertEqual(result['status'], 'failed')
+        self.assertIn('轨迹', result['error'])
+        self.assertIsNone(self.runtime._state('codex')['active'])
+
+    def test_completed_turn_waits_for_background_process_before_quit(self):
+        self.prepare()
+        self.runtime.minimum_seconds = lambda: 0
+        self.backend.mode = 'background'
+        result, _ = self.runtime._segment('codex', 'formal', self.runtime._state('codex'), 'test', 5)
+        terminal = self.backend.last_terminal
+        self.assertEqual(result['status'], 'completed')
+        self.assertEqual(terminal.turns, 2)
+        self.assertIn('后台', terminal.sent[0])
+        self.assertEqual(terminal.sent[-1], '/quit')
+
+    def test_attach_observes_only_recorded_active_terminal_and_does_not_change_state(self):
+        self.prepare()
+        with self.assertRaises(FlowError) as caught:
+            self.runtime.attach('codex')
+        self.assertEqual(caught.exception.code, 'TERMINAL_UNAVAILABLE')
+        state = self.runtime._state('codex')
+        state['active'] = {'terminal_socket': '/synthetic/ar-tui-test/tmux.sock'}
+        self.runtime._save('codex', state)
+        before = (self.runtime.directory/'codex/state.json').read_bytes()
+        with patch('autoresearch_flow.runtime.TmuxTerminal.existing') as existing:
+            existing.return_value.observe.return_value = {'status': 'observer_detached', 'readonly': True}
+            self.assertTrue(self.runtime.attach('codex')['readonly'])
+        existing.assert_called_once_with(state['active']['terminal_socket'])
+        self.assertEqual((self.runtime.directory/'codex/state.json').read_bytes(), before)
+        self.assertEqual(self.backend.commands, [])
+
+    def test_cleanup_failure_requires_recovery_not_another_run(self):
+        self.prepare()
+        self.runtime.preflight('codex', True)
+        self.backend.mode = 'error'
+        with patch.object(self.backend, 'stop', side_effect=FlowError('CLEANUP_UNCONFIRMED', 'synthetic')):
+            result = self.runtime.run('codex', 1, confirm_cost=True)
+        self.assertIsNotNone(result['active'])
+        self.assertEqual(self.runtime._state('codex')['segments'][-1]['status'], 'cleanup_unconfirmed')
+        with self.assertRaises(FlowError) as error:
+            self.runtime.run('codex', 1, resume=True, confirm_cost=True)
+        self.assertEqual(error.exception.code, 'UNCLOSED_SEGMENT')
+        self.assertIsNone(self.runtime.recover('codex')['active'])
+
+    def test_preflight_retry_preserves_its_thread_and_is_not_formal_time(self):
+        self.prepare()
+        self.backend.mode = 'error'
+        self.assertEqual(self.runtime.preflight('codex', True)['status'], 'blocked')
+        self.backend.mode = 'ok'
+        self.assertEqual(self.runtime.preflight('codex', True)['status'], 'ready')
+        self.assertEqual(self.backend.commands[-1][1:3], ['resume', THREAD])
+        self.assertIsNone(self.runtime.status('codex')['thread_id'])
+
     def test_log_tampering_detected(self):
         self.prepare()
         self.runtime.preflight("codex", True)
-        p = next((self.runtime.directory / "codex/logs").rglob("codex.jsonl"))
+        p = next((self.runtime.directory / "codex/logs").rglob("native.jsonl"))
         p.write_text("tampered")
         with self.assertRaises(FlowError):
             self.runtime.status("codex")
@@ -291,7 +541,7 @@ class RuntimeTests(unittest.TestCase):
         failure = subprocess.CompletedProcess([], 1, '', 'bwrap: namespace denied')
         with patch.object(self.runtime.backend, "check"), \
              patch.object(self.runtime.backend, "stop"), \
-             patch.object(self.runtime.backend, "spawn", side_effect=AssertionError("API must not start")) as spawn, \
+             patch('autoresearch_flow.runtime.TmuxTerminal.start', side_effect=AssertionError('API must not start')) as spawn, \
              patch("autoresearch_flow.runtime.subprocess.run", side_effect=[success, failure]) as run:
             with self.assertRaises(FlowError) as raised:
                 self.runtime.preflight("seed", True)
@@ -356,7 +606,7 @@ class RuntimeTests(unittest.TestCase):
         directory.mkdir(parents=True)
         events = [(0, {"type": "thread.started", "thread_id": THREAD}),
                   (0, {"type": "turn.started"}), (10, {"type": "item.completed", "item": {}})]
-        (directory / "events.jsonl").write_text("".join(json.dumps({"at": at, "source": "codex", "event": e})+"\n" for at,e in events))
+        (directory / "events.jsonl").write_text("".join(json.dumps({"at": at, "source": "native_rollout", "event": e})+"\n" for at,e in events))
         state["active"] = {"container": "owned", "segment_id": "interrupted", "phase": "formal"}
         self.runtime._save("codex", state)
         status = self.runtime.recover("codex")

@@ -39,7 +39,7 @@ class DeliveryTests(unittest.TestCase):
         self.status_patch = patch.object(Runtime, "status", side_effect=lambda track: {
             "active": None, "thread_id": f"thread-{track}", "effective_seconds_before_content_review": 37800})
         self.state_patch = patch.object(Runtime, "_state", side_effect=lambda track: {
-            "segments": [{"segment_id": "segment-1", "phase": "formal"}]})
+            "segments": [{"segment_id": "segment-1", "phase": "formal", "status": "completed"}]})
         self.status_patch.start()
         self.state_patch.start()
         self.addCleanup(self.status_patch.stop)
@@ -48,6 +48,13 @@ class DeliveryTests(unittest.TestCase):
     def ref(self, path):
         path = Path(path)
         return {"path": str(path.relative_to(self.root)), "sha256": _sha256(path)}
+
+    def test_duration_without_normal_closure_cannot_become_final_trajectory(self):
+        with patch.object(Runtime, '_state', return_value={'segments': [
+                {'segment_id': 'interrupted', 'phase': 'formal', 'status': 'budget_exhausted'}]}):
+            with self.assertRaises(FlowError) as error:
+                self.ev.finalize_trajectory('codex')
+        self.assertEqual(error.exception.code, 'TRAJECTORY_RUNNING')
 
     def prepare_trajectories(self):
         for track in ("codex", "seed"):

@@ -79,10 +79,9 @@ class DeliveryEvidence:
         minimum = duration["policy"]["minimum_effective_seconds"]
         _require(status["effective_seconds_before_content_review"] >= minimum,
                  "DURATION_SHORT", f"该轨迹可核活动时长不足冻结门槛 {minimum / 3600:g} 小时")
-        if duration["policy"]["mode"] == "non_training_7h":
-            segments = [s for s in runtime._state(track)["segments"] if s["phase"] == "formal"]
-            _require(segments and segments[-1].get("status") == "completed", "TRAJECTORY_RUNNING",
-                     "7h轨迹末段尚未正常收口；外部故障需原会话接续，不能只凭计时达标交付")
+        segments = [s for s in runtime._state(track)["segments"] if s["phase"] == "formal"]
+        _require(segments and segments[-1].get("status") == "completed", "TRAJECTORY_RUNNING",
+                 "轨迹末段尚未正常收口；外部故障需原会话接续，不能只凭计时达标交付")
         return runtime, status
 
     def finalize_trajectory(self, track: str, changes: dict | None = None) -> dict:

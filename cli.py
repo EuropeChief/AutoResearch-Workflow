@@ -115,7 +115,7 @@ def _parser() -> argparse.ArgumentParser:
                                  help="显式重试本队列已登记的外部异常；不允许重试方法失败")
     runtime = commands.add_parser("runtime", help="Codex 双轨启动、预检、原始日志与计时")
     actions = runtime.add_subparsers(dest="runtime_action", required=True)
-    for name in ("prepare", "check", "preflight", "run", "resume", "finalize", "recover", "status", "exclude"):
+    for name in ("prepare", "check", "preflight", "run", "resume", "finalize", "recover", "status", "attach", "exclude"):
         command = actions.add_parser(name)
         command.add_argument("--task-root", type=Path, required=True)
         if name in {"prepare", "exclude"}:
@@ -248,6 +248,8 @@ def main(argv: list[str] | None = None) -> int:
                 result = runtime.finalize(args.track, args.confirm_final_score)
             elif args.runtime_action == "recover":
                 result = runtime.recover(args.track)
+            elif args.runtime_action == 'attach':
+                result = runtime.attach(args.track)
             elif args.runtime_action == "exclude":
                 result = runtime.exclude(args.track, _read_json(args.file))
             else:

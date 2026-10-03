@@ -1,16 +1,14 @@
-"""Pinned native Codex records and detached terminal seam, not an ANSI parser.
-
-This adapter is staged for the bounded TUI pilot. It does not change Runtime's
-default mode until native Harbor/Seed acceptance has passed.
-"""
+"""Pinned native Codex records and detached terminal seam, not an ANSI parser."""
 from __future__ import annotations
 
 import json
 import datetime as dt
+import os
 from pathlib import Path
 import re
 import shlex
 import subprocess
+import stat
 import tempfile
 
 from .core import FlowError, _require
@@ -30,6 +28,7 @@ class NativeEvents:
         self.state = 'starting'
         self.turn_id = None
         self.calls = {}
+        self.processes = {}
 
     @property
     def idle(self):
@@ -61,6 +60,7 @@ class NativeEvents:
             if event_type in {'error', 'turn_aborted', 'task_failed'}:
                 self.state = 'failed'
                 self.calls.clear()
+                self.processes.clear()
                 return [{'type': 'turn.failed', 'error': payload}]
             if event_type == 'task_complete':
                 _require(self.state == 'running' and payload.get('turn_id') == self.turn_id
@@ -80,11 +80,14 @@ class NativeEvents:
                 item = {'id': call_id, 'type': 'command_execution' if name in {
                     'exec_command', 'shell', 'shell_command'} else 'mcp_tool_call',
                     'name': name, 'arguments': payload.get('arguments', payload.get('input'))}
-                if item['type'] == 'command_execution':
-                    try:
-                        arguments = json.loads(item['arguments'])
+                try:
+                    arguments = json.loads(item['arguments'])
+                    if item['type'] == 'command_execution':
                         item['command'] = arguments.get('cmd', arguments.get('command', ''))
-                    except (ValueError, TypeError, AttributeError):
+                    elif name == 'write_stdin':
+                        item['process_session'] = str(arguments.get('session_id', ''))
+                except (ValueError, TypeError, AttributeError):
+                    if item['type'] == 'command_execution':
                         item['command'] = ''
                 self.calls[call_id] = item
                 return [{'type': 'item.started', 'item': item}]
@@ -93,12 +96,37 @@ class NativeEvents:
                 _require(call_id in self.calls, 'NATIVE_TOOL_INVALID', '工具结果缺对应调用；不补造开始时间')
                 item = self.calls.pop(call_id)
                 output = payload.get('output')
-                if item['type'] == 'command_execution':
-                    match = re.search(r'(?m)^Process exited with code ([0-9]+)\s*$', output or '') if isinstance(output, str) else None
-                    item['exit_code'] = int(match[1]) if match else None
-                return [{'type': 'item.completed', 'item': {**item,
-                    'aggregated_output': output if isinstance(output, str) else json.dumps(output, ensure_ascii=False)}}]
+                return self._tool_output(item, output)
         return []
+
+    def _tool_output(self, item, output):
+        text = output if isinstance(output, str) else json.dumps(output, ensure_ascii=False)
+        finished = re.search(r'(?m)^Process exited with code (-?[0-9]+)\s*$', text)
+        running = re.search(r'(?m)^Process running with session ID (\S+)\s*$', text)
+        if item['type'] == 'command_execution':
+            item['exit_code'] = int(finished[1]) if finished else None
+        events = [{'type': 'item.completed', 'item': {**item, 'aggregated_output': text}}]
+        # Keep the original command alive across exec_command's asynchronous
+        # return and write_stdin polls. Unknown sessions cannot certify a score.
+        session = item.get('process_session')
+        if running and item['type'] == 'command_execution':
+            session = running[1]
+            _require(session not in self.processes, 'NATIVE_TOOL_INVALID', '异步进程标识重复')
+            self.processes[session] = {**item, 'id': 'process:'+session, 'output': ''}
+            events.append({'type': 'item.started', 'item': self.processes[session].copy()})
+        if session in self.processes:
+            process = self.processes[session]
+            body = re.split(r'(?m)^(?:Final output|Output):\s*\n', text, maxsplit=1)
+            _require(len(body) == 2, 'NATIVE_TOOL_INVALID', '异步工具结果缺标准输出边界，不能猜测评分')
+            process['output'] += body[1]
+            _require(len(process['output'].encode('utf-8')) <= 4*1024*1024,
+                     'LOG_LINE_LIMIT', '异步公开结果超出合并预算；原生分块仍须保留')
+            if finished:
+                self.processes.pop(session)
+                events.append({'type': 'item.completed', 'item': {
+                    **{k: v for k, v in process.items() if k != 'output'},
+                    'exit_code': int(finished[1]), 'aggregated_output': process['output']}})
+        return events
 
 
 class RolloutTail:
@@ -212,6 +240,25 @@ class TmuxTerminal:
     def __exit__(self, *exc):
         self.close()
 
+    @classmethod
+    def existing(cls, socket):
+        """Open only a tool-owned live socket; never create a replacement server."""
+        path = Path(socket)
+        _require(path.is_absolute() and path.name == 'tmux.sock' and path.parent.name.startswith('ar-tui-')
+                 and path.parent.parent == Path(tempfile.gettempdir()) and not path.is_symlink()
+                 and not path.parent.is_symlink(), 'TERMINAL_UNAVAILABLE', '专属终端路径无效；不猜测其他会话')
+        try:
+            info, parent = path.stat(), path.parent.stat()
+        except OSError as exc:
+            raise FlowError('TERMINAL_UNAVAILABLE', '专属终端已不存在；检查运行状态，不自动重建') from exc
+        _require(stat.S_ISSOCK(info.st_mode) and info.st_uid == parent.st_uid == os.getuid()
+                 and stat.S_IMODE(parent.st_mode) == 0o700,
+                 'TERMINAL_UNAVAILABLE', '专属终端所有权或权限不符')
+        terminal = cls.__new__(cls)
+        terminal.directory, terminal.socket = path.parent, path
+        terminal.started, terminal.closed = True, False
+        return terminal
+
     def _command(self, *args, **kwargs):
         try:
             result = subprocess.run(['tmux', '-S', str(self.socket), '-f', '/dev/null', *args],
@@ -243,6 +290,15 @@ class TmuxTerminal:
 
     def attach_command(self):
         return ['tmux', '-S', str(self.socket), 'attach-session', '-r', '-t', 'autoresearch']
+
+    def observe(self):
+        _require(self.status()['alive'], 'TERMINAL_UNAVAILABLE', '该分段已退出，无运行画面可连接')
+        try:
+            result = subprocess.run(self.attach_command())
+        except (OSError, KeyboardInterrupt) as exc:
+            raise FlowError('OBSERVER_DETACHED', '观察端已退出或无法连接；不会停止监督进程') from exc
+        _require(result.returncode == 0, 'OBSERVER_DETACHED', '观察端连接结束；请查询 status，不能据此推断模型停止')
+        return {'status': 'observer_detached', 'readonly': True}
 
     def send(self, prompt):
         _require(self.status()['alive'] and isinstance(prompt, str) and prompt

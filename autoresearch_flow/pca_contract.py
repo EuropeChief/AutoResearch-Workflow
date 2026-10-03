@@ -10,22 +10,14 @@ from pathlib import Path
 
 from .core import FlowError, _canonical_digest, _read_json, _require, _sha256
 from .experiments import evidence
+from .runtime_evaluate import TreeError, tree_digest
 
 
 def task_digest(root: Path) -> str:
-    root = Path(root)
-    _require(root.is_dir() and not root.is_symlink(), "TASK_DIRECTORY", "任务目录不存在或为链接")
-    entries = []
-    for path in sorted(root.rglob("*")):
-        _require(not path.is_symlink(), "TASK_SYMLINK", "构建/移交材料不得通过符号链接越界")
-        mode = path.stat().st_mode
-        _require(stat.S_ISREG(mode) or stat.S_ISDIR(mode), "TASK_SPECIAL_FILE", "任务材料不能含设备、管道等特殊文件")
-        item = {"path": path.relative_to(root).as_posix(), "mode": stat.S_IMODE(mode),
-                "kind": "file" if stat.S_ISREG(mode) else "directory"}
-        if stat.S_ISREG(mode):
-            item["sha256"] = _sha256(path)
-        entries.append(item)
-    return _canonical_digest(entries)
+    try:
+        return tree_digest(root)
+    except TreeError as exc:
+        raise FlowError(exc.code, str(exc)) from exc
 
 
 def check_task(root: Path) -> dict:
