@@ -137,13 +137,19 @@ def validate_config(config, root):
 
 
 def public_evaluation(item, exact):
-    """Accept only an observed successful exact public command, not claimed text."""
+    """Accept the fixed public command, optionally after a literal workspace cd."""
     if item.get('type') != 'command_execution' or item.get('exit_code') != 0:
         return None
     try:
-        command = shlex.split(item.get('command', ''))
+        text = item.get('command', '')
+        command = shlex.split(text)
         if len(command) == 3 and Path(command[0]).name in {'bash', 'sh'} and command[1] in {'-lc', '-c'}:
-            command = shlex.split(command[2])
+            text = command[2]
+        # Native Codex commonly adds this harmless working-directory prefix.
+        # Strip only the two literal public directories; do not accept arbitrary
+        # shell composition, substitutions, pipes or result-producing suffixes.
+        text = re.sub(r'^cd[ \t]+/workspace(?:/solution)?[ \t]*&&[ \t]*', '', text, count=1)
+        command = shlex.split(text)
         if command != exact:
             return None
         value = json.loads(item.get('aggregated_output', item.get('output', '')).strip().splitlines()[-1])

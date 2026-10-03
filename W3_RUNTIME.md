@@ -1,6 +1,6 @@
 # W3：Agent 运行底座
 
-当前实现使用 Codex 0.147.0 原生 TUI，统一监督启动、原会话恢复、日志与计时；不再使用 exec JSON 模式。TUI 有界 Seed CPU 探针已通过，正式监督接入已完成离线测试，新增真实联调待授权与验收，尚不能视为正式发布。双镜像接口见 [PCA_ENVIRONMENT.md](PCA_ENVIRONMENT.md)，证据范围见 [发布说明](RELEASE.md)。
+当前实现使用 Codex 0.147.0 原生 TUI，统一监督启动、原会话恢复、日志与计时。正式监督入口已通过有界 Seed CPU 联调，包含预算暂停、两次原会话恢复和只读观察；不等于正式发布或十小时轨迹验收。双镜像接口见 [PCA_ENVIRONMENT.md](PCA_ENVIRONMENT.md)，证据范围见 [发布说明](RELEASE.md)。
 
 ## 范围与分工
 
@@ -158,6 +158,6 @@ start/end 为 Unix 秒；重叠扣时只扣一次，原始日志不改写。最�
 
 最新离线及异路径迁移测试数以 [验收记录](release/acceptance.json) 为准。覆盖独立目录、API 秘密脱敏、实际工具结果检查、预检不计时、原会话恢复、新会话拒绝、异常扣时、宕机收口、证据漂移、Harbor 资源绑定与最终评分门禁；不调用 Docker/GPU/模型。
 
-原生 TUI 探针已在同一 Seed 会话完成首次启动、恢复与三次公开评测，产生 Agent 自写八字段记录，详见 [短测证据与局限](pilots/pca_cpu/TUI_PROBE.md)。正式监督入口当前只有离线回归证据，真实短联调尚待完成。GPT、GPU、真实长上下文压缩与十小时轨迹未由该 CPU 探针证明；具体题目预检不能省略。AppArmor 例外仅限获准试验，不迁移到正式题目。
+正式入口已完成独立预检和三个同会话运行分段，验证预算暂停、两次恢复、只读观察及脱离，产生真实公开结果与 Agent 自写八字段记录，详见 [短测证据与局限](pilots/pca_cpu/TUI_PROBE.md)。原始记录可核活动为 363.582 秒，最终评分门禁正确拒绝；预算暂停不保证当前候选已恢复到最佳。Agent 自报 time 仍须据原生日志审查，格式正确不代表内容正确。GPT、GPU、真实长上下文压缩与十小时轨迹未由该 CPU 短测证明；具体题目预检不能省略。AppArmor 例外仅限获准试验，不迁移到正式题目。
 
 Codex 接口依据：[交互命令（含退出）](https://learn.chatgpt.com/docs/developer-commands?surface=cli)、[官方配置 Schema](https://developers.openai.com/codex/config-schema.json)；本实现只接受已核验的 0.147.0 原生事件格式，其他版本须先适配与验证。

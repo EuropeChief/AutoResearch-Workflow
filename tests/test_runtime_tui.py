@@ -70,6 +70,33 @@ class NativeEventsTests(unittest.TestCase):
                                        output=f'Process exited with code {code}\nFinal output:\n'+json.dumps(result)))[0]['item']
             self.assertEqual(public_evaluation(item, ['/workspace/evaluate']), expected)
 
+    def test_fixed_workspace_cd_wrapper_is_recognized_without_accepting_other_shell_work(self):
+        result = {'status': 'succeeded', 'score': 1,
+                  'raw_metric': {'name': 'toy_error', 'direction': 'minimize', 'value': 0}}
+        commands = [
+            ('cd /workspace && /workspace/evaluate', result),
+            ('cd /workspace/solution&&/workspace/evaluate', result),
+            ("bash -lc 'cd /workspace && /workspace/evaluate'", result),
+            ('cd /tmp && /workspace/evaluate', None),
+            ('cd /workspace; /workspace/evaluate', None),
+            ('cd /workspace && /workspace/evaluate; echo fake', None),
+            ('cd /workspace && /workspace/evaluate | cat', None),
+            ('cd /workspace && echo /workspace/evaluate', None),
+            ('cd /workspace && /workspace/evaluate > /tmp/result', None),
+            ('cd /workspace && /workspace/evaluate && echo fake', None),
+            ('cd "$(echo /workspace)" && /workspace/evaluate', None),
+        ]
+        for command, expected in commands:
+            with self.subTest(command=command):
+                adapter = NativeEvents('0.147.0')
+                adapter.convert(meta())
+                adapter.convert(row(0, 'event_msg', type='task_started', turn_id='t1'))
+                adapter.convert(row(1, 'response_item', type='function_call', name='exec_command',
+                                    call_id='c', arguments=json.dumps({'cmd': command})))
+                event = adapter.convert(row(2, 'response_item', type='function_call_output', call_id='c',
+                    output='Process exited with code 0\nFinal output:\n'+json.dumps(result)))[0]
+                self.assertEqual(public_evaluation(event['item'], ['/workspace/evaluate']), expected)
+
     def test_external_failure_stops_time_and_compaction_keeps_original_thread(self):
         adapter, clock = NativeEvents('0.147.0', THREAD), EventClock(THREAD)
         records = [meta(), row(0, 'event_msg', type='task_started', turn_id='t1'),
