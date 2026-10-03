@@ -28,7 +28,7 @@
     {
       "mode": 436,
       "path": "RELEASE.md",
-      "sha256": "3e3894601879b93ba7f4514229a9e28b2c840640c5d4fa1a04e5b14980232e8a"
+      "sha256": "b411e08e80552fdddec905476a10402463a2f398034dc0a1469f660f2e7e6fb7"
     },
     {
       "mode": 436,
@@ -223,12 +223,12 @@
     {
       "mode": 436,
       "path": "pilots/gpu_queue/README.md",
-      "sha256": "e4ecb4492dd40ef24d0cdf70a85dfde520fec5912b8bdf606d88ca4946e42588"
+      "sha256": "58fc4a17938283e33b0fe527463869ca13f14e4ac4cabafd240c4ff05ea1c7c2"
     },
     {
       "mode": 436,
       "path": "pilots/gpu_queue/cuda_adapter.py",
-      "sha256": "3a19700ee82fb0f73d67a14c469e6a00045c3cbc64e5f6ff1fd7580ad0c4cada"
+      "sha256": "e7b46c36ce08f9767217309b5e386ac8119baab8e78156c6fc16bf9559ee84e3"
     },
     {
       "mode": 436,
@@ -248,7 +248,12 @@
     {
       "mode": 436,
       "path": "pilots/pca_cpu/TUI_PROBE.md",
-      "sha256": "9dbfabf0cc3a56e4b01a0eec69d466d3e077f56f7efa22ce3b72a2dfb3e23298"
+      "sha256": "d54297d21299a29881c50c50a0d2c2072dc4d233fc27d8310a9b6249a4b3b09a"
+    },
+    {
+      "mode": 436,
+      "path": "pilots/pca_cpu/environment/.dockerignore",
+      "sha256": "27751edbe8584d38f7d976b14d4260ca65cad6c9c4d51c54e30a3714d140434c"
     },
     {
       "mode": 436,
@@ -314,6 +319,11 @@
       "mode": 436,
       "path": "pilots/pca_cpu/task.toml",
       "sha256": "f1ded674b800d4d672f9ba2a28f25be60f1eef93e46149b1d4f583c219d2c79c"
+    },
+    {
+      "mode": 436,
+      "path": "pilots/pca_cpu/tests/.dockerignore",
+      "sha256": "27751edbe8584d38f7d976b14d4260ca65cad6c9c4d51c54e30a3714d140434c"
     },
     {
       "mode": 436,
@@ -653,12 +663,12 @@
     {
       "mode": 436,
       "path": "tests/test_gpu_pilot.py",
-      "sha256": "f1b64dba334fbb8911221ded253c6e43614441ca25db3c1d29f74a35710911be"
+      "sha256": "4753b7e3352f219a8e5ca881fa7ce2187d6e2273e09d3a3befabad9fc3b13b74"
     },
     {
       "mode": 436,
       "path": "tests/test_harbor_pilot.py",
-      "sha256": "ecc232d0422cbcf56c947989c788f8aced1995010c3af5ab01f90ffd5f80182d"
+      "sha256": "d35e82116f0e4982d0b83c9ca3a5bdaceed08be36e347719cc89107e4a1edc70"
     },
     {
       "mode": 436,
@@ -753,7 +763,7 @@
     {
       "mode": 436,
       "path": "tools/release_check.py",
-      "sha256": "8b2f1f30cd5545f52cbcbfefb3275c5d27f9be936ab7b42676cb3cd1176985d2"
+      "sha256": "68ffc8361c61e8f7592c978b8885e101d5c87efac4dc605396f037966f8320c5"
     },
     {
       "mode": 436,

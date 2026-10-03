@@ -27,7 +27,7 @@ SOURCE_DIRECTORIES = {"autoresearch_flow", "rules", "templates", "model_profiles
                       "skills", "tests", "tools", "pilots", "sources", "docs"}
 GENERATED_DIRECTORIES = {"__pycache__", "runs", "build", "release", "runtime",
                          "tmp", "venv", "node_modules"}
-SPECIAL_FILES = {"Dockerfile", ".gitignore", ".gitattributes"}
+SPECIAL_FILES = {"Dockerfile", ".gitignore", ".gitattributes", ".dockerignore"}
 SNAPSHOT_DOCUMENTS = {Path("rules/provenance/PCA_RULE_ALIGNMENT.md")}
 
 

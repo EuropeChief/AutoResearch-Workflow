@@ -13,6 +13,19 @@ spec.loader.exec_module(pilot)
 
 
 class VerdictTests(unittest.TestCase):
+    def test_build_contexts_exclude_local_python_cache(self):
+        from tools.release_check import payload_files, source_files
+        sources, payload = set(source_files()), set(payload_files())
+        for context in ('environment', 'tests'):
+            path = PILOT.parent/context/'.dockerignore'
+            with self.subTest(context=context):
+                self.assertTrue(path.is_file(), 'Python test caches must not enter Docker COPY')
+                patterns = path.read_text().splitlines()
+                self.assertIn('**/__pycache__', patterns)
+                self.assertIn('**/*.py[cod]', patterns)
+                self.assertIn(path, sources, 'Build exclusions must be source-bound')
+                self.assertIn(path, payload, 'Relocated package must retain build exclusions')
+
     def setUp(self):
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)

@@ -13,13 +13,37 @@ FLOW = Path(__file__).resolve().parents[1]
 
 
 class GpuPilotTests(unittest.TestCase):
+    def test_adapter_accepts_observed_pytorch_uuid_without_nvidia_prefix(self):
+        from pilots.gpu_queue.cuda_adapter import evaluate
+        observed = 'e5719698-edfe-bbe4-ff2c-686aff90c7df'
+        assigned = 'GPU-' + observed
+        request = {'assigned_devices': [assigned], 'run': {'seed': 1}}
+
+        class IdentityVerified(Exception):
+            pass
+
+        def before_workload(seed):
+            raise IdentityVerified()
+
+        for actual in (observed, assigned):
+            cuda = SimpleNamespace(is_available=lambda: True, device_count=lambda: 1,
+                                   get_device_properties=lambda index: SimpleNamespace(uuid=actual))
+            fake = SimpleNamespace(cuda=cuda, manual_seed=before_workload)
+            with self.subTest(actual=actual), patch.dict(os.environ, CUDA_VISIBLE_DEVICES=assigned), \
+                 patch.dict(sys.modules, torch=fake):
+                with self.assertRaises(IdentityVerified):
+                    evaluate(request)
+
     def test_adapter_rejects_mismatched_or_extra_devices_before_workload(self):
         from pilots.gpu_queue.cuda_adapter import evaluate
-        request = {'assigned_devices': ['GPU-authorized']}
+        authorized = 'GPU-e5719698-edfe-bbe4-ff2c-686aff90c7df'
+        other = '54fe0ffa-b4d2-d149-633e-e37e6e8e96c4'
+        request = {'assigned_devices': [authorized]}
         for visible, count, actual, message in [
-            ('GPU-other', 1, 'GPU-authorized', 'queue-assigned'),
-            ('GPU-authorized', 2, 'GPU-authorized', 'more than one'),
-            ('GPU-authorized', 1, 'GPU-other', 'differs'),
+            ('GPU-other', 1, authorized, 'queue-assigned'),
+            (authorized, 2, authorized, 'more than one'),
+            (authorized, 1, other, 'differs from queue assignment'),
+            (authorized, 1, 'GPU-other', 'valid GPU UUID'),
         ]:
             cuda = SimpleNamespace(is_available=lambda: True, device_count=lambda: count,
                                    get_device_properties=lambda index: SimpleNamespace(uuid=actual))

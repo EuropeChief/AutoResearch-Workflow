@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import random
 import sys
+import uuid
 
 
 def evaluate(request):
@@ -14,7 +15,13 @@ def evaluate(request):
     import torch
     if not torch.cuda.is_available() or torch.cuda.device_count() != 1:
         raise RuntimeError('CUDA unavailable or more than one device exposed')
-    actual = str(torch.cuda.get_device_properties(0).uuid)
+    raw_uuid = str(torch.cuda.get_device_properties(0).uuid)
+    # PyTorch returns a bare UUID; nvidia-smi/CUDA_VISIBLE_DEVICES use GPU-UUID.
+    # Canonicalize the observed value, never substitute the requested device.
+    try:
+        actual = 'GPU-' + str(uuid.UUID(raw_uuid.removeprefix('GPU-')))
+    except ValueError as error:
+        raise RuntimeError(f'actual CUDA device {raw_uuid} differs from a valid GPU UUID') from error
     if actual != assigned[0]:
         raise RuntimeError(f'actual CUDA device {actual} differs from queue assignment')
     seed = request['run']['seed']
@@ -31,7 +38,8 @@ def evaluate(request):
     correct = finite and bool(torch.equal(expected, value))
     output = Path(request['output_directory'])
     cuda = {'cuda_available': True, 'matmul_finite': finite, 'matmul_correct': correct,
-            'visible_devices': [actual], 'torch_version': torch.__version__, 'seed': seed}
+            'visible_devices': [actual], 'observed_cuda_uuid': raw_uuid,
+            'torch_version': torch.__version__, 'seed': seed}
     (output/'cuda-result.json').write_text(json.dumps(cuda)+'\n')
     if not correct:
         raise RuntimeError('CUDA identity-matrix product is incorrect or non-finite')

@@ -7,8 +7,9 @@
 | 能力 | 当前证据与限制 |
 |---|---|
 | 规则、状态、实验/评分、QA 后三包及填表 | 离线合同与异路径部署可核；科学结论仍须实质审查，QA 在独立会话进行 |
-| 原生 Codex TUI、预算暂停、同会话恢复、只读观察 | 既有源码快照完成 Seed CPU 短测，见 [证据与局限](pilots/pca_cpu/TUI_PROBE.md)；当前政策已统一为 native_tui，旧冻结快照不改写，发布前须对新政策版本补适用性验证 |
-| 有限本地复验队列 | CPU 实进程与模拟设备测试通过；[GPU 小探针](pilots/gpu_queue/README.md)已备妥但动态验收待授权，不支持据此宣称共享卡独占 |
+| 原生 Codex TUI、预算暂停、同会话恢复、只读观察 | 当前 native_tui 政策下新建 Seed CPU 任务，预检与两段同会话实测通过，见 [证据与局限](pilots/pca_cpu/TUI_PROBE.md)；未修改旧冻结记录，不代表十小时正式轨迹通过 |
+| 有限本地复验队列 | CPU 合同及[两卡 GPU 实测](pilots/gpu_queue/README.md)通过，串并行同结果、完成后无重复启动；不据此宣称共享卡独占或 Harbor GPU provider 已验证 |
+| Harbor 双镜像评分链 | 当前源码的 CPU 合成验收完成候选移交、独立 Verifier 与 reward 回收；不是正式 Hidden 数据验收 |
 | 环境适配 | Harbor 0.23.0、Codex CLI 0.147.0 为已适配目标；每题镜像/资源/provider 均须预检，其他版本不自动兼容 |
 | 完整发行 | 入口与领域文档已归位；当前证据绑定和[独立新会话试用](pilots/entry_trial/README.md)全部满足后才正式发布；GPT、真实压缩与正式长程未由 CPU 短测证明 |
 
