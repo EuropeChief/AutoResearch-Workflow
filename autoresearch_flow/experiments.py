@@ -17,6 +17,11 @@ from .core import (FlowError, TaskStore, SHA256_RE, TASK_ID_RE, _atomic_json,
                    _sha256, _utc_now)
 
 
+FAILED_RUN_STATUSES = frozenset({
+    "failed", "infra_error", "hard_gate_failure", "format_error", "timeout", "resource_exceeded",
+})
+
+
 def number(value, label):
     _require(type(value) in (int, float) and math.isfinite(value), "INVALID_NUMBER", f"{label} 必须是有限数值（不能是布尔值）")
     return value
@@ -65,7 +70,7 @@ def validate_protocol(p):
 
 
 def normalize(raw, baseline, upper_bound, direction, *, hard_gate_passed=True):
-    """Linear, continuous, directional, unclipped score; hard gate is separate."""
+    """Unclipped score; gate failures return -1, not a value-based validity test."""
     for label, value in (("B", baseline), ("U", upper_bound)):
         number(value, label)
     _require(direction in {"maximize", "minimize"}, "INVALID_SCORE", "指标方向无效")
@@ -73,7 +78,7 @@ def normalize(raw, baseline, upper_bound, direction, *, hard_gate_passed=True):
     _require(sign * (upper_bound - baseline) > 0, "INVALID_SCORE", "U 必须严格位于 B 的改善方向")
     _require(type(hard_gate_passed) is bool, "INVALID_SCORE", "Hard Gate 必须是布尔值")
     if not hard_gate_passed:
-        return 0.0
+        return -1.0
     number(raw, "raw_metric")
     score = (raw - baseline) / (upper_bound - baseline)
     return number(score, "score")
@@ -186,7 +191,7 @@ class ExperimentBook:
             _require(run_id in data["runs"], "RUN_MISSING", "运行必须先登记 start")
             run = data["runs"][run_id]
             _require(run["status"] == "running", "RUN_FINISHED", "已完成结果不允许覆盖")
-            _require(result.get("status") in {"succeeded", "failed", "infra_error", "hard_gate_failure"}, "INVALID_RESULT", "运行状态不合法")
+            _require(result.get("status") in FAILED_RUN_STATUSES | {"succeeded"}, "INVALID_RESULT", "运行状态不合法")
             refs = result.get("evidence")
             _require(isinstance(refs, dict) and "log" in refs, "INVALID_EVIDENCE", "所有运行包括失败均须保留原始日志")
             for ref in refs.values():
@@ -312,7 +317,7 @@ def score_check(book, protocol_id, contract):
         issues.append("Reference 分数不在 [0.15,0.8]；不得反推 U 修正")
     sigma = report["groups"]["baseline"]["sample_std"]
     warnings = ["剩余 headroom 小于 3σ_B，需专家说明改进空间"] if sigma and sign * (u - r) < 3 * sigma else []
-    return {**report, "status": "blocked" if not 0.15 <= score <= 0.8 else report["status"], "issues": issues, "warnings": warnings, "anchors": {"baseline": b, "reference": r, "upper_bound": u, "metric_ceiling": ceiling}, "reference_score": score, "formula": "(raw-B)/(U-B), unclipped; hard gate failure = 0", "upper_bound_review": "requires_expert_review"}
+    return {**report, "status": "blocked" if not 0.15 <= score <= 0.8 else report["status"], "issues": issues, "warnings": warnings, "anchors": {"baseline": b, "reference": r, "upper_bound": u, "metric_ceiling": ceiling}, "reference_score": score, "formula": "(raw-B)/(U-B), unclipped; hard gate failure = -1, excluded by status", "upper_bound_review": "requires_expert_review"}
 
 
 def baseline_check(book, protocol_id, review, phase):

@@ -10,7 +10,7 @@ from pathlib import Path
 
 from autoresearch_flow import FLOW_VERSION
 from autoresearch_flow.core import FlowError, Registry, TaskStore, _read_json, _canonical_digest, _require
-from autoresearch_flow.experiments import ExperimentBook, baseline_check, score_check
+from autoresearch_flow.experiments import FAILED_RUN_STATUSES, ExperimentBook, baseline_check, score_check
 from autoresearch_flow.runtime import Runtime
 from autoresearch_flow.w4_evidence import DeliveryEvidence
 from autoresearch_flow.w4_package import DeliveryPackage, check_package
@@ -308,7 +308,7 @@ def main(argv: list[str] | None = None) -> int:
         _emit({"action": action, "status": "blocked", "issues": [{"code": exc.code, "message": exc.message}], "next_action": "按错误说明修复；不要绕过来源锁或静默初始化"}, args.format)
         return 2
     _emit(payload, args.format)
-    return 2 if payload["status"] in {"blocked", "needs_review", "recorded_invalid", "failed", "infra_error", "hard_gate_failure"} else 0
+    return 2 if payload["status"] in FAILED_RUN_STATUSES | {"blocked", "needs_review", "recorded_invalid"} else 0
 
 
 if __name__ == "__main__":

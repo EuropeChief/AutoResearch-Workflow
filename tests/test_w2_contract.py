@@ -90,7 +90,7 @@ class W2Tests(unittest.TestCase):
         self.assertEqual(normalize(5, 10, 0, "minimize"), 0.5)
         self.assertEqual(normalize(-1, 10, 0, "minimize"), 1.1)
         self.assertEqual(normalize(11, 10, 0, "minimize"), -0.1)
-        self.assertEqual(normalize(None, 10, 0, "minimize", hard_gate_passed=False), 0)
+        self.assertEqual(normalize(None, 10, 0, "minimize", hard_gate_passed=False), -1)
         self.book.lock(p)
         self.p = p
         for role, value in (("baseline", 10), ("reference", 5)):
@@ -99,12 +99,26 @@ class W2Tests(unittest.TestCase):
         self.assertEqual(self.book.report("min")["status"], "ok")
         self.assertIsNone(self.book.report("min")["groups"]["baseline"]["sample_std"])
 
+    def test_hard_gate_minus_one_does_not_clip_valid_scores(self):
+        for direction, upper, raw_values in (
+            ("maximize", 20, (0, -5, 10, 15, 20, 25)),
+            ("minimize", 0, (20, 25, 10, 5, 0, -5)),
+        ):
+            with self.subTest(direction=direction):
+                self.assertEqual(normalize(None, 10, upper, direction, hard_gate_passed=False), -1)
+                self.assertEqual([normalize(raw, 10, upper, direction) for raw in raw_values],
+                                 [-1, -1.5, 0, 0.5, 1, 1.5])
+
     def test_score_contract_and_wrong_upper_bounds(self):
         self.pair()
         contract = {"protocol_sha256": self.lock["sha256"], "upper_bound": 20, "metric_ceiling": 100, "rationale": "Synthetic ex ante reasoning", "evidence": [self.proof]}
         result = score_check(self.book, "p1", contract)
         self.assertEqual(result["reference_score"], 0.5)
         self.assertEqual(result["status"], "ok")
+        self.assertEqual(result["anchors"], {"baseline": 10, "reference": 15,
+                                            "upper_bound": 20, "metric_ceiling": 100})
+        self.assertIn("hard gate failure = -1", result["formula"])
+        self.assertIn("excluded by status", result["formula"])
         for u in (10, 9, float("nan"), float("inf"), True):
             with self.assertRaises(FlowError):
                 normalize(15, 10, u, "maximize")
@@ -130,6 +144,52 @@ class W2Tests(unittest.TestCase):
         self.assertEqual(result["attempts"][0]["status"], "failed")
         with self.assertRaises(FlowError):
             self.start("baseline", 1, "cannot-select-again", retry_of=run["run_id"])
+
+    def test_cli_failure_types_are_retained_and_excluded_from_aggregation(self):
+        cli = Path(__file__).resolve().parents[1] / "cli.py"
+        for status in ("hard_gate_failure", "format_error", "timeout", "resource_exceeded", "infra_error", "failed"):
+            with self.subTest(status=status):
+                protocol_id = "failure-" + status
+                self.book.lock({**self.p, "id": protocol_id})
+                run = self.book.start({"run_id": protocol_id, "protocol_id": protocol_id,
+                                       "role": "best_method", "seed": 1, "method_files": [self.method]})
+                failure = {"status": status, "error": f"Synthetic {status}: inspect log and correct the cause.",
+                           "raw_metric": 999, "evidence": {"log": self.ref(protocol_id + ".log", status)}}
+                if status == "hard_gate_failure":
+                    failure["score"] = -1
+                result_file = self.ref(protocol_id + ".json", json.dumps(failure))
+                result = subprocess.run([sys.executable, str(cli), "--format", "json", "experiment", "finish",
+                                         "--task-root", str(self.root), "--run-id", run["run_id"],
+                                         "--file", str(self.root / result_file["path"])], capture_output=True, text=True)
+                self.assertEqual(result.returncode, 2, result.stderr)
+                recorded = json.loads(result.stdout)
+                self.assertEqual(recorded["status"], status)
+                self.assertEqual(recorded["result"], failure)
+                for seed, value in ((2, 9), (3, 11)):
+                    valid = self.book.start({"run_id": f"{protocol_id}-{seed}", "protocol_id": protocol_id,
+                                             "role": "best_method", "seed": seed, "method_files": [self.method]})
+                    self.finish(valid, value)
+                report = self.book.report(protocol_id, ("best_method",))
+                self.assertEqual(report["status"], "blocked")
+                attempts = {item["run_id"]: item for item in report["attempts"]}
+                self.assertEqual(attempts[run["run_id"]]["status"], status)
+                self.assertEqual(report["groups"]["best_method"]["values"], {"2": 9, "3": 11})
+                self.assertEqual(report["groups"]["best_method"]["mean"], 10)
+                self.assertEqual(len(report["issues"]), 1)
+                self.assertIn(status, report["issues"][0])
+
+    def test_successful_negative_scores_remain_valid_in_aggregation(self):
+        for seed, raw in zip(self.p["seeds"], (0, -5, 5)):
+            score = normalize(raw, 10, 20, "maximize")
+            result = self.finish(self.start("best_method", seed), raw, score=score)
+            self.assertEqual(result["status"], "succeeded")
+        report = self.book.report("p1", ("best_method",))
+        self.assertEqual(report["status"], "ok")
+        self.assertEqual(report["groups"]["best_method"]["count"], 3)
+        self.assertEqual(report["groups"]["best_method"]["mean"], 0)
+        scores = [normalize(raw, 10, 20, "maximize")
+                  for raw in report["groups"]["best_method"]["values"].values()]
+        self.assertEqual(sorted(scores, reverse=True), [-0.5, -1, -1.5])
 
     def test_infrastructure_retry_disclosed_and_evidence_not_dropped(self):
         run = self.start("baseline", 1, "broken")

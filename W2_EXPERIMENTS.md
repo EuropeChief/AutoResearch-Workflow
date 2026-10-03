@@ -63,7 +63,7 @@
 
 题目可信执行入口应产生原始结果文件。W2 的 `result-envelope.json` 携带同样的规范化字段并附证据索引；`evidence.result` 指向独立原始记录，避免自引用哈希。当前适配合同要求原始记录包含 envelope 中除 `evidence` 外的同名字段，程序逐项交叉核对：
 
-- `status`：succeeded / failed / infra_error / hard_gate_failure。
+- `status`：succeeded / hard_gate_failure / format_error / timeout / resource_exceeded / infra_error / failed。已知失败按类型登记；failed 用于其他未细分失败，不代替已知分类。除 succeeded 外均不进入正常聚合，CLI 返回非零退出码；只有 infra_error 允许显式登记基础设施重试。
 - start 返回的 `seed / role / method_sha256 / protocol_sha256 / seed_plan_sha256`。
 - `fixed`：实际使用的数据、预处理和评分实现指纹。
 - `raw_metric`：有限原始指标；`quality_passed`：真实质量门结果。
@@ -83,7 +83,7 @@ Public/Dev 与最终 Verifier 必须对齐指标定义、方向与硬约束，�
 
 report 使用所有正式 seed，不抽样，σ 使用 Baseline 原始指标的样本标准差（n−1）。不足 3σ 或 Δ≤0 阻止通过；3σ–5σ 返回 needs_review，按教程增加重复并标记平台复核；≥5σ 为强数值证据。确定性单次任务的标准差为 null；样本标准差为 0 仍要求 Δ>0。
 
-score-contract 包含 protocol_sha256、upper_bound、metric_ceiling、rationale 和非空 evidence 引用。B/R 从成对结果计算，不接受手填均值。采用 `(raw-B)/(U-B)`，保持连续、单调、方向明确、不裁剪，B→0、U→1；非作弊 Hard Gate 失败返回 0，基础设施错误单独分类。检查 Reference 位于 [0.15,0.8]；headroom <3σ 给专家风险提示，不伪造强制门槛。U 的依据与是否事后反推仍需专家判断。
+score-contract 包含 protocol_sha256、upper_bound、metric_ceiling、rationale 和非空 evidence 引用。B/R 从成对结果计算，不接受手填均值。采用 `(raw-B)/(U-B)`，保持连续、单调、方向明确、不裁剪，B→0、U→1；非作弊 Hard Gate 失败返回 -1，按 hard_gate_failure 状态排除，不参与正常方案排序或聚合。正常方案的公式结果即使恰为 -1 或小于 -1 仍合法，不能仅凭分数判断有效性。格式错误、超时、资源超限和基础设施错误分别返回对应失败类型与清晰、可操作的 error，不统一折成 -1 或 0；账本保留失败原件，不替失败伪造正常分数。检查 Reference 位于 [0.15,0.8]；headroom <3σ 给专家风险提示，不伪造强制门槛。U 的依据与是否事后反推仍需专家判断。
 
 review.json 绑定 protocol_sha256、experiment_sha256、baseline_method_sha256；阶段 3 再绑定 reference_method_sha256。checks 必须恰含 B01–B08，每项均含 status、reviewer、rationale、非空 evidence。status 为 pass/fail/manual/deferred。只有 B03/B07 的跨方法部分可在阶段 2 deferred，须 current_part_passed=true、due_stage=3、pending_requirement 说明；阶段 3 不再允许 deferred。程序只返回 ready_for_expert_confirmation，不代签合理性或推进阶段。
 
