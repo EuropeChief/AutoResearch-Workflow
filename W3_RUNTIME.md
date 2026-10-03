@@ -1,6 +1,6 @@
 # W3：Agent 运行底座
 
-状态：0.2.0 PCA 已发布。Harbor 0.23.0 有限适配、候选移交/独立评分及 Seed 同会话有界短测已验证。旧 [联调记录](../AutoResearch新流程设计/W5_SEED_PILOT.md) 属于 0.1.0，不是新版证据。双镜像接口见 [PCA_ENVIRONMENT.md](PCA_ENVIRONMENT.md)，当前范围见 [实施记录](../AutoResearch新流程设计/PCA_IMPLEMENTATION_STATUS.md)。
+状态：历史 0.2.0 PCA 发布快照已验证 Harbor 0.23.0 有限适配、候选移交/独立评分及 Seed 同会话有界短测；旧 0.1.0 联调不是新版证据。当前工作树增量未重新做真实模型联调，不借用历史记录宣称已通过。双镜像接口见 [PCA_ENVIRONMENT.md](PCA_ENVIRONMENT.md)，版本及证据范围见 [发布说明](RELEASE.md)。无需设计仓库即可使用本文。
 
 ## 范围与分工
 
@@ -25,7 +25,7 @@ image 必须使用完整 sha256 镜像 ID 或 repo@sha256:digest。镜像需包�
 
 API 凭据支持 JSON 顶层字段（kind=api_key_json、key=字段名）；登录凭据使用 kind=codex_login，省略 base_url/key。登录副本允许刷新，不修改原文件；新生成权限配置显式拒绝 Agent 工具读取 `/codex/auth.json`，可信 Codex 父进程仍可使用它认证。运行目录含鉴权副本与 Codex 持久会话，**不能整体当成最终提交材料上传**。
 
-Seed TOML 保留固定模型/Ark 地址、262144 上下文、160000 压缩阈值和 65536 输出预留；根 config.toml 不动态读取。按原厂文档，GPT 使用 max，Seed 使用最高有效档 high（xhigh/max 对 Seed 映射为 high）；依据见 [模型核对记录](../AutoResearch新流程设计/PCA_MODEL_CONFIGURATION.md)。Seed 短测的实际 Codex turn_context 已核对模型和 high；GPT 未在本轮调用，用户自管 provider 的实际接受情况须在新题预检验证，不把原厂支持等同于代理已验证。认证路径保持用户原配置，不打印密钥。
+Seed TOML 保留固定模型/Ark 地址、262144 上下文、160000 压缩阈值和 65536 输出预留；根 config.toml 不动态读取。2026-09-30 配置核对时，GPT 使用 max，Seed 使用最高有效档 high（xhigh/max 对 Seed 映射为 high）；历史依据分别为 OpenAI 的 gpt-5.6-sol 模型文档、火山方舟的 deep-thinking / model-parameter-support 文档，设计仓库记录标识为 `ca978de:PCA_MODEL_CONFIGURATION.md`（仅追溯，不是部署依赖）。`max_output_tokens` 在本工具只检查压缩余量，不声称已设置服务端输出上限。历史 Seed 短测已核对实际 turn_context 的模型和 high；GPT 未在该轮调用。用户自管 provider 的实际接受情况须在新题预检验证，不把配置或原厂能力等同于实际服务已验证。认证路径保持用户原配置，不打印密钥。
 
 `context_window`、`auto_compact_token_limit`、`max_output_tokens` 如填写须同时提供；第三项仅用于预留输出空间的校验，不是发送给 Codex 的请求参数。当前官方 Schema 没有 `model_max_output_tokens`，本工具不生成该字段。`model_context_window` 与压缩阈值按生成的 Codex 配置应用；自定义模型 metadata 仍可能使用回退值，服务端输出限制与长程压缩不在 W5 短联调已证明的范围内，需在实际长程记录中核查。短冒烟不能证明十小时不会遇到上下文问题。
 

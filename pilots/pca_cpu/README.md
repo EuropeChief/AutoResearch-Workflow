@@ -4,7 +4,7 @@
 
 显式指定已存在的本地 Python 镜像并允许 Docker 后运行 `python3 run_components.py --base-image 本地镜像 --allow-docker`。会新增两张共享基础层的组件镜像和 runs/ 记录，不清理或停止其他任务容器。此合成 grader 不供真实题目原样复用。
 
-`task.toml` 中的镜像 ID 是本机记录，不是跨机器可用的公共镜像。`run_harbor.py` 从组件报告取当前 ID，校验 context 摘要，将 instruction.md、task.toml、environment/、tests/ 单独复制；不要将 build/runs 当作任务输入。Harbor 0.23.0 为用户暂定目标，进度见 [实施记录](../../../AutoResearch新流程设计/PCA_IMPLEMENTATION_STATUS.md)。CLI 退出码 0 不足以判成功，须检查 trial 异常、实际独立环境和 reward。
+`task.toml` 中的镜像 ID 是本机记录，不是跨机器可用的公共镜像。`run_harbor.py` 从组件报告取当前 ID，校验 context 摘要，将 instruction.md、task.toml、environment/、tests/ 单独复制；不要将 build/runs 当作任务输入。Harbor 0.23.0 为用户暂定目标，适用范围见 [发布说明](../../RELEASE.md)。CLI 退出码 0 不足以判成功，须检查 trial 异常、实际独立环境和 reward。
 
 ```bash
 python3 run_harbor.py --harbor-bin /本机虚拟环境/bin/harbor --docker-config /本机专用Docker目录 --component-report /本次组件/report.json --allow-docker

@@ -1,0 +1,118 @@
+{
+  "catalog": {
+    "path": "AutoResearch新流程/rules/catalog.json",
+    "sha256": "e3c7dafe871a0c8d549d0f44ff5c49d670ad05434cbbc68b1e30f7de3481ec33"
+  },
+  "flow_version": "0.2.0",
+  "workflow_revision": "2026-10-03.op01",
+  "schema_version": 1,
+  "sources": [
+    {
+      "id": "tutorial",
+      "path": "通用规则/AutoResearch 专家线下标注教程｜PCA 双镜像对齐版/AutoResearch 专家线下标注教程｜PCA 双镜像对齐版.md",
+      "priority": 1,
+      "scope": "global",
+      "sha256": "ddf9e9286dea1ea551c47574716cb2a93c39b7dfe93c0d77284f731782947fab",
+      "version": "PCA-20260929"
+    },
+    {
+      "id": "qa_skill",
+      "path": ".codex/skills/autoresearch-task-qa/SKILL.md",
+      "priority": 2,
+      "scope": "global",
+      "sha256": "584db44ea949220ec44582b98590be3984d50e4d3c0272690fc6c21d4b638fd6",
+      "version": "v0.3.1@2026-09-30"
+    },
+    {
+      "id": "source_alignment",
+      "path": ".codex/skills/autoresearch-task-qa/references/source-alignment.md",
+      "priority": 2,
+      "scope": "global",
+      "sha256": "93e8eb3ba75b2b14d2b9300284330c3c1192965eca7d76002c847bcbc48e2499",
+      "version": "v0.3.1@2026-09-30"
+    },
+    {
+      "id": "research_quality",
+      "path": ".codex/skills/autoresearch-task-qa/references/research-quality.md",
+      "priority": 2,
+      "scope": "global",
+      "sha256": "3304e93def3129922fe7544bca7fd6a778aa6df1270aa9259ee1ee6ef71d0724",
+      "version": "v0.3.1@2026-09-30"
+    },
+    {
+      "id": "implementation_policy",
+      "path": ".codex/skills/autoresearch-task-qa/references/implementation-policy.md",
+      "priority": 2,
+      "scope": "global",
+      "sha256": "863832ac7277bc3cce0f51f3d346b03c0e8600e19b5403dc99e58b156c9d331e",
+      "version": "v0.3.1@2026-09-30"
+    },
+    {
+      "id": "submission_format",
+      "path": ".codex/skills/autoresearch-task-qa/references/submission-format.md",
+      "priority": 2,
+      "scope": "global",
+      "sha256": "535903a11526c125d51511e0752554f9b7df73605458d1b94da5ca3702aa0c3e",
+      "version": "v0.3.1@2026-09-30"
+    },
+    {
+      "id": "docker_path_contract",
+      "path": ".codex/skills/autoresearch-task-qa/references/docker-path-contract.md",
+      "priority": 2,
+      "scope": "global",
+      "sha256": "10afe94e54542906b7bc4ef911f2f43d1373a5e7459738606bbfb1ddc8631e60",
+      "version": "v0.3.1@2026-09-30"
+    },
+    {
+      "id": "harbor_harness",
+      "path": ".codex/skills/autoresearch-task-qa/references/harbor-harness.md",
+      "priority": 2,
+      "scope": "global",
+      "sha256": "f701dd2e07e1adfb40d8ae56f14c5440296aab8e6a824d205f13592084a9ba2c",
+      "version": "v0.3.1@2026-09-30"
+    },
+    {
+      "id": "implementation_report",
+      "path": ".codex/skills/autoresearch-task-qa/references/implementation-report.md",
+      "priority": 2,
+      "scope": "global",
+      "sha256": "be02e4ad45ad1596413308cab46d7fde5f64e36f01a26635230757c452b4b5e8",
+      "version": "v0.3.1@2026-09-30"
+    },
+    {
+      "id": "baseline_skill",
+      "path": ".codex/skills/autoresearch-baseline-quality/SKILL.md",
+      "priority": 2,
+      "scope": "global",
+      "sha256": "e1ad68530be94c2cfe59ee146a7dd37c614eae537ff85cbda3e7147c0c150d76",
+      "version": "qa-g02-route@2026-09-18"
+    },
+    {
+      "id": "baseline_review_method",
+      "path": ".codex/skills/autoresearch-baseline-quality/references/baseline-review-method.md",
+      "priority": 2,
+      "scope": "global",
+      "sha256": "15f996157d18b17209d0640bec24e2c39711fbac682ee7eaac830c7a7a8a568c",
+      "version": "implementation@2026-09-18"
+    },
+    {
+      "id": "exposure_manifest",
+      "path": ".codex/skills/autoresearch-task-qa/references/exposure-manifest.md",
+      "priority": 2,
+      "scope": "global",
+      "sha256": "7f4bba67d2acd2e7732409d04bce76422c0935987eb8a9f42c9e992641929a69",
+      "version": "v0.3.1@2026-09-30"
+    }
+  ],
+  "w0_inputs": [
+    {
+      "path": "AutoResearch新流程设计/PCA_RULE_ALIGNMENT.md",
+      "sha256": "0d912ce79951afe0bcda85688ea1aad69b1be8da935b9cd8d9dc78a383455609"
+    },
+    {
+      "path": "AutoResearch新流程/QA_V031_ALIGNMENT.md",
+      "sha256": "911b46ddadc9476924accf5dc4ebe5ef572e3292fa6ec140582726093657ac30"
+    }
+  ],
+  "qa_revision": "v0.3.1@2026-09-30"
+}

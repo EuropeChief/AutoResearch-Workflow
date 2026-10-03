@@ -2,17 +2,17 @@
 
 Run once per tool release, not as a mandatory per-task test suite.
 """
-import ast
 import argparse
+import ast
 import json
 import os
-from pathlib import Path
 import re
 import shutil
 import subprocess
 import sys
 import tempfile
 import tomllib
+from pathlib import Path
 from urllib.parse import unquote
 
 FLOW = Path(__file__).resolve().parents[1]
@@ -20,6 +20,27 @@ ROOT = FLOW.parent
 sys.path.insert(0, str(FLOW))
 from autoresearch_flow import FLOW_VERSION
 from autoresearch_flow.core import Registry, _atomic_json, _sha256, _utc_now
+
+# This is a deployment allowlist, not a recursive copy of the maintainer's workspace.
+SOURCE_DIRECTORIES = {"autoresearch_flow", "rules", "templates", "model_profiles",
+                      "skills", "tests", "tools", "pilots"}
+GENERATED_DIRECTORIES = {"__pycache__", "runs", "build", "release", "runtime",
+                         "tmp", "venv", "node_modules"}
+SPECIAL_FILES = {"Dockerfile", ".gitignore", ".gitattributes"}
+SNAPSHOT_DOCUMENTS = {Path("rules/provenance/PCA_RULE_ALIGNMENT.md")}
+
+
+def distributable_name(name):
+    if name.startswith(".") and name not in SPECIAL_FILES:
+        return False
+    if re.search(r"(?:auth|credential|secret|token).*\.json$", name, re.IGNORECASE):
+        return False
+    return Path(name).suffix not in {".pyc", ".pyo", ".log", ".sock"}
+
+
+def source_name(name):
+    return distributable_name(name) and (Path(name).suffix in {".py", ".md", ".toml", ".json", ".sh"}
+                                        or name in SPECIAL_FILES)
 
 
 def live_release_evidence():
@@ -96,18 +117,109 @@ def prior_live_evidence():
                              "new_live_run": False}}
 
 
-def source_files():
+def source_files(flow=None):
+    flow = FLOW if flow is None else flow
     files = []
-    for directory, children, names in os.walk(FLOW):
-        children[:] = sorted(c for c in children if c not in
-                             {"__pycache__", ".git", "runs", "build", "release"})
+    for directory, children, names in os.walk(flow):
+        children[:] = sorted(c for c in children if not c.startswith(".")
+                             and c not in GENERATED_DIRECTORIES
+                             and (Path(directory) != flow or c in SOURCE_DIRECTORIES))
+        for child in children:
+            if (Path(directory) / child).is_symlink():
+                raise ValueError(f"Unexpected source symlink: {Path(directory) / child}")
         for name in sorted(names):
             path = Path(directory) / name
+            if not source_name(name):
+                continue
+            if Path(directory) == flow and path.suffix != ".md" and name not in SPECIAL_FILES | {"cli.py"}:
+                continue
             if path.is_symlink():
                 raise ValueError(f"Unexpected source symlink: {path}")
-            if path.suffix in {".py", ".md", ".toml", ".json", ".sh"} or name in {"Dockerfile", ".gitignore"}:
-                files.append(path)
+            files.append(path)
     return sorted(files)
+
+
+def payload_files(flow=None):
+    """Runtime sources + locked central authorities; never the design archive."""
+    flow = FLOW if flow is None else flow
+    root = flow.parent
+    registry = Registry(flow)
+    assert registry.check_sources() == [], "Rule sources drifted"
+    files = source_files(flow)
+    refs = [*registry.manifest["sources"], *registry.manifest["w0_inputs"]]
+    files.extend(root / ref["path"] for ref in refs)
+    for name in ("autoresearch-task-qa", "autoresearch-baseline-quality"):
+        skill = root / ".codex/skills" / name
+        assert (skill / "SKILL.md").is_file(), f"Missing QA skill: {name}"
+        for directory, children, names in os.walk(skill):
+            children[:] = sorted(c for c in children if not c.startswith(".")
+                                 and c not in GENERATED_DIRECTORIES)
+            for child in children:
+                if (Path(directory) / child).is_symlink():
+                    raise ValueError(f"Unexpected QA symlink: {child}")
+            for filename in names:
+                if distributable_name(filename):
+                    files.append(Path(directory) / filename)
+    for p in files:
+        relative = p.relative_to(root)
+        assert relative.parts[0] in {flow.name, "通用规则", ".codex"}, relative
+        assert p.is_file() and not p.is_symlink(), p
+    return sorted(set(files))
+
+
+def check_documents(files):
+    links = 0
+    for path in files:
+        if path.suffix == ".py":
+            ast.parse(path.read_text(), filename=str(path))
+        elif path.suffix == ".json":
+            json.loads(path.read_text())
+        elif path.suffix == ".toml":
+            tomllib.loads(path.read_text())
+        elif path.suffix == ".md" and path.relative_to(FLOW) not in SNAPSHOT_DOCUMENTS:
+            for target in re.findall(r"\]\(([^)]+)\)", path.read_text()):
+                if target.startswith(("http:", "https:", "#", "mailto:")):
+                    continue
+                target = unquote(target.split("#")[0].strip("<>"))
+                assert (path.parent / target).exists(), (path, target)
+                links += 1
+    return links
+
+
+def release_files(flow=None):
+    """Small release receipts/history, never caches, symlinks or live runs."""
+    flow = FLOW if flow is None else flow
+    files = []
+    for directory, children, names in os.walk(flow / "release"):
+        children[:] = sorted(c for c in children if not c.startswith(".")
+                             and c not in GENERATED_DIRECTORIES)
+        for child in children:
+            assert not (Path(directory) / child).is_symlink(), child
+        for name in names:
+            p = Path(directory) / name
+            if p.suffix in {".json", ".md"} and source_name(name):
+                assert p.is_file() and not p.is_symlink(), p
+                files.append(p)
+    return sorted(files)
+
+
+def preserve_receipts(release):
+    """Keep the prior pair byte-for-byte before replacing current receipts."""
+    names = ("acceptance.json", "source_manifest.json")
+    present = [release / name for name in names if (release / name).exists()]
+    if not present:
+        return
+    assert all(p.is_file() and not p.is_symlink() for p in present), "Unsafe prior receipts"
+    key = "-".join(_sha256(p)[:16] for p in present)
+    history = release / "history" / key
+    history.mkdir(parents=True, exist_ok=True)
+    for source in present:
+        destination = history / source.name
+        if destination.exists():
+            assert destination.read_bytes() == source.read_bytes(), "Historical receipt collision"
+        else:
+            with destination.open("xb") as stream:
+                stream.write(source.read_bytes())
 
 
 def run(command, cwd):
@@ -115,7 +227,7 @@ def run(command, cwd):
     environment.pop("PYTHONPATH", None)
     environment["PYTHONDONTWRITEBYTECODE"] = "1"
     result = subprocess.run(command, cwd=cwd, env=environment, capture_output=True,
-                            text=True, timeout=120)
+                            text=True, timeout=120, check=False)
     output = result.stdout + result.stderr
     if result.returncode:
         raise RuntimeError(f"{command}:\n{output[-6000:]}")
@@ -131,44 +243,28 @@ def main():
     args = parser.parse_args()
     if args.reuse_prior_live and not args.release:
         parser.error("--reuse-prior-live requires --release")
-    registry = Registry()
+    registry = Registry(FLOW)
     assert registry.check_sources() == [], "Rule sources drifted"
     files = source_files()
-    links = 0
-    for path in files:
-        if path.suffix == ".py":
-            ast.parse(path.read_text(), filename=str(path))
-        elif path.suffix == ".json":
-            json.loads(path.read_text())
-        elif path.suffix == ".toml":
-            tomllib.loads(path.read_text())
-        elif path.suffix == ".md":
-            for target in re.findall(r"\]\(([^)]+)\)", path.read_text()):
-                if target.startswith(("http:", "https:", "#", "mailto:")):
-                    continue
-                target = unquote(target.split("#")[0].strip("<>"))
-                assert (path.parent / target).exists(), (path, target)
-                links += 1
-    manifest = registry.manifest
-    dependencies = [ROOT / ref["path"] for ref in [*manifest["sources"], *manifest["w0_inputs"]]]
-    for skill in (ROOT / ".codex/skills/autoresearch-task-qa",
-                  ROOT / ".codex/skills/autoresearch-baseline-quality"):
-        dependencies.extend(path for path in skill.rglob("*") if path.is_file()
-                            and "__pycache__" not in path.parts)
-    # Keep explanatory design links; no task contents, host config, credentials,
-    # pilot results or binary build context are needed in the relocated copy.
-    dependencies.extend((ROOT / "AutoResearch新流程设计").glob("*.md"))
-    all_files = sorted(set(files + dependencies))
+    links = check_documents(files)
+    all_files = payload_files()
+    checked_files = [{"path": str(p.relative_to(ROOT)), "sha256": _sha256(p)} for p in all_files]
     native = run([sys.executable, "-m", "unittest", "discover", "-s", str(FLOW / "tests"), "-v"], ROOT)
     with tempfile.TemporaryDirectory(prefix="ar-release-relocation-") as temporary:
         root = Path(temporary)
-        for source in all_files:
+        for source in all_files + release_files():
             target = root / source.relative_to(ROOT)
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(source, target)
         relocated_flow = root / FLOW.name
         assert not (root / "config.toml").exists()
         assert not (root / "auth.json").exists()
+        assert not (root / "AutoResearch新流程设计").exists()
+        # Link validation must also run outside the original design workspace.
+        relocated_check = [sys.executable, "-c",
+                           ("from tools.release_check import source_files, check_documents; "
+                            "check_documents(source_files())")]
+        run(relocated_check, relocated_flow)
         isolated = run([sys.executable, "-m", "unittest", "discover", "-s", str(relocated_flow / "tests"), "-v"], root)
         task = root / "new-task"
         task.mkdir()
@@ -183,20 +279,27 @@ def main():
               "release_ready": args.release,
               "pending": [] if args.release else ["维护者最终发布及新版迁移包"],
               "at": _utc_now(), "version": FLOW_VERSION, "qa_revision": registry.manifest.get("qa_revision"),
+              "package_revision": registry.manifest.get("package_revision"),
               "python": sys.version.split()[0], "rule_count": len(registry.catalog["rules"]),
               "qa_coverage_count": len(registry.catalog["coverage"]), "checked_links": links,
               "native_tests": re.search(r"Ran (\d+) tests", native).group(1),
               "relocated_tests": re.search(r"Ran (\d+) tests", isolated).group(1),
               "relocation_without_host_config_or_auth": True,
+              "relocation_without_design_or_pilot_runs": True,
               "fresh_cli_init_and_resume_status": True,
               "model_calls": 0, "scope": "tool contracts, not scientific or platform acceptance"}
     if live:
         report["bounded_live_evidence"] = live
     release = FLOW / "release"
     release.mkdir(exist_ok=True)
+    assert checked_files == [{"path": str(p.relative_to(ROOT)), "sha256": _sha256(p)}
+                             for p in payload_files()], "Sources changed during validation"
+    preserve_receipts(release)
     _atomic_json(release / "source_manifest.json", {
-        "version": FLOW_VERSION, "scope": "source and locked rule dependencies; excludes generated release reports and local pilot/build data",
-        "files": [{"path": str(p.relative_to(ROOT)), "sha256": _sha256(p)} for p in all_files]})
+        "version": FLOW_VERSION, "package_revision": registry.manifest.get("package_revision"),
+        "scope": "source and locked rule dependencies; excludes design archive, generated release reports and local pilot/build data",
+        "files": checked_files})
+    report["source_manifest_sha256"] = _sha256(release / "source_manifest.json")
     _atomic_json(release / "acceptance.json", report)
     print(json.dumps(report, ensure_ascii=False, indent=2))
 

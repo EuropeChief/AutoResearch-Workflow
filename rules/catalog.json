@@ -191,8 +191,8 @@
     ]
   },
   "generated_from": {
-    "rule_catalog": "AutoResearch新流程设计/PCA_RULE_ALIGNMENT.md",
-    "qa_coverage": "AutoResearch新流程设计/W0_QA_COVERAGE.md"
+    "rule_catalog": "AutoResearch新流程/rules/provenance/PCA_RULE_ALIGNMENT.md",
+    "qa_coverage": "AutoResearch新流程/rules/catalog.json#/coverage"
   },
   "rule_count": 50,
   "rules": [

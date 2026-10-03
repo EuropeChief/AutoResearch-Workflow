@@ -1,42 +1,23 @@
 {
-  "at": "2026-09-30T14:33:26+00:00",
-  "bounded_live_evidence": {
-    "completed_formal_segment": true,
-    "final_gate_rejected_short_pilot": true,
-    "harbor_transfer_report": {
-      "path": "AutoResearch新流程/pilots/pca_cpu/runs/harbor-20260930T091303597138Z/report.json",
-      "sha256": "03d64fd739ea07f48989d32e1e468ee9e5c9e34a086bbac68f6048da40539420"
-    },
-    "hidden_queries": 0,
-    "reuse": {
-      "basis": "QA-only change; runtime sources and raw evidence unchanged",
-      "new_live_run": false,
-      "original_acceptance_at": "2026-09-30T11:59:22+00:00"
-    },
-    "same_thread": true,
-    "seed_state": {
-      "path": "AutoResearch新流程/pilots/pca_cpu/runs/runtime02/.autoresearch-flow/runtime/seed/state.json",
-      "sha256": "29c2b25b1eeca3a928f9bcae544fc623f94253d03a2fd82675ffe1a1ab7f53ac"
-    },
-    "seed_trajectory": {
-      "path": "AutoResearch新流程/pilots/pca_cpu/runs/runtime02/.autoresearch-flow/runtime/seed/formal/output/trajectory.jsonl",
-      "rounds": 5,
-      "sha256": "d5d3118c1cea6d93fac83d647b50276a00f865d4134d428dc20847050936e589"
-    }
-  },
-  "checked_links": 76,
+  "at": "2026-10-03T06:17:22+00:00",
+  "checked_links": 112,
   "fresh_cli_init_and_resume_status": true,
   "model_calls": 0,
-  "native_tests": "113",
-  "pending": [],
+  "native_tests": "168",
+  "package_revision": "2026-10-03.decoupled",
+  "pending": [
+    "维护者最终发布及新版迁移包"
+  ],
   "python": "3.13.13",
   "qa_coverage_count": 38,
   "qa_revision": "v0.3.1@2026-09-30",
-  "release_ready": true,
-  "relocated_tests": "113",
+  "release_ready": false,
+  "relocated_tests": "168",
+  "relocation_without_design_or_pilot_runs": true,
   "relocation_without_host_config_or_auth": true,
   "rule_count": 50,
   "scope": "tool contracts, not scientific or platform acceptance",
-  "status": "released",
+  "source_manifest_sha256": "d4588e4c2338fe2d9b17dcd14b41cc7ce4a2bbb7ddb64a042020b63496400c7a",
+  "status": "contracts_passed",
   "version": "0.2.0"
 }

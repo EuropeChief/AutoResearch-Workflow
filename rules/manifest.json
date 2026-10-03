@@ -1,7 +1,7 @@
 {
   "catalog": {
     "path": "AutoResearch新流程/rules/catalog.json",
-    "sha256": "e3c7dafe871a0c8d549d0f44ff5c49d670ad05434cbbc68b1e30f7de3481ec33"
+    "sha256": "d7a2623ed70026d6cb9d8e8bf1518984924d343b384d0b637016795e45df8b22"
   },
   "flow_version": "0.2.0",
   "workflow_revision": "2026-10-03.op01",
@@ -106,7 +106,7 @@
   ],
   "w0_inputs": [
     {
-      "path": "AutoResearch新流程设计/PCA_RULE_ALIGNMENT.md",
+      "path": "AutoResearch新流程/rules/provenance/PCA_RULE_ALIGNMENT.md",
       "sha256": "0d912ce79951afe0bcda85688ea1aad69b1be8da935b9cd8d9dc78a383455609"
     },
     {
@@ -114,5 +114,6 @@
       "sha256": "911b46ddadc9476924accf5dc4ebe5ef572e3292fa6ec140582726093657ac30"
     }
   ],
-  "qa_revision": "v0.3.1@2026-09-30"
+  "qa_revision": "v0.3.1@2026-09-30",
+  "package_revision": "2026-10-03.decoupled"
 }

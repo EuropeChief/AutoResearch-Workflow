@@ -10,8 +10,7 @@
 
 ## 本机示例与验收边界
 
-当前已完成的版本是 `runs/trial02/`；`trial01/` 是保留的失败试验。完整结论见
-[W5 联调报告](../../../AutoResearch新流程设计/W5_SEED_PILOT.md)。
+历史 0.1.0 联调完成版本是 `runs/trial02/`；`trial01/` 是保留的失败试验。原始设计报告归档标识为 `ca978de:W5_SEED_PILOT.md`，不是部署依赖。该联调仅证明当时 Seed 的短程预检、评测和同 thread 恢复，不证明当前 PCA 双镜像、GPT、GPU 或正式时长。新版适用范围见 [发布说明](../../RELEASE.md)。
 
 只读结果复核（不调用模型，也不改写已保存的 verification.json）：
 

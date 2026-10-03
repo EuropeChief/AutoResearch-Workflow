@@ -6,6 +6,8 @@
 
 ## 入口
 
+运行包与设计资料已按 `2026-10-03.decoupled` 修订分离，部署不再需要设计仓库；中央教程/QA 来源布局不变。详情及旧任务显式升级见 [解耦说明](DECOUPLING.md)。正式新版迁移发布仍归 OP-8，不把预览包称为正式发布。
+
 专家 Agent 从 [START_HERE.md](START_HERE.md) 开始；六阶段操作见 [SIX_STAGES.md](SIX_STAGES.md)，状态登记见 [STAGE_STATE.md](STAGE_STATE.md)。Codex/Pi 可直接读取同一份 [薄 Skill](skills/autoresearch-workflow/SKILL.md)，无需更改旧流程入口。当前只提供流程包内 Skill 源文件，未自动安装到用户宿主配置。
 
 在仓库根目录运行：

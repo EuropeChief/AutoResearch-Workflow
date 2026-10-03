@@ -2,7 +2,7 @@
 
 先部署通用流程及中央规则一次，再为每道题指定独立任务目录。规则不需要放到题目目录中。
 
-当前 0.2.0 PCA 版已发布，迁移包及解包复验记录位于中央根 `deliverables/`。旧 0.1.0 包仍对应 v4，不覆盖或静默升级。用户暂定 Harbor 0.23.0 为本地兼容目标，非项目方指定版本；其他版本/provider 不视为自动兼容。
+历史 0.2.0 PCA 发布包位于中央根 `deliverables/`。当前工作树含 OP-0—OP-3 和 `2026-10-03.decoupled` 解耦修订，正式新版迁移发布仍归 OP-8；不要把历史包当作这些增量已发布。旧 0.1.0 包仍对应 v4。用户暂定 Harbor 0.23.0 为本地兼容目标，非项目方指定版本；其他版本/provider 不视为自动兼容。
 
 ## 一次性部署
 
@@ -11,7 +11,6 @@
 ```text
 中央根/
   AutoResearch新流程/             # 此流程包：代码、文档、模板、模型 TOML、薄 Skill、测试
-  AutoResearch新流程设计/         # W0 锁定资料及实施/验收说明
   通用规则/
     AutoResearch 专家线下标注教程｜PCA 双镜像对齐版/
       AutoResearch 专家线下标注教程｜PCA 双镜像对齐版.md
@@ -20,7 +19,9 @@
     autoresearch-baseline-quality/
 ```
 
-源码和锁定依赖详见 [清单](release/source_manifest.json)；这不是压缩包复制命令，也不包含所有 QA Skill 执行脚本，部署时上述两个项目方 Skill 文件夹应完整复制。验收证据可保留 `release/` 的小型报告；**不要复制** `pilots/` 下任意 `build/`、`runs/`、`__pycache__/`、旧题目录、旧根 `config.toml` 或密钥。pilot 运行原证据只在发布工作区留存，不是每次部署的运行依赖。
+源码和锁定依赖详见 [清单](release/source_manifest.json)；当前打包工具纳入两个完整项目方 QA Skill 的分发文件。手动部署也应保留它们的完整内容。运行包内的 [规则溯源快照](rules/provenance/README.md) 已替代原跨设计目录的锁定输入；**不需要复制设计仓库**，教程与 QA 原件仍集中维护，不放进题目目录。验收证据可保留 `release/` 的小型报告；**不要复制** `.git/`、缓存、`pilots/` 下任意 `build/`、`runs/`、旧题目录、旧根 `config.toml` 或密钥。pilot 源码可保留，运行原证据只在维护工作区留存。
+
+从旧工作树切换的操作与验收/发布区别见 [解耦与兼容说明](DECOUPLING.md)。未发布的预览包不能代替 OP-8 的正式发布。
 
 前置条件：Python 3.11+；运行 Agent 时还需 Linux、用户可直接访问 Docker、任务镜像内的固定 Codex 版本及任务依赖；GPU 仅在题目需要时配置。
 

@@ -29,7 +29,7 @@ python3 "$FLOW_ROOT/cli.py" environment check \
 
 ## 真实运行证据接口
 
-实际命令必须与目标版本匹配。用户于 2026-09-30 暂定 Harbor 0.23；现已在 pilot 专用虚拟环境安装 0.23.0，并核对该版本支持 separate、artifacts 和 Verifier 环境配置。此为本地暂定兼容目标，不是项目方正式指定。Compose/Buildx 也仅安装到 pilot 专用 Docker 配置目录，不自动替换宿主环境；没有把本地 Docker 后端包装成 Harbor。须先小规模打通 Agent→artifacts→separate Verifier，再接入正式运行监督；不需要为工具验证重跑双 10h。实际进度见 [升级实施记录](../AutoResearch新流程设计/PCA_IMPLEMENTATION_STATUS.md)。
+实际命令必须与目标版本匹配。用户于 2026-09-30 暂定 Harbor 0.23；历史 pilot 使用 0.23.0 并核对其 separate、artifacts 和 Verifier 环境配置。此为本地暂定兼容目标，不是项目方正式指定。Compose/Buildx 仅安装到 pilot 专用 Docker 配置目录，不自动替换宿主环境；没有把本地 Docker 后端包装成 Harbor。先小规模打通 Agent→artifacts→separate Verifier，再接入正式运行监督；不需要为工具验证重跑双 10h。版本适用范围见 [发布说明](RELEASE.md)，设计历史只作维护追溯，不是执行依赖。
 
 实跑后使用 [内部记录模板](templates/harbor-execution.example.json)，所有字段须据真实日志填写。此 JSON 是**通用流程内部检查接口**，不是教程额外指定的文件名或顶层目录。
 
