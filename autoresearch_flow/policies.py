@@ -1,28 +1,21 @@
-"""Versioned task policy, separate from authoritative rules and runtime evidence.
-
-OP-2 makes stability optional; OP-3 admits an evidenced non-training duration
-exception. Later features stay disabled. Missing legacy fields remain read-only.
-"""
+"""Current frozen task policy, distinct from rules and implementation status."""
 from copy import deepcopy
 
-REVISION = "2026-10-03.op03"
-OP02_REVISION = "2026-10-03.op02"
-OP01_REVISION = "2026-10-03.op01"
+REVISION = "2026-10-03.public"
 DURATION_SECONDS = {"default_10h": 36000, "non_training_7h": 25200}
 DELIVERY_CHECKPOINTS = ("qa_verified", "archives_verified", "form_ready")
-LEGACY_POLICY = {
+DEFAULT_POLICY = {
     "schema_version": 1,
-    "revision": "legacy-0.2.0",
-    "git_required": False,
+    "revision": REVISION,
+    "git_required": True,
     "duration_policy": {"mode": "default_10h", "minimum_effective_seconds": 36000},
     "ui_mode": "exec_json",
-    "require_stability_receipt": True,
+    "require_stability_receipt": False,
 }
 
 
 def new_policy():
-    return deepcopy(LEGACY_POLICY) | {"revision": REVISION, "git_required": True,
-                                      "require_stability_receipt": False}
+    return deepcopy(DEFAULT_POLICY)
 
 
 def validate_duration(value):
@@ -38,31 +31,25 @@ def validate_duration(value):
 
 def effective_policy(state):
     from .core import _require
-    policy = deepcopy(state.get("workflow_policy", LEGACY_POLICY))
-    _require(isinstance(policy, dict) and set(policy) == set(LEGACY_POLICY)
+    policy = deepcopy(state.get("workflow_policy"))
+    _require(isinstance(policy, dict) and set(policy) == set(DEFAULT_POLICY)
              and policy["schema_version"] == 1
              and isinstance(policy["revision"], str)
-             and policy["revision"] in {"legacy-0.2.0", OP01_REVISION, OP02_REVISION, REVISION},
-             "INVALID_POLICY", "未知工作流政策合同；请使用匹配版本或显式升级")
+             and policy["revision"] == REVISION,
+             "INVALID_POLICY", "缺少当前冻结政策或版本不匹配；请用任务原版本流程恢复，不自动补旧默认值")
     validate_duration(policy["duration_policy"])
-    _require(type(policy["git_required"]) is bool and type(policy["require_stability_receipt"]) is bool,
-             "INVALID_POLICY", "Git 与稳定性门禁字段须为布尔值")
-    _require(policy["ui_mode"] == "exec_json"
-             and (policy["duration_policy"]["mode"] == "default_10h" or policy["revision"] == REVISION),
-             "POLICY_NOT_IMPLEMENTED", "TUI 尚未实施；旧政策不能直接改为 7h")
+    _require(policy["git_required"] is True and policy["require_stability_receipt"] is False,
+             "INVALID_POLICY", "当前政策要求 Git 检查点，专门稳定性收据非必需；不得静默改动政策")
+    _require(policy["ui_mode"] == "exec_json", "POLICY_NOT_IMPLEMENTED", "TUI 尚未验收，不可提前启用")
     if policy["duration_policy"]["mode"] == "non_training_7h":
         _require(isinstance(state.get("duration_assessment"), dict),
                  "DURATION_ASSESSMENT_REQUIRED", "7h 必须先通过 task duration-set 登记证据与确认")
-    _require(policy["require_stability_receipt"] == (policy["revision"] in {"legacy-0.2.0", OP01_REVISION}),
-             "INVALID_POLICY", "稳定性政策须与修订匹配；旧任务请显式升级，不单独改字段")
-    _require(policy["git_required"] == (policy["revision"] != "legacy-0.2.0"),
-             "INVALID_POLICY", "当前政策修订的 Git 门禁不能单独关闭；旧任务使用旧政策默认值")
     return policy
 
 
 def policy_status(state):
-    return {"status": "ok", "policy_source": "frozen" if "workflow_policy" in state else "legacy_default",
+    return {"status": "ok", "policy_source": "frozen",
             "workflow_policy": effective_policy(state),
             "planned_delivery_checkpoints": list(DELIVERY_CHECKPOINTS),
-            "pending_implementation": {"tui": "OP-4", "parallel_dispatch": "OP-5",
-                                       "three_archives": "OP-6", "form_material": "OP-7"}}
+            "pending_implementation": {"tui": "未验收", "parallel_dispatch": "未实现",
+                                       "three_archives": "未实现", "form_material": "未实现"}}

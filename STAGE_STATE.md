@@ -1,8 +1,8 @@
 # 状态与证据：统一登记和接续
 
-此模块把 W1 状态与 W2–W4 检查结果接起来，不运行训练、调用模型或代替独立 QA。题目根下仍使用 `.autoresearch-flow/state.json` schema 1；新增的不可覆盖记录在 `.autoresearch-flow/stage_records/`。
+此模块把 W1 状态与 W2–W4 检查结果接起来，不运行训练、调用模型或代替独立 QA。题目根下使用 `.autoresearch-flow/state.json` schema 2；新增的不可覆盖记录在 `.autoresearch-flow/stage_records/`。
 
-OP-0/1 增量为新任务增加 `workflow_policy`；旧状态只读兼容，显式政策升级及 Git 命令见 [操作说明](OP01_POLICY_GIT.md)。OP-2 的12h收据可选，OP-3 支持有证据且启动前冻结的7h例外，见 [稳定性政策](OP02_STABILITY.md)、[时长政策](OP03_DURATION.md)。OP-4—OP-8 仍待实施，默认10h/exec_json不变。
+政策随新任务冻结，见 [Git](OP01_POLICY_GIT.md)、[稳定性](OP02_STABILITY.md)、[时长](OP03_DURATION.md)。只支持新任务和同版本恢复；旧状态只读拒绝，不自动补值或迁移。
 
 ## 常用命令
 
@@ -24,7 +24,7 @@ python3 "$FLOW_ROOT/cli.py" stage finish --task-root "$TASK_ROOT" --stage 2 --fi
 
 | 步骤 | 自动重核的事实 |
 |---|---|
-| 1.1（当前政策的新任务） | Git 范围已确认且存在真实、可追溯的初始检查点；旧政策不补门禁 |
+| 1.1（当前政策的新任务） | Git 范围已确认且存在真实、可追溯的初始检查点 |
 | 2.1 | 双镜像结构及真实 Harbor 最小移交/独立评分记录；结构检查不替代实跑 |
 | 2.3 | W2 正式协议已锁定 |
 | 2.4 / 3.2 / 5.2 | 对应角色正式 seed 完整性及 W2 统计报告 |
@@ -37,7 +37,7 @@ python3 "$FLOW_ROOT/cli.py" stage finish --task-root "$TASK_ROOT" --stage 2 --fi
 | 6.3 | 当前包绑定了独立 QA 原报告，报告未被改动 |
 | 6.4 / 6.5 | 逐项处置覆盖报告检查项、绑定包/报告，明确不存在未解决本地项；报告未通过项不能手改成 pass |
 
-6.5 另核最终包内 Harbor 实跑、最佳代码与实际候选清单/评分合同绑定。OP-2 政策不要求 `checks.stability`；省略时如实记为 `not_run`，提供时仍核真实 12h、镜像、无异常及包内证据。旧政策仍必填，显式升级后取消。内部记录格式与相对路径范围见 [PCA_ENVIRONMENT.md](PCA_ENVIRONMENT.md)，不是新增平台必填文件名。
+6.5 另核最终包内 Harbor 实跑、最佳代码与实际候选清单/评分合同绑定。当前政策不要求 `checks.stability`；省略时如实记为 `not_run`，提供时仍核真实 12h、镜像、无异常及包内证据。旧任务使用匹配的原版本。内部记录格式与相对路径范围见 [PCA_ENVIRONMENT.md](PCA_ENVIRONMENT.md)，不是新增平台必填文件名。
 
 其余步骤登记专家的实际判断与证据，不自动证明论文方法、Baseline 代表性、合法迭代或模型能力。`finish` 会重新检查当前阶段所有实际程序门禁，并核阶段 2/3 使用同一个正式协议，阶段 6 全部步骤对应同一包版本。
 
@@ -59,7 +59,7 @@ python3 "$FLOW_ROOT/cli.py" stage reopen --task-root "$TASK_ROOT" --step 6.1 --f
 
 输入为 `{"reviewer":"责任人","reason":"具体变化与影响"}`。从最早受影响步骤开始把已做的后续结论标为 `needs_recheck`，保留原始结果和历史记录。后续重验可复用仍匹配的训练证据；文字或格式修订不自动触发重跑。重包后重新独立 QA；只修最终材料时通常回退 6.1，方法/协议变更应回退相应的研究阶段。
 
-`stage status` 检查已通过记录的原件引用哈希；发现漂移给出对应步骤，不静默改为通过。阶段推进与规则升级由一个专家会话串行执行；可并行的训练作业仅通过 W2 的运行账本登记。
+`stage status` 检查已通过记录的原件引用哈希；发现漂移给出对应步骤，不静默改为通过。阶段状态写入由一个专家会话串行执行；可并行的训练作业仅通过 W2 的运行账本登记。
 
 题目类型与适配入口在环境验收前通过 `task configure --file ...` 登记，见 [配置模板](templates/task-config.example.json)。`task check` 只查 W1 状态/来源；恢复任务应再运行 `stage status` 检查已登记证据。
 

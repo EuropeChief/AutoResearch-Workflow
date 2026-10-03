@@ -5,7 +5,7 @@
 | 现象 | 处理 |
 |---|---|
 | `TASK_NOT_INITIALIZED` | 核用户给出的题目根；新题明确授权后 init。不要推断或迁移旧 `.autoresearch/`。 |
-| `SOURCE_DRIFT` | 回查原件差异和 manifest；修好中央来源锁后预览 `task upgrade`，确认影响再显式 `--apply`，重验受影响结论。 |
+| `SOURCE_DRIFT` | 回查原件与任务来源锁，恢复任务冻结的原文件/工具版本；不手改哈希或重写锁让检查通过。 |
 | `EVIDENCE_DRIFT` / `STALE_STEP_RECORD` | 查对应 receipt，确认是错误修改还是有意修订。从最早受影响步骤 reopen；旧原始结果仍保留，不修改哈希掩盖变化。 |
 | `STEP_ORDER` / `STAGE_INCOMPLETE` | 看 status 的 next_step，补实际工作及证据；不能仅填 passed。 |
 | `STEP_FROZEN` | 已通过步骤不可直接覆写；需要返修时 reopen，生成新记录。 |

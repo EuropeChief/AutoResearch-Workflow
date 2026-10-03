@@ -28,30 +28,29 @@ class DesignDecouplingTests(unittest.TestCase):
         self.root = Path(self.tmp.name)
         self.flow = self.root / FLOW.name
         manifest = json.loads((FLOW / "rules/manifest.json").read_text())
-        refs = [manifest["catalog"], *manifest["sources"], *manifest["w0_inputs"],
-                {"path": f"{FLOW.name}/rules/manifest.json"}]
+        refs = [manifest["catalog"], *manifest["sources"], *manifest["bundled_files"],
+                {"path": "rules/manifest.json"}]
         for ref in refs:
             relative = Path(ref["path"])
             if relative.parts[0] == "AutoResearch新流程设计":
                 continue
-            target = self.root / relative
+            target = self.flow / relative
             target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(FLOW.parent / relative, target)
+            shutil.copyfile(FLOW / relative, target)
         self.task = self.root / "new-task"
         self.task.mkdir()
 
-    def test_initialize_without_design_and_reject_provenance_tampering(self):
+    def test_initialize_without_design_and_reject_bundled_asset_tampering(self):
         registry = Registry(self.flow)
         self.assertFalse((self.root / "AutoResearch新流程设计").exists())
         self.assertEqual(registry.check_sources(), [])
-        store = TaskStore(self.task, repository_root=self.root)
+        store = TaskStore(self.task, repository_root=self.flow)
         state = store.initialize(registry, "decoupled-smoke")
         self.assertEqual(state["current_stage"], "1")
         self.assertEqual(store.check()["issues"], [])
-        provenance = self.flow / "rules/provenance/PCA_RULE_ALIGNMENT.md"
-        self.assertEqual(_sha256(provenance),
-                         "0d912ce79951afe0bcda85688ea1aad69b1be8da935b9cd8d9dc78a383455609")
-        provenance.write_text(provenance.read_text() + "\nsynthetic drift\n")
+        asset = self.flow / next(r["path"] for r in registry.manifest["bundled_files"]
+                                  if r["path"].endswith(".zip"))
+        asset.write_bytes(asset.read_bytes() + b"synthetic drift")
         issues = registry.check_sources()
         self.assertEqual(len(issues), 1)
         self.assertEqual(issues[0]["code"], "SOURCE_DRIFT")
@@ -78,58 +77,26 @@ class DesignDecouplingTests(unittest.TestCase):
         module = tool("release_check")
         files = module.payload_files() + module.release_files()
         for p in files:
-            relative = p.relative_to(FLOW.parent)
+            relative = p.relative_to(FLOW)
             self.assertNotIn("AutoResearch新流程设计", relative.parts)
-            target = self.root / relative
+            target = self.flow / relative
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(p, target)
         self.assertFalse((self.root / "AutoResearch新流程设计").exists())
         self.assertFalse((self.flow / "pilots/pca_cpu/runs").exists())
-        with patch.object(module, "ROOT", self.root), patch.object(module, "FLOW", self.flow):
+        with patch.object(module, "ROOT", self.flow), patch.object(module, "FLOW", self.flow):
             module.check_documents(module.source_files())
         self.assertEqual(Registry(self.flow).check_sources(), [])
 
-    def test_path_only_upgrade_is_explicit_and_preserves_passed_stages(self):
-        manifest_path = self.flow / "rules/manifest.json"
-        current_bytes = manifest_path.read_bytes()
-        current = json.loads(current_bytes)
-        old = copy.deepcopy(current)
-        provenance_ref = next(r for r in old["w0_inputs"]
-                              if r["path"].endswith("/PCA_RULE_ALIGNMENT.md"))
-        current_path = self.root / provenance_ref["path"]
-        provenance_ref["path"] = "AutoResearch新流程设计/PCA_RULE_ALIGNMENT.md"
-        old_path = self.root / provenance_ref["path"]
-        old_path.parent.mkdir()
-        shutil.copyfile(current_path, old_path)
-        old.pop("package_revision", None)
-        _atomic_json(manifest_path, old)
-        store = TaskStore(self.task, repository_root=self.root)
-        before = store.initialize(Registry(self.flow), "path-only")
-        before["stages"]["1"]["status"] = "passed"
-        for step in before["stages"]["1"]["substeps"].values():
-            step["status"] = "passed"
-        before["current_stage"] = "2"
-        _atomic_json(store.state_path, before)
-        original_state_bytes = store.state_path.read_bytes()
-        manifest_path.write_bytes(current_bytes)
-        old_path.unlink()
-        old_path.parent.rmdir()
+    def test_historical_provenance_is_not_a_runtime_dependency(self):
         registry = Registry(self.flow)
-        self.assertEqual(store.check()["issues"][0]["code"], "SOURCE_DRIFT")
-        preview = store.upgrade(registry, apply=False)
-        self.assertTrue(preview["changed"])
-        self.assertFalse(preview["applied"])
-        self.assertEqual(preview["changed_rules"], [])
-        self.assertEqual(preview["affected_stages"], [])
-        self.assertFalse(preview["policy_changed"])
-        self.assertEqual(store.state_path.read_bytes(), original_state_bytes)
-        store.upgrade(registry, apply=True)
-        after = json.loads(store.state_path.read_text())
-        self.assertEqual(after["stages"], before["stages"])
-        self.assertEqual(after["workflow_policy"], before["workflow_policy"])
-        self.assertEqual(after["current_stage"], "2")
-        self.assertEqual(after["history"][-1]["previous_lock"], before["rules_lock"])
+        self.assertNotIn("w0_inputs", registry.manifest)
+        self.assertFalse((self.flow / "rules/provenance").exists())
+        store = TaskStore(self.task, repository_root=self.flow)
+        store.initialize(registry, "without-history")
+        before = store.state_path.read_bytes()
         self.assertEqual(store.check()["issues"], [])
+        self.assertEqual(store.state_path.read_bytes(), before)
 
     def test_replacing_receipts_preserves_previous_pair_without_rewriting_it(self):
         module = tool("release_check")
@@ -155,15 +122,15 @@ class DesignDecouplingTests(unittest.TestCase):
         checker = tool("release_check")
         packager = tool("build_migration")
         for p in checker.payload_files():
-            target = self.root / p.relative_to(FLOW.parent)
+            target = self.flow / p.relative_to(FLOW)
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(p, target)
-        with patch.object(checker, "ROOT", self.root), patch.object(checker, "FLOW", self.flow):
+        with patch.object(checker, "ROOT", self.flow), patch.object(checker, "FLOW", self.flow):
             paths = checker.payload_files()
         release = self.flow / "release"
         release.mkdir(exist_ok=True)
         manifest = {"version": checker.FLOW_VERSION, "package_revision": "test",
-                    "files": [{"path": str(p.relative_to(self.root)), "sha256": _sha256(p)}
+                    "files": [{"path": str(p.relative_to(self.flow)), "sha256": _sha256(p)}
                               for p in paths]}
         manifest_path = release / "source_manifest.json"
         _atomic_json(manifest_path, manifest)
@@ -171,12 +138,12 @@ class DesignDecouplingTests(unittest.TestCase):
                   "status": "contracts_passed", "release_ready": False,
                   "source_manifest_sha256": _sha256(manifest_path)}
         _atomic_json(release / "acceptance.json", report)
-        with patch.object(packager, "ROOT", self.root), patch.object(packager, "FLOW", self.flow):
+        with patch.object(packager, "ROOT", self.flow), patch.object(packager, "FLOW", self.flow):
             with self.assertRaisesRegex(RuntimeError, "not a ready record"):
                 packager._payload()
             payload = packager._payload(preview=True)
             self.assertFalse(any("AutoResearch新流程设计/" in p for p in payload))
-            self.assertIn(f"{FLOW.name}/.gitattributes", payload)
+            self.assertIn(".gitattributes", payload)
             # Current inputs must match the checked manifest, even in preview.
             (self.flow / "autoresearch_flow/added_after_check.py").write_text("# changed\n")
             with self.assertRaisesRegex(RuntimeError, "manifest.*(stale|drift)"):

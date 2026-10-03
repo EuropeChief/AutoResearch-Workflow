@@ -1,47 +1,44 @@
 # 新环境部署与开始新题
 
-先部署通用流程及中央规则一次，再为每道题指定独立任务目录。规则不需要放到题目目录中。
-
-历史 0.2.0 PCA 发布包位于中央根 `deliverables/`。当前工作树含 OP-0—OP-3 和 `2026-10-03.decoupled` 解耦修订，正式新版迁移发布仍归 OP-8；不要把历史包当作这些增量已发布。旧 0.1.0 包仍对应 v4。用户暂定 Harbor 0.23.0 为本地兼容目标，非项目方指定版本；其他版本/provider 不视为自动兼容。
-
-## 一次性部署
-
-在任意可写的中央目录下保留下列相对布局（顶层路径可变，下面这些目录名不能随意改）：
+整体复制或克隆本流程仓库到任意目录。规则原件集中在流程包内，不需要复制到每道题，也无需额外提供设计仓库。
 
 ```text
-中央根/
-  AutoResearch新流程/             # 此流程包：代码、文档、模板、模型 TOML、薄 Skill、测试
-  通用规则/
-    AutoResearch 专家线下标注教程｜PCA 双镜像对齐版/
-      AutoResearch 专家线下标注教程｜PCA 双镜像对齐版.md
-  .codex/skills/
-    autoresearch-task-qa/         # 原样保留项目方 Skill 包
-    autoresearch-baseline-quality/
+流程根/
+  START_HERE.md
+  cli.py
+  autoresearch_flow/
+  rules/
+  sources/tutorial/               # 当期原教程和原附件
+  skills/autoresearch-task-qa/     # 完整项目方 Skill
+  skills/autoresearch-baseline-quality/
+  skills/autoresearch-workflow/    # 专家 Agent 的薄入口
 ```
 
-源码和锁定依赖详见 [清单](release/source_manifest.json)；当前打包工具纳入两个完整项目方 QA Skill 的分发文件。手动部署也应保留它们的完整内容。运行包内的 [规则溯源快照](rules/provenance/README.md) 已替代原跨设计目录的锁定输入；**不需要复制设计仓库**，教程与 QA 原件仍集中维护，不放进题目目录。验收证据可保留 `release/` 的小型报告；**不要复制** `.git/`、缓存、`pilots/` 下任意 `build/`、`runs/`、旧题目录、旧根 `config.toml` 或密钥。pilot 源码可保留，运行原证据只在维护工作区留存。
+本版尚在开发，发布状态见 [RELEASE.md](RELEASE.md)。不要以历史归档替代当前源码，也不要复制鉴权文件、虚拟环境、题目产物、pilot 运行目录或缓存作为通用流程。
 
-从旧工作树切换的操作与验收/发布区别见 [解耦与兼容说明](DECOUPLING.md)。未发布的预览包不能代替 OP-8 的正式发布。
+## 环境与配置
 
-前置条件：Python 3.11+；运行 Agent 时还需 Linux、用户可直接访问 Docker、任务镜像内的固定 Codex 版本及任务依赖；GPU 仅在题目需要时配置。
+前期研究需要 Python 3.11+ 和独立题目目录；开始实验、容器或模型调用时再核相应依赖。本流程不负责从零安装宿主环境，不自动修改驱动、服务、用户组或安全配置。
 
-Harbor 0.23.0 单独安装到 Python 3.12+ 的虚拟环境，不要求流程核心与它共用 Python。本地试验使用 Python 3.13。准备 Docker Compose/Buildx 插件，在题目 runtime 配置中指定 `harness.executable`，需要专用插件目录时再填写 `harness.docker_config`。迁移时重新填写本机路径、构建/拉取对应镜像并预检；不要复制本机虚拟环境或照搬本机镜像 ID。CPU 短测不证明 GPU 分配已在新机器验证。
+目前有限适配目标为 Harbor 0.23.0，非项目方指定通用版本。实际使用仍需现成 Docker、Compose/Buildx、适配 Harbor 的 Python 环境及任务镜像；仅 GPU 题目要求相关设备与运行时。题目配置明确填写本机可执行文件路径，不能沿用另一台机器的镜像 ID 或环境结论。接口见 [PCA 环境说明](PCA_ENVIRONMENT.md)。
 
-分别检查 `model_profiles/codex.toml`、`model_profiles/seed.toml` 中的模型、地址和鉴权**路径引用**。将鉴权文件另行安全配置到当前机器，只填 `auth_ref.path`，不把密钥粘入 TOML、Prompt 或任务状态。原文件中的绝对路径属于本机配置，不应假设在新机器存在。当前模型参数可沿用，但仍需核对新题当期模型/推理档位要求。
+模型配置隔离模板与本地私有配置的改造尚在进行。当前真实调用前按 [运行底座](W3_RUNTIME.md) 核验配置来源及鉴权路径；不要假设源码中的本机路径在新环境存在。密钥只通过明确外部引用提供，不放进任务状态、Prompt、普通日志或提交包。
+
+在流程根运行：
 
 ```bash
-python3 /中央根/AutoResearch新流程/cli.py --format json version
-python3 /中央根/AutoResearch新流程/cli.py --format json rules check
+python3 cli.py --format json version
+python3 cli.py --format json rules check
 ```
 
-来源缺失或哈希不符时先补齐原件/审查版本变化，不手工改哈希使检查通过。只迁移目录不改变原件时，无需重做 W0 提炼。
+来源缺失或哈希不同应恢复匹配版本原件，不能只改哈希让检查通过。顶层目录可改名，内部相对布局应保留。
 
 ## 开始新题
 
-创建独立题目目录，放入题目卡、论文、代码或明确获取链接。向专家 Agent 提供如下指令（Codex 或 Pi 均可）：
+在题目目录准备题目卡、论文、代码或明确的获取链接。向专家 Agent（Codex 或 Pi）提供：
 
-> 请使用 `/中央根/AutoResearch新流程/START_HERE.md` 指定的新流程处理 `/题目根`。我授权为该新题初始化状态。先核对中央规则，按六阶段推进；涉及高成本运行与冻结时按流程确认，不迁移或引用其他题目的状态。
+> 请读取 `/流程根/START_HERE.md`，处理新题目录 `/题目根`。我授权为该新题初始化流程状态。按当前步骤推进，科学冻结、高成本运行及其他必要授权按流程处理，不引用其他题目的状态。
 
-也可以让宿主直接读取本包 `skills/autoresearch-workflow/SKILL.md`。安装薄 Skill 只是方便发现入口，不改变流程行为；本轮不自动安装或覆盖宿主 Skill。旧仓库 `AGENTS.md` 可能仍指向旧流程，所以开始新题时需**明确选择此新入口**，不能混用两套状态。
+也可显式读取本包薄 Skill。安装 Skill 只是便于发现入口，不改变合同；不自动覆盖宿主配置。已有根目录指令若仍指向旧流程，应明确选择本入口，不混用两套状态。
 
-之后按照 [START_HERE.md](START_HERE.md) 恢复当前步骤。每题只做题目适配、相关实验和两路真实 Public/Dev 预检；无需复制通用程序、重建 Broker 或重跑全套发布测试。更换机器、Codex 版本或安全边界时，针对变化补测；某台机器的安全例外不可直接继承。
+每题只实现题目适配、研究实验及相关预检，不复制通用程序或重建整个运行底座。当前仅支持新任务和同版本恢复；旧任务用原版本。改变机器、配置或安全边界后，针对变化补测，不能继承另一台机器的安全例外。

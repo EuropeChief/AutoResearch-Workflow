@@ -16,14 +16,14 @@ from pathlib import Path
 from urllib.parse import unquote
 
 FLOW = Path(__file__).resolve().parents[1]
-ROOT = FLOW.parent
+ROOT = FLOW
 sys.path.insert(0, str(FLOW))
 from autoresearch_flow import FLOW_VERSION
 from autoresearch_flow.core import Registry, _atomic_json, _sha256, _utc_now
 
 # This is a deployment allowlist, not a recursive copy of the maintainer's workspace.
 SOURCE_DIRECTORIES = {"autoresearch_flow", "rules", "templates", "model_profiles",
-                      "skills", "tests", "tools", "pilots"}
+                      "skills", "tests", "tools", "pilots", "sources", "docs"}
 GENERATED_DIRECTORIES = {"__pycache__", "runs", "build", "release", "runtime",
                          "tmp", "venv", "node_modules"}
 SPECIAL_FILES = {"Dockerfile", ".gitignore", ".gitattributes"}
@@ -39,7 +39,7 @@ def distributable_name(name):
 
 
 def source_name(name):
-    return distributable_name(name) and (Path(name).suffix in {".py", ".md", ".toml", ".json", ".sh"}
+    return distributable_name(name) and (Path(name).suffix in {".py", ".md", ".toml", ".json", ".sh", ".yaml", ".yml"}
                                         or name in SPECIAL_FILES)
 
 
@@ -140,29 +140,16 @@ def source_files(flow=None):
 
 
 def payload_files(flow=None):
-    """Runtime sources + locked central authorities; never the design archive."""
+    """One self-contained workflow root; never parent directories or secrets."""
     flow = FLOW if flow is None else flow
-    root = flow.parent
     registry = Registry(flow)
     assert registry.check_sources() == [], "Rule sources drifted"
     files = source_files(flow)
-    refs = [*registry.manifest["sources"], *registry.manifest["w0_inputs"]]
-    files.extend(root / ref["path"] for ref in refs)
-    for name in ("autoresearch-task-qa", "autoresearch-baseline-quality"):
-        skill = root / ".codex/skills" / name
-        assert (skill / "SKILL.md").is_file(), f"Missing QA skill: {name}"
-        for directory, children, names in os.walk(skill):
-            children[:] = sorted(c for c in children if not c.startswith(".")
-                                 and c not in GENERATED_DIRECTORIES)
-            for child in children:
-                if (Path(directory) / child).is_symlink():
-                    raise ValueError(f"Unexpected QA symlink: {child}")
-            for filename in names:
-                if distributable_name(filename):
-                    files.append(Path(directory) / filename)
+    # Locked assets (including tutorial ZIP attachments) are allowed explicitly,
+    # not by accepting arbitrary archives found in the maintainer's workspace.
+    files.extend(flow / ref["path"] for ref in registry.manifest["bundled_files"])
     for p in files:
-        relative = p.relative_to(root)
-        assert relative.parts[0] in {flow.name, "通用规则", ".codex"}, relative
+        p.relative_to(flow)
         assert p.is_file() and not p.is_symlink(), p
     return sorted(set(files))
 
@@ -176,7 +163,9 @@ def check_documents(files):
             json.loads(path.read_text())
         elif path.suffix == ".toml":
             tomllib.loads(path.read_text())
-        elif path.suffix == ".md" and path.relative_to(FLOW) not in SNAPSHOT_DOCUMENTS:
+        elif (path.suffix == ".md" and path.relative_to(FLOW) not in SNAPSHOT_DOCUMENTS
+              and not path.relative_to(FLOW).parts[:2] in {
+                  ("skills", "autoresearch-task-qa"), ("skills", "autoresearch-baseline-quality")}):
             for target in re.findall(r"\]\(([^)]+)\)", path.read_text()):
                 if target.startswith(("http:", "https:", "#", "mailto:")):
                     continue
@@ -256,7 +245,7 @@ def main():
             target = root / source.relative_to(ROOT)
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(source, target)
-        relocated_flow = root / FLOW.name
+        relocated_flow = root
         assert not (root / "config.toml").exists()
         assert not (root / "auth.json").exists()
         assert not (root / "AutoResearch新流程设计").exists()

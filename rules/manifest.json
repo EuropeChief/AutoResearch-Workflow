@@ -1,119 +1,256 @@
 {
   "catalog": {
-    "path": "AutoResearch新流程/rules/catalog.json",
-    "sha256": "d7a2623ed70026d6cb9d8e8bf1518984924d343b384d0b637016795e45df8b22"
+    "path": "rules/catalog.json",
+    "sha256": "88758e2e78340495ebfb70711265cd16a4833ce3ada3b4951fd5fa9c10d9ae62"
   },
-  "flow_version": "0.2.0",
-  "workflow_revision": "2026-10-03.op01",
+  "flow_version": "0.3.0",
   "schema_version": 1,
+  "qa_checks": ["B01","B02","B03","B04","B05","B06","B07","B08","G01","G02","G03","H01","H02","H03","H04","H05","H06","QA01","QA02","QA03","QA04","QA05","QA06","QA07","QA08","QA09","QA10","QA11","QA12","QA13","QA14","QA15","QA16","QA17","QA18","QA19","QA20","QA21"],
+  "skipped_checks": ["QA15"],
   "sources": [
     {
       "id": "tutorial",
-      "path": "通用规则/AutoResearch 专家线下标注教程｜PCA 双镜像对齐版/AutoResearch 专家线下标注教程｜PCA 双镜像对齐版.md",
+      "path": "sources/tutorial/AutoResearch 专家线下标注教程｜PCA 双镜像对齐版.md",
       "priority": 1,
       "scope": "global",
       "sha256": "ddf9e9286dea1ea551c47574716cb2a93c39b7dfe93c0d77284f731782947fab",
-      "version": "PCA-20260929"
+      "version": "PCA-20260929",
+      "origin_path": "通用规则/AutoResearch 专家线下标注教程｜PCA 双镜像对齐版/AutoResearch 专家线下标注教程｜PCA 双镜像对齐版.md"
     },
     {
       "id": "qa_skill",
-      "path": ".codex/skills/autoresearch-task-qa/SKILL.md",
+      "path": "skills/autoresearch-task-qa/SKILL.md",
       "priority": 2,
       "scope": "global",
       "sha256": "584db44ea949220ec44582b98590be3984d50e4d3c0272690fc6c21d4b638fd6",
-      "version": "v0.3.1@2026-09-30"
+      "version": "v0.3.1@2026-09-30",
+      "origin_path": ".codex/skills/autoresearch-task-qa/SKILL.md"
     },
     {
       "id": "source_alignment",
-      "path": ".codex/skills/autoresearch-task-qa/references/source-alignment.md",
+      "path": "skills/autoresearch-task-qa/references/source-alignment.md",
       "priority": 2,
       "scope": "global",
       "sha256": "93e8eb3ba75b2b14d2b9300284330c3c1192965eca7d76002c847bcbc48e2499",
-      "version": "v0.3.1@2026-09-30"
+      "version": "v0.3.1@2026-09-30",
+      "origin_path": ".codex/skills/autoresearch-task-qa/references/source-alignment.md"
     },
     {
       "id": "research_quality",
-      "path": ".codex/skills/autoresearch-task-qa/references/research-quality.md",
+      "path": "skills/autoresearch-task-qa/references/research-quality.md",
       "priority": 2,
       "scope": "global",
       "sha256": "3304e93def3129922fe7544bca7fd6a778aa6df1270aa9259ee1ee6ef71d0724",
-      "version": "v0.3.1@2026-09-30"
+      "version": "v0.3.1@2026-09-30",
+      "origin_path": ".codex/skills/autoresearch-task-qa/references/research-quality.md"
     },
     {
       "id": "implementation_policy",
-      "path": ".codex/skills/autoresearch-task-qa/references/implementation-policy.md",
+      "path": "skills/autoresearch-task-qa/references/implementation-policy.md",
       "priority": 2,
       "scope": "global",
       "sha256": "863832ac7277bc3cce0f51f3d346b03c0e8600e19b5403dc99e58b156c9d331e",
-      "version": "v0.3.1@2026-09-30"
+      "version": "v0.3.1@2026-09-30",
+      "origin_path": ".codex/skills/autoresearch-task-qa/references/implementation-policy.md"
     },
     {
       "id": "submission_format",
-      "path": ".codex/skills/autoresearch-task-qa/references/submission-format.md",
+      "path": "skills/autoresearch-task-qa/references/submission-format.md",
       "priority": 2,
       "scope": "global",
       "sha256": "535903a11526c125d51511e0752554f9b7df73605458d1b94da5ca3702aa0c3e",
-      "version": "v0.3.1@2026-09-30"
+      "version": "v0.3.1@2026-09-30",
+      "origin_path": ".codex/skills/autoresearch-task-qa/references/submission-format.md"
     },
     {
       "id": "docker_path_contract",
-      "path": ".codex/skills/autoresearch-task-qa/references/docker-path-contract.md",
+      "path": "skills/autoresearch-task-qa/references/docker-path-contract.md",
       "priority": 2,
       "scope": "global",
       "sha256": "10afe94e54542906b7bc4ef911f2f43d1373a5e7459738606bbfb1ddc8631e60",
-      "version": "v0.3.1@2026-09-30"
+      "version": "v0.3.1@2026-09-30",
+      "origin_path": ".codex/skills/autoresearch-task-qa/references/docker-path-contract.md"
     },
     {
       "id": "harbor_harness",
-      "path": ".codex/skills/autoresearch-task-qa/references/harbor-harness.md",
+      "path": "skills/autoresearch-task-qa/references/harbor-harness.md",
       "priority": 2,
       "scope": "global",
       "sha256": "f701dd2e07e1adfb40d8ae56f14c5440296aab8e6a824d205f13592084a9ba2c",
-      "version": "v0.3.1@2026-09-30"
+      "version": "v0.3.1@2026-09-30",
+      "origin_path": ".codex/skills/autoresearch-task-qa/references/harbor-harness.md"
     },
     {
       "id": "implementation_report",
-      "path": ".codex/skills/autoresearch-task-qa/references/implementation-report.md",
+      "path": "skills/autoresearch-task-qa/references/implementation-report.md",
       "priority": 2,
       "scope": "global",
       "sha256": "be02e4ad45ad1596413308cab46d7fde5f64e36f01a26635230757c452b4b5e8",
-      "version": "v0.3.1@2026-09-30"
+      "version": "v0.3.1@2026-09-30",
+      "origin_path": ".codex/skills/autoresearch-task-qa/references/implementation-report.md"
     },
     {
       "id": "baseline_skill",
-      "path": ".codex/skills/autoresearch-baseline-quality/SKILL.md",
+      "path": "skills/autoresearch-baseline-quality/SKILL.md",
       "priority": 2,
       "scope": "global",
       "sha256": "e1ad68530be94c2cfe59ee146a7dd37c614eae537ff85cbda3e7147c0c150d76",
-      "version": "qa-g02-route@2026-09-18"
+      "version": "qa-g02-route@2026-09-18",
+      "origin_path": ".codex/skills/autoresearch-baseline-quality/SKILL.md"
     },
     {
       "id": "baseline_review_method",
-      "path": ".codex/skills/autoresearch-baseline-quality/references/baseline-review-method.md",
+      "path": "skills/autoresearch-baseline-quality/references/baseline-review-method.md",
       "priority": 2,
       "scope": "global",
       "sha256": "15f996157d18b17209d0640bec24e2c39711fbac682ee7eaac830c7a7a8a568c",
-      "version": "implementation@2026-09-18"
+      "version": "implementation@2026-09-18",
+      "origin_path": ".codex/skills/autoresearch-baseline-quality/references/baseline-review-method.md"
     },
     {
       "id": "exposure_manifest",
-      "path": ".codex/skills/autoresearch-task-qa/references/exposure-manifest.md",
+      "path": "skills/autoresearch-task-qa/references/exposure-manifest.md",
       "priority": 2,
       "scope": "global",
       "sha256": "7f4bba67d2acd2e7732409d04bce76422c0935987eb8a9f42c9e992641929a69",
-      "version": "v0.3.1@2026-09-30"
-    }
-  ],
-  "w0_inputs": [
-    {
-      "path": "AutoResearch新流程/rules/provenance/PCA_RULE_ALIGNMENT.md",
-      "sha256": "0d912ce79951afe0bcda85688ea1aad69b1be8da935b9cd8d9dc78a383455609"
-    },
-    {
-      "path": "AutoResearch新流程/QA_V031_ALIGNMENT.md",
-      "sha256": "911b46ddadc9476924accf5dc4ebe5ef572e3292fa6ec140582726093657ac30"
+      "version": "v0.3.1@2026-09-30",
+      "origin_path": ".codex/skills/autoresearch-task-qa/references/exposure-manifest.md"
     }
   ],
   "qa_revision": "v0.3.1@2026-09-30",
-  "package_revision": "2026-10-03.decoupled"
+  "package_revision": "2026-10-03.public-rules",
+  "bundled_files": [
+    {
+      "path": "skills/autoresearch-baseline-quality/agents/openai.yaml",
+      "sha256": "79d7424f5e8da52b31b833d3d62313b7f5b0dc7e4c91fd9dd3a5852770fe286b"
+    },
+    {
+      "path": "skills/autoresearch-baseline-quality/references/baseline-review-method.md",
+      "sha256": "15f996157d18b17209d0640bec24e2c39711fbac682ee7eaac830c7a7a8a568c"
+    },
+    {
+      "path": "skills/autoresearch-baseline-quality/SKILL.md",
+      "sha256": "e1ad68530be94c2cfe59ee146a7dd37c614eae537ff85cbda3e7147c0c150d76"
+    },
+    {
+      "path": "skills/autoresearch-task-qa/agents/openai.yaml",
+      "sha256": "17c41d7c878f9ddb61590d2aec3ad24fdf2ca2dc1447429ca7993a5e6a841a82"
+    },
+    {
+      "path": "skills/autoresearch-task-qa/references/docker-path-contract.md",
+      "sha256": "10afe94e54542906b7bc4ef911f2f43d1373a5e7459738606bbfb1ddc8631e60"
+    },
+    {
+      "path": "skills/autoresearch-task-qa/references/exposure-manifest.md",
+      "sha256": "7f4bba67d2acd2e7732409d04bce76422c0935987eb8a9f42c9e992641929a69"
+    },
+    {
+      "path": "skills/autoresearch-task-qa/references/harbor-harness.md",
+      "sha256": "f701dd2e07e1adfb40d8ae56f14c5440296aab8e6a824d205f13592084a9ba2c"
+    },
+    {
+      "path": "skills/autoresearch-task-qa/references/implementation-policy.md",
+      "sha256": "863832ac7277bc3cce0f51f3d346b03c0e8600e19b5403dc99e58b156c9d331e"
+    },
+    {
+      "path": "skills/autoresearch-task-qa/references/implementation-report.md",
+      "sha256": "be02e4ad45ad1596413308cab46d7fde5f64e36f01a26635230757c452b4b5e8"
+    },
+    {
+      "path": "skills/autoresearch-task-qa/references/precheck-policy.md",
+      "sha256": "4c84074aa9214f5a6070f038ea1b084d30cd947abac3f4510c1b149432d5550c"
+    },
+    {
+      "path": "skills/autoresearch-task-qa/references/qa-spec.md",
+      "sha256": "7a26bce4dde9283b2f3a289659b93f8a7120096059bebc4306d7514609e5475a"
+    },
+    {
+      "path": "skills/autoresearch-task-qa/references/report-schema.md",
+      "sha256": "10ff4bbcb2ddf77fd2f5a8b985ff72b7b49b87a11da682f49a6ee687998853fd"
+    },
+    {
+      "path": "skills/autoresearch-task-qa/references/research-quality.md",
+      "sha256": "3304e93def3129922fe7544bca7fd6a778aa6df1270aa9259ee1ee6ef71d0724"
+    },
+    {
+      "path": "skills/autoresearch-task-qa/references/source-alignment.md",
+      "sha256": "93e8eb3ba75b2b14d2b9300284330c3c1192965eca7d76002c847bcbc48e2499"
+    },
+    {
+      "path": "skills/autoresearch-task-qa/references/submission-format.md",
+      "sha256": "535903a11526c125d51511e0752554f9b7df73605458d1b94da5ca3702aa0c3e"
+    },
+    {
+      "path": "skills/autoresearch-task-qa/scripts/audit_collection.py",
+      "sha256": "465561e2da63401826476820792c4b0eed7f1b7cf5127b43d95da97ca06c4b69"
+    },
+    {
+      "path": "skills/autoresearch-task-qa/scripts/audit_task.py",
+      "sha256": "c9f59b4f1f8e13f94c16bc1b2b66e7192805ada89b624186ea71fa24c6f43e91"
+    },
+    {
+      "path": "skills/autoresearch-task-qa/scripts/content_gates.py",
+      "sha256": "baab33a3c4b51b30b93d3136398295673e814b5de67de06a6ce98999c664d29c"
+    },
+    {
+      "path": "skills/autoresearch-task-qa/scripts/docker_paths.py",
+      "sha256": "6ad984082d6f55386f57279d8798e1aa06bd2440ad129e6ae12e404157eda13f"
+    },
+    {
+      "path": "skills/autoresearch-task-qa/scripts/harbor_review.py",
+      "sha256": "378a0ef87fff52e2128b526a3c0eb1da5d9ff8fa557625608a2d58bc5783530b"
+    },
+    {
+      "path": "skills/autoresearch-task-qa/scripts/implementation_review.py",
+      "sha256": "b82881bd612d9d51abafcf4fd1bfb09568393843b82c6e967241ad4ad07dae39"
+    },
+    {
+      "path": "skills/autoresearch-task-qa/scripts/submission_format.py",
+      "sha256": "039517b860a87ae562ac90190476692bc2991e5e86d1fa0f494c515def4ea8b5"
+    },
+    {
+      "path": "skills/autoresearch-task-qa/scripts/test_audit_collection.py",
+      "sha256": "6b83edd9f7e8c7c66d4f6588053ac9143cceab84391f760ce196dcd7742b7552"
+    },
+    {
+      "path": "skills/autoresearch-task-qa/scripts/test_audit_task.py",
+      "sha256": "ff29243a232b450d0991f369dbfec0c787eefc17fb267cc80a68db02d722b43d"
+    },
+    {
+      "path": "skills/autoresearch-task-qa/scripts/test_content_gates.py",
+      "sha256": "95ca6a2a34fc97a1d64a2a63f534d1ec2ea429edcc9f9b2acd0787279b8ae52b"
+    },
+    {
+      "path": "skills/autoresearch-task-qa/scripts/test_docker_paths.py",
+      "sha256": "df58fa1a1c718431a5b09e36042098c5d3e7d1c050edb224863ecb371245fa03"
+    },
+    {
+      "path": "skills/autoresearch-task-qa/scripts/test_harbor_review.py",
+      "sha256": "471dc706b2c340e2c2763c1707ce688f30081b2fa08acbada8fbdfba2c6ea8b9"
+    },
+    {
+      "path": "skills/autoresearch-task-qa/scripts/test_implementation_review.py",
+      "sha256": "2e03066b733297ec04b892dc7c07179dd0e8f29a14d9e84268b11346e1f31e2b"
+    },
+    {
+      "path": "skills/autoresearch-task-qa/scripts/test_submission_format.py",
+      "sha256": "5a17ae2b457fd97051b9e67c26f5841e66c6ad297611a70b3f485965ecf9ede0"
+    },
+    {
+      "path": "skills/autoresearch-task-qa/SKILL.md",
+      "sha256": "584db44ea949220ec44582b98590be3984d50e4d3c0272690fc6c21d4b638fd6"
+    },
+    {
+      "path": "sources/tutorial/AutoResearch 专家线下标注教程｜PCA 双镜像对齐版.md",
+      "sha256": "ddf9e9286dea1ea551c47574716cb2a93c39b7dfe93c0d77284f731782947fab"
+    },
+    {
+      "path": "sources/tutorial/图片和附件/population-genetics-pca_teaching-format_20260929 1.zip",
+      "sha256": "a4ec672dbb3bcd9d52b49c3575e1e80f559139363f7450e6e83b890342e044f7"
+    },
+    {
+      "path": "sources/tutorial/图片和附件/population-genetics-pca_teaching-format_20260929.zip",
+      "sha256": "a4ec672dbb3bcd9d52b49c3575e1e80f559139363f7450e6e83b890342e044f7"
+    }
+  ]
 }

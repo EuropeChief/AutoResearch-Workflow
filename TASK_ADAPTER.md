@@ -8,7 +8,7 @@
 - 论文、代码或可核来源链接；必要的数据访问条件与资源限制。
 - 到模型调用阶段，再给已批准的账户/预算和凭据路径。凭据值不写入说明、Prompt 或题目证据。
 
-正式规则默认来自中央 `rules/manifest.json`，无需用户为每题重填版本、日期和优先级。发现来源改变时显式复核并升级；不把旧示例当正式规则。
+正式规则默认来自中央 `rules/manifest.json`，无需用户为每题重填版本、日期和优先级。出现来源漂移时恢复该任务锁定的原版本；新规则用于新任务，不静默改锁，不把旧示例当正式规则。
 
 ## 专家实现的题目部分
 
@@ -38,7 +38,7 @@
   .autoresearch-flow/      # CLI 生成；无需用户手建
 ```
 
-这只是制作期布局；双镜像合同见 [PCA_ENVIRONMENT.md](PCA_ENVIRONMENT.md)。模型配置集中在 `model_profiles/codex.toml`、`seed.toml`，runtime 配置升级为 schema 2。题面由 Harness 提供；本地组件预检可显式映射 instruction.md，不再要求 task.toml 公开。Agent 每轮只调用 Public/Dev，/workspace/solution 是可写候选，/workspace/starter 只读；私有 tests 不可见。正式 Harbor 适配尚未完成，不能以本地 Docker 路径冒充正式启动。
+这只是制作期布局；双镜像合同见 [PCA_ENVIRONMENT.md](PCA_ENVIRONMENT.md)。模型配置集中在 `model_profiles/codex.toml`、`seed.toml`，runtime 配置升级为 schema 2。题面由 Harness 提供；本地组件预检可显式映射 instruction.md，不再要求 task.toml 公开。Agent 每轮只调用 Public/Dev，/workspace/solution 是可写候选，/workspace/starter 只读；私有 tests 不可见。Harbor 0.23.0 的有限适配见环境合同，仍须按每题实际条件预检，不能以本地 Docker 路径冒充正式启动。
 
 ## 接口对照
 
@@ -50,4 +50,4 @@ Public/Dev 入口使用 [W3](W3_RUNTIME.md) 的最后一行 JSON：`status/score
 
 ## 真实联调范围
 
-旧 W5 的 Seed CPU 联调属于 0.1.0；新版状态见 [发布记录](RELEASE.md)。新版必须补目标 Harbor 独立环境、候选移交和出分实跑；同接口授权自验不代表官方 Hidden 通过。
+每题须有目标 Harbor 独立环境、候选移交和出分实跑证据；同接口授权自验不代表官方 Hidden 通过。工具发布验收范围见 [发布记录](RELEASE.md)。

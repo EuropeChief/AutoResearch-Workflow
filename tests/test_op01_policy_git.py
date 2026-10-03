@@ -79,29 +79,18 @@ class PolicyGitTests(unittest.TestCase):
         del data["workflow_policy"]
         self.store.state_path.write_text(json.dumps(data))
         before = self.store.state_path.read_bytes()
-        legacy = self.cli("policy")
-        self.assertEqual(legacy["policy_source"], "legacy_default")
-        self.assertEqual(legacy["workflow_policy"]["git_required"], False)
-        self.assertEqual(legacy["workflow_policy"]["duration_policy"]["minimum_effective_seconds"], 36000)
+        legacy = self.cli("policy", expected=2)
+        self.assertEqual(legacy["issues"][0]["code"], "INVALID_POLICY")
         self.assertEqual(self.store.state_path.read_bytes(), before)
 
-    def test_policy_adoption_requires_explicit_apply_and_unprepared_runtime(self):
-        data = json.loads(self.store.state_path.read_text())
-        del data["workflow_policy"]
-        self.store.state_path.write_text(json.dumps(data))
+    def test_upgrade_command_is_unavailable_and_preserves_state(self):
         before = self.store.state_path.read_bytes()
-        preview = self.cli("upgrade", "--adopt-policy")
-        self.assertTrue(preview["policy_changed"])
-        self.assertEqual(preview["affected_stages"], [1])
+        cli = Path(__file__).resolve().parents[1] / "cli.py"
+        result = subprocess.run([sys.executable, str(cli), "task", "upgrade",
+            "--task-root", str(self.task)], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("invalid choice", result.stderr)
         self.assertEqual(self.store.state_path.read_bytes(), before)
-        runtime = self.store.state_dir / "runtime"
-        runtime.mkdir()
-        blocked = self.cli("upgrade", "--adopt-policy", "--apply", expected=2)
-        self.assertEqual(blocked["issues"][0]["code"], "RUNTIME_ALREADY_PREPARED")
-        self.assertEqual(self.store.state_path.read_bytes(), before)
-        runtime.rmdir()
-        self.assertTrue(self.cli("upgrade", "--adopt-policy", "--apply")["applied"])
-        self.assertTrue(self.cli("policy")["workflow_policy"]["git_required"])
 
     def test_unsupported_runtime_policy_is_rejected_instead_of_silently_ignored(self):
         data = json.loads(self.store.state_path.read_text())
@@ -123,7 +112,11 @@ class PolicyGitTests(unittest.TestCase):
         data = json.loads(self.store.state_path.read_text())
         del data["workflow_policy"]
         self.store.state_path.write_text(json.dumps(data))
-        self.assertEqual(flow.record(spec)["step_status"], "passed")
+        before = self.store.state_path.read_bytes()
+        with self.assertRaises(FlowError) as caught:
+            flow.record(spec)
+        self.assertEqual(caught.exception.code, "INVALID_POLICY")
+        self.assertEqual(self.store.state_path.read_bytes(), before)
 
     def test_parent_repository_preserves_unrelated_staged_and_unstaged_work(self):
         self.git("init", "--quiet", cwd=self.root)
@@ -274,19 +267,13 @@ class PolicyGitTests(unittest.TestCase):
                 self.store.state_path.write_text(json.dumps(data))
                 self.assertEqual(self.cli("policy", expected=2)["issues"][0]["code"], "INVALID_POLICY")
 
-    def test_adoption_reopens_passed_step_inside_in_progress_stage(self):
+    def test_missing_policy_does_not_rewrite_existing_step_history(self):
         data = json.loads(self.store.state_path.read_text())
-        del data["workflow_policy"]
+        data.pop("workflow_policy")
         self.store.state_path.write_text(json.dumps(data))
-        (self.task / "input.md").write_text("synthetic inputs")
-        flow = StageFlow(self.task)
-        spec = {"step": "1.1", "status": "passed", "reviewer": "synthetic", "summary": "legacy",
-                "evidence": flow.reference(["input.md"])["evidence"], "checks": {}}
-        flow.record(spec)
-        self.cli("upgrade", "--adopt-policy", "--apply")
-        data = json.loads(self.store.state_path.read_text())
-        self.assertEqual(data["stages"]["1"]["substeps"]["1.1"]["status"], "needs_recheck")
-        self.assertEqual(flow.status()["next_step"], "1.1")
+        before = self.store.state_path.read_bytes()
+        self.assertEqual(self.cli("check", expected=2)["issues"][0]["code"], "INVALID_POLICY")
+        self.assertEqual(self.store.state_path.read_bytes(), before)
 
     def test_snapshot_preserves_mode_even_when_existing_repo_ignores_mode_changes(self):
         script = self.task / "script.sh"

@@ -191,14 +191,16 @@
     ]
   },
   "generated_from": {
-    "rule_catalog": "AutoResearch新流程/rules/provenance/PCA_RULE_ALIGNMENT.md",
-    "qa_coverage": "AutoResearch新流程/rules/catalog.json#/coverage"
+    "authority": "rules/manifest.json",
+    "qa_coverage": "rules/catalog.json#/coverage"
   },
   "rule_count": 50,
   "rules": [
     {
       "evidence": "任务卡、论文/代码、资源清单、GO/NO-GO",
       "id": "AR-001",
+      "timing": {"inform_at":"1.1","check_at":["1.1","1.4"],"due_at":["1.4"]},
+      "applicability": "requires_review",
       "reviewer": "专家",
       "source_refs": [
         "T:PCA-20260929:L80–116"
@@ -211,6 +213,8 @@
     {
       "evidence": "`instruction.md`、候选接口、guard、Starter/Reference diff",
       "id": "AR-002",
+      "timing": {"inform_at":"1.2","check_at":["1.2","2.2","3.3"],"due_at":["1.4","3.3"]},
+      "applicability": "all",
       "reviewer": "专家",
       "source_refs": [
         "T:PCA-20260929:L18–22,251–282",
@@ -226,6 +230,8 @@
     {
       "evidence": "候选理由、Starter 源码、协议与正式结果",
       "id": "AR-003",
+      "timing": {"inform_at":"1.3","check_at":["1.3","2.5","3.5"],"due_at":["2.5","3.5"]},
+      "applicability": "requires_review",
       "reviewer": "专家",
       "source_refs": [
         "T:PCA-20260929:L20,160,350–449",
@@ -241,6 +247,8 @@
     {
       "evidence": "包目录、运行挂载/COPY、权限或恢复链",
       "id": "AR-004",
+      "timing": {"inform_at":"1.2","check_at":["2.1","4.1","6.2"],"due_at":["4.1","6.2"]},
+      "applicability": "all",
       "reviewer": "程序＋专家",
       "source_refs": [
         "T:PCA-20260929:L38–64,144–165,618",
@@ -259,6 +267,8 @@
     {
       "evidence": "TOML、适配入口、平台版本依据",
       "id": "AR-005",
+      "timing": {"inform_at":"2.1","check_at":["2.1","3.5","6.2"],"due_at":["4.1","6.2"]},
+      "applicability": "all",
       "reviewer": "程序＋专家",
       "source_refs": [
         "T:PCA-20260929:L171–217",
@@ -276,6 +286,8 @@
     {
       "evidence": "题面与调用链",
       "id": "AR-006",
+      "timing": {"inform_at":"2.2","check_at":["2.2","3.5","6.1"],"due_at":["4.1","6.1"]},
+      "applicability": "all",
       "reviewer": "专家",
       "source_refs": [
         "T:PCA-20260929:L219–282,948",
@@ -293,6 +305,8 @@
     {
       "evidence": "题面、实际可见材料",
       "id": "AR-007",
+      "timing": {"inform_at":"2.2","check_at":["2.2","4.1","6.2"],"due_at":["4.1","6.2"]},
+      "applicability": "all",
       "reviewer": "专家",
       "source_refs": [
         "T:PCA-20260929:L280,515–525",
@@ -310,6 +324,8 @@
     {
       "evidence": "环境配置、guard、评分调用链",
       "id": "AR-008",
+      "timing": {"inform_at":"2.1","check_at":["2.1","2.2","3.5","4.1"],"due_at":["4.1","6.2"]},
+      "applicability": "requires_review",
       "reviewer": "专家",
       "source_refs": [
         "T:PCA-20260929:L251–282,509–525",
@@ -327,6 +343,8 @@
     {
       "evidence": "Dockerfile、构建命令、路径解析、运行记录",
       "id": "AR-009",
+      "timing": {"inform_at":"2.1","check_at":["2.1","3.5","6.5"],"due_at":["4.1","6.5"]},
+      "applicability": "all",
       "reviewer": "程序＋专家",
       "source_refs": [
         "T:PCA-20260929:L38–64,288–324,529–541",
@@ -345,6 +363,8 @@
     {
       "evidence": "构建/运行日志、资源记录、专家说明",
       "id": "AR-010",
+      "timing": {"inform_at":"2.1","check_at":["2.1","4.1","6.5"],"due_at":["6.5"]},
+      "applicability": "requires_review",
       "reviewer": "专家＋平台",
       "source_refs": [
         "T:PCA-20260929:L70–72,324"
@@ -361,6 +381,8 @@
     {
       "evidence": "Agent 实际可见集、镜像/COPY、挂载、恢复与评分链",
       "id": "AR-011",
+      "timing": {"inform_at":"2.1","check_at":["2.1","3.5","4.1","6.2"],"due_at":["4.1","6.2"]},
+      "applicability": "all",
       "reviewer": "专家＋平台",
       "source_refs": [
         "T:PCA-20260929:L144–165,464,515–525",
@@ -378,6 +400,8 @@
     {
       "evidence": "verifier 调用链与结果写入逻辑",
       "id": "AR-012",
+      "timing": {"inform_at":"2.1","check_at":["2.1","3.5","6.5"],"due_at":["3.5","6.5"]},
+      "applicability": "all",
       "reviewer": "专家",
       "source_refs": [
         "T:PCA-20260929:L455–464,515–525",
@@ -395,6 +419,8 @@
     {
       "evidence": "仓库状态或清理脚本与执行证据",
       "id": "AR-013",
+      "timing": {"inform_at":"2.1","check_at":["4.1","6.2"],"due_at":["4.1","6.2"]},
+      "applicability": "requires_review",
       "reviewer": "程序＋专家",
       "source_refs": [
         "T:PCA-20260929:L523",
@@ -412,6 +438,8 @@
     {
       "evidence": "Public/Dev 调用、路径与评分结果",
       "id": "AR-014",
+      "timing": {"inform_at":"2.1","check_at":["2.1","3.5","4.1","6.5"],"due_at":["3.5","6.5"]},
+      "applicability": "requires_review",
       "reviewer": "专家＋平台",
       "source_refs": [
         "T:PCA-20260929:L9–13,455–464,529–541"
@@ -428,6 +456,8 @@
     {
       "evidence": "`训练证据说明.md`、逐轮 `result.json`、协议标识",
       "id": "AR-015",
+      "timing": {"inform_at":"2.2","check_at":["2.3","3.2","5.2"],"due_at":["2.3","3.2","5.2"]},
+      "applicability": "all",
       "reviewer": "程序＋专家",
       "source_refs": [
         "T:PCA-20260929:L350–449,491–503"
@@ -443,6 +473,8 @@
     {
       "evidence": "Starter/B 源码、选取理由、可比锚点",
       "id": "AR-016",
+      "timing": {"inform_at":"1.3","check_at":["2.5","3.3"],"due_at":["2.5","3.3"]},
+      "applicability": "all",
       "reviewer": "专家",
       "source_refs": [
         "T:PCA-20260929:L18–34",
@@ -457,6 +489,8 @@
     {
       "evidence": "源码、原始日志、模型索引、实际步数",
       "id": "AR-017",
+      "timing": {"inform_at":"2.2","check_at":["2.4","2.5","3.3"],"due_at":["2.5","3.3"]},
+      "applicability": "requires_review",
       "reviewer": "专家",
       "source_refs": [
         "T:PCA-20260929:L24–34,350–449",
@@ -471,6 +505,8 @@
     {
       "evidence": "固定协议、双方日志/资源/配置",
       "id": "AR-018",
+      "timing": {"inform_at":"2.3","check_at":["2.5","3.2","3.3"],"due_at":["3.3"]},
+      "applicability": "requires_review",
       "reviewer": "专家",
       "source_refs": [
         "T:PCA-20260929:L28,350–449",
@@ -485,6 +521,8 @@
     {
       "evidence": "粗筛摘要、正式选择规则、全部候选/失败记录",
       "id": "AR-019",
+      "timing": {"inform_at":"2.3","check_at":["2.5","3.3"],"due_at":["2.5","3.3"]},
+      "applicability": "all",
       "reviewer": "专家",
       "source_refs": [
         "T:PCA-20260929:L18–34",
@@ -499,6 +537,8 @@
     {
       "evidence": "两侧逐 seed 结果、日志与模型哈希",
       "id": "AR-020",
+      "timing": {"inform_at":"2.3","check_at":["2.4","3.2","3.3"],"due_at":["2.5","3.3"]},
+      "applicability": "requires_review",
       "reviewer": "程序＋专家",
       "source_refs": [
         "T:PCA-20260929:L34,350–449",
@@ -513,6 +553,8 @@
     {
       "evidence": "同协议 sanity 结果与技术解释",
       "id": "AR-021",
+      "timing": {"inform_at":"1.3","check_at":["2.5","3.3"],"due_at":["2.5","3.3"]},
+      "applicability": "requires_review",
       "reviewer": "专家",
       "source_refs": [
         "T:PCA-20260929:L18–34",
@@ -527,6 +569,8 @@
     {
       "evidence": "B/R diff、协议和实际运行",
       "id": "AR-022",
+      "timing": {"inform_at":"1.3","check_at":["3.1","3.3"],"due_at":["3.3"]},
+      "applicability": "requires_review",
       "reviewer": "专家",
       "source_refs": [
         "T:PCA-20260929:L350–449",
@@ -541,6 +585,8 @@
     {
       "evidence": "逐项审查表、冻结决定、待后续证据项",
       "id": "AR-023",
+      "timing": {"inform_at":"2.3","check_at":["2.5","3.3","3.5"],"due_at":["2.5","3.5"]},
+      "applicability": "requires_review",
       "reviewer": "专家",
       "source_refs": [
         "T:PCA-20260929:L18–34",
@@ -555,6 +601,8 @@
     {
       "evidence": "正式目录与文件、路径/字段交叉核对",
       "id": "AR-024",
+      "timing": {"inform_at":"2.3","check_at":["2.4","3.2","5.2","6.1"],"due_at":["2.4","3.2","5.2","6.1"]},
+      "applicability": "all",
       "reviewer": "程序＋专家",
       "source_refs": [
         "T:PCA-20260929:L350–449",
@@ -572,6 +620,8 @@
     {
       "evidence": "checkpoint、artifact、reload.log、result 引用",
       "id": "AR-025",
+      "timing": {"inform_at":"2.3","check_at":["2.4","3.2","5.2","6.1"],"due_at":["2.4","3.2","5.2","6.1"]},
+      "applicability": "requires_review",
       "reviewer": "程序＋专家",
       "source_refs": [
         "T:PCA-20260929:L350–449",
@@ -589,6 +639,8 @@
     {
       "evidence": "`reference/`、双方全部运行与摘要",
       "id": "AR-026",
+      "timing": {"inform_at":"1.3","check_at":["3.1","3.2","3.3"],"due_at":["3.5"]},
+      "applicability": "all",
       "reviewer": "程序＋专家",
       "source_refs": [
         "T:PCA-20260929:L338–449",
@@ -605,6 +657,8 @@
     {
       "evidence": "协议、逐次原始值、seed 清单",
       "id": "AR-027",
+      "timing": {"inform_at":"2.3","check_at":["2.4","3.2","5.2"],"due_at":["3.2","5.2"]},
+      "applicability": "requires_review",
       "reviewer": "程序＋专家",
       "source_refs": [
         "T:PCA-20260929:L405–449,491–503",
@@ -621,6 +675,8 @@
     {
       "evidence": "逐 seed B/R 原值、可复算统计",
       "id": "AR-028",
+      "timing": {"inform_at":"2.3","check_at":["3.2","3.3"],"due_at":["3.5"]},
+      "applicability": "requires_review",
       "reviewer": "程序＋专家",
       "source_refs": [
         "T:PCA-20260929:L405–449,491–503",
@@ -637,6 +693,8 @@
     {
       "evidence": "协议、指标、确定性论证、阈值来源",
       "id": "AR-029",
+      "timing": {"inform_at":"2.3","check_at":["3.2","3.3"],"due_at":["3.5"]},
+      "applicability": "requires_review",
       "reviewer": "专家",
       "source_refs": [
         "T:PCA-20260929:L18–34,491–503",
@@ -654,6 +712,8 @@
     {
       "evidence": "评分源码/锚点依据/公式测试",
       "id": "AR-030",
+      "timing": {"inform_at":"2.2","check_at":["3.4","3.5"],"due_at":["3.5"]},
+      "applicability": "all",
       "reviewer": "程序＋专家",
       "source_refs": [
         "T:PCA-20260929:L466–503",
@@ -670,6 +730,8 @@
     {
       "evidence": "B/R/U、方法方向与差异说明",
       "id": "AR-031",
+      "timing": {"inform_at":"1.3","check_at":["3.4","3.5"],"due_at":["3.5"]},
+      "applicability": "requires_review",
       "reviewer": "程序＋专家",
       "source_refs": [
         "T:PCA-20260929:L466–503",
@@ -687,6 +749,8 @@
     {
       "evidence": "grader、错误路径、合同测试",
       "id": "AR-032",
+      "timing": {"inform_at":"2.1","check_at":["3.4","3.5","6.2"],"due_at":["3.5","6.2"]},
+      "applicability": "all",
       "reviewer": "程序＋专家",
       "source_refs": [
         "T:PCA-20260929:L505–513",
@@ -703,6 +767,8 @@
     {
       "evidence": "包清单、task 根",
       "id": "AR-033",
+      "timing": {"inform_at":"2.1","check_at":["2.1","6.1"],"due_at":["2.1","6.1"]},
+      "applicability": "all",
       "reviewer": "程序＋专家",
       "source_refs": [
         "T:PCA-20260929:L118–165,455–464",
@@ -720,6 +786,8 @@
     {
       "evidence": "`tests/test.sh`、评分链、reward 位置",
       "id": "AR-034",
+      "timing": {"inform_at":"2.1","check_at":["2.1","3.5","6.5"],"due_at":["3.5","6.5"]},
+      "applicability": "all",
       "reviewer": "专家",
       "source_refs": [
         "T:PCA-20260929:L455–464,515–541",
@@ -738,6 +806,8 @@
     {
       "evidence": "job/trial 配置或真实 config",
       "id": "AR-035",
+      "timing": {"inform_at":"2.1","check_at":["2.1","4.1","6.5"],"due_at":["4.1","6.5"]},
+      "applicability": "requires_review",
       "reviewer": "专家",
       "source_refs": [
         "T:PCA-20260929:L171–207,529–541",
@@ -755,6 +825,8 @@
     {
       "evidence": "Trial 记录",
       "id": "AR-036",
+      "timing": {"inform_at":"2.1","check_at":["2.1","3.5","4.1","6.5"],"due_at":["4.1","6.5"]},
+      "applicability": "requires_review",
       "reviewer": "程序＋专家＋平台",
       "source_refs": [
         "T:PCA-20260929:L529–541",
@@ -772,6 +844,8 @@
     {
       "evidence": "启动配置、实际可见集、会话与目录",
       "id": "AR-037",
+      "timing": {"inform_at":"4.1","check_at":["4.1","4.4"],"due_at":["4.1","4.4"]},
+      "applicability": "all",
       "reviewer": "专家",
       "source_refs": [
         "T:PCA-20260929:L569–618",
@@ -787,6 +861,8 @@
     {
       "evidence": "原会话事件、净时长台账、异常与恢复证据",
       "id": "AR-038",
+      "timing": {"inform_at":"4.1","check_at":["4.1","4.4","6.1"],"due_at":["4.1","4.4","6.1"]},
+      "applicability": "requires_review",
       "reviewer": "程序＋专家",
       "source_refs": [
         "T:PCA-20260929:L70–72,569–618,809–825",
@@ -802,6 +878,8 @@
     {
       "evidence": "方法演进、Public/Dev 评分与决策、异常记录",
       "id": "AR-039",
+      "timing": {"inform_at":"4.1","check_at":["4.2","4.3","4.4"],"due_at":["4.4"]},
+      "applicability": "requires_review",
       "reviewer": "专家",
       "source_refs": [
         "T:PCA-20260929:L549–563,598–646",
@@ -817,6 +895,8 @@
     {
       "evidence": "两份轨迹 JSON、摘要与实际记录",
       "id": "AR-040",
+      "timing": {"inform_at":"4.1","check_at":["4.2","4.3","4.4","6.1"],"due_at":["4.4","6.1"]},
+      "applicability": "all",
       "reviewer": "程序＋专家",
       "source_refs": [
         "T:PCA-20260929:L620–646,829–874",
@@ -832,6 +912,8 @@
     {
       "evidence": "最终源码、复验结果、选择说明",
       "id": "AR-041",
+      "timing": {"inform_at":"4.1","check_at":["4.4","5.1","5.2","5.3","5.4"],"due_at":["4.4","5.4"]},
+      "applicability": "requires_review",
       "reviewer": "程序＋专家",
       "source_refs": [
         "T:PCA-20260929:L557–559,660–668,878–884"
@@ -845,6 +927,8 @@
     {
       "evidence": "确定版本包清单与引用",
       "id": "AR-042",
+      "timing": {"inform_at":"2.3","check_at":["6.1","6.2"],"due_at":["6.2"]},
+      "applicability": "all",
       "reviewer": "程序＋专家",
       "source_refs": [
         "T:PCA-20260929:L670–730",
@@ -858,6 +942,8 @@
     {
       "evidence": "JSON 字段与正式摘要",
       "id": "AR-043",
+      "timing": {"inform_at":"3.4","check_at":["6.1","6.2"],"due_at":["6.2"]},
+      "applicability": "all",
       "reviewer": "程序＋专家",
       "source_refs": [
         "T:PCA-20260929:L722–807"
@@ -870,6 +956,8 @@
     {
       "evidence": "JSON、计时台账、训练/复验证据",
       "id": "AR-044",
+      "timing": {"inform_at":"4.1","check_at":["4.4","6.1"],"due_at":["6.1"]},
+      "applicability": "requires_review",
       "reviewer": "程序＋专家",
       "source_refs": [
         "T:PCA-20260929:L572–586,809–827",
@@ -883,6 +971,8 @@
     {
       "evidence": "独立会话 QA 报告与包摘要",
       "id": "AR-045",
+      "timing": {"inform_at":"6.1","check_at":["6.3","6.4","6.5"],"due_at":["6.5"]},
+      "applicability": "requires_review",
       "reviewer": "用户＋专家＋平台",
       "source_refs": [
         "T:PCA-20260929:L74–78,886–952",
@@ -897,6 +987,8 @@
     {
       "evidence": "report.json/md/txt、包哈希、逐项映射",
       "id": "AR-046",
+      "timing": {"inform_at":"6.3","check_at":["6.4","6.5"],"due_at":["6.5"]},
+      "applicability": "all",
       "reviewer": "用户＋专家",
       "source_refs": [
         "T:PCA-20260929:L74–78",
@@ -910,6 +1002,8 @@
     {
       "evidence": "任务卡、`task.toml`、训练/评测计时与资源记录",
       "id": "AR-047",
+      "timing": {"inform_at":"1.1","check_at":["1.4","2.3","3.5"],"due_at":["1.4","3.5"]},
+      "applicability": "requires_review",
       "reviewer": "专家＋平台",
       "source_refs": [
         "T:PCA-20260929:L171–207,529–543"
@@ -924,6 +1018,8 @@
     {
       "evidence": "Dockerfile、依赖、构建/启动记录与适配说明",
       "id": "AR-048",
+      "timing": {"inform_at":"2.1","check_at":["2.1","3.5","6.2"],"due_at":["3.5","6.2"]},
+      "applicability": "all",
       "reviewer": "专家＋平台",
       "source_refs": [
         "T:PCA-20260929:L288–324,455–464",
@@ -942,6 +1038,8 @@
     {
       "evidence": "数据指纹、资产清单、实际可见集与平台交接记录",
       "id": "AR-049",
+      "timing": {"inform_at":"2.1","check_at":["2.3","3.5","6.2"],"due_at":["2.3","3.5","6.2"]},
+      "applicability": "requires_review",
       "reviewer": "专家＋平台",
       "source_refs": [
         "T:PCA-20260929:L144–165,294,455–464,515–525"
@@ -958,6 +1056,8 @@
     {
       "evidence": "workspace/qa_exposure_manifest.json、镜像摘要、实际 Agent 视图清单",
       "id": "AR-050",
+      "timing": {"inform_at":"2.1","check_at":["4.1","6.2"],"due_at":["4.1","6.2"]},
+      "applicability": "all",
       "reviewer": "程序＋专家",
       "source_refs": [
         "Q:exposure-manifest.md",
@@ -980,8 +1080,7 @@
       "notice_text": "流程没有进行新项目git仓库的建立，不利于后续流程的审查与回退，建议在第一阶段进行合理git仓库的建立。",
       "stages": [1],
       "affected_rule_ids": [],
-      "implementation_op": "OP-1",
-      "decision": "新初始化任务阶段1.1要求范围确认与首个真实Git检查点；旧任务不静默追加门禁。工程策略，不宣称教程强制Git。"
+      "decision": "新任务阶段1.1要求范围确认与首个真实Git检查点。工程策略，不宣称教程强制Git；旧任务用原版本流程恢复。"
     },
     {
       "id": "U-20261003-02",
@@ -989,8 +1088,7 @@
       "notice_text": "将流程制定的agent底座设定为codex可视化界面，而不是只输出json格式的日志，这样专家可以实时观察。",
       "stages": [4],
       "affected_rule_ids": ["AR-037", "AR-038", "AR-040"],
-      "implementation_op": "OP-4",
-      "decision": "采用原生终端TUI，仍须保留原始日志、净计时与同会话恢复；OP-4验收前继续exec_json，不能提前启用。"
+      "decision": "采用原生终端TUI，仍须保留原始日志、净计时与同会话恢复；实际可用模式由冻结政策与实现状态声明。"
     },
     {
       "id": "U-20261003-03",
@@ -998,8 +1096,7 @@
       "notice_text": "取消最后阶段的12小时容器检查，该部分质检不检查，流程中先不将该部分作为门禁。",
       "stages": [2, 6],
       "affected_rule_ids": ["AR-010"],
-      "implementation_op": "OP-2",
-      "decision": "用户要求取消专门浸泡与收据门禁；教程12h稳定性目标仍保留且不得声称未做测试已通过。OP-0仅记录，门禁移除待OP-2。"
+      "decision": "取消专门浸泡与收据门禁；教程12h稳定性目标仍保留且不得声称未做测试已通过。"
     },
     {
       "id": "U-20261003-04",
@@ -1007,8 +1104,7 @@
       "notice_text": "有些题目不需要训练，迭代很快，在进行迭代前，评估是否符合教程中的七小时时长例外，并设定正式迭代的有效市场下限。",
       "stages": [4, 5, 6],
       "affected_rule_ids": ["AR-038", "AR-039", "AR-041", "AR-044"],
-      "implementation_op": "OP-3",
-      "decision": "原通知的‘有效市场’按上下文理解为‘有效时长’。默认10h；符合完整教程条件的7h例外在启动前评估冻结，后续按证据到期关闭；OP-3验收前不允许实际启用。"
+      "decision": "原通知的‘有效市场’按上下文理解为‘有效时长’。默认10h；符合完整教程条件的7h例外在启动前评估冻结，后续按证据到期关闭。"
     },
     {
       "id": "U-20261003-05",
@@ -1016,7 +1112,6 @@
       "notice_text": "最终复验允许在不影响结果的前提下，根据可用GPU数量进行并行，不强制要求串行。",
       "stages": [5],
       "affected_rule_ids": ["AR-041", "AR-047", "AR-049"],
-      "implementation_op": "OP-5",
       "decision": "只改变独立运行的调度，不改变单次科学协议或资源合同；指标受资源竞争影响时串行或独占。"
     },
     {
@@ -1025,8 +1120,7 @@
       "notice_text": "在独立质检skill通过后再进行压缩，不要在没通过前就压缩，同时压缩要打包最终提交包、其中的harbor_task仓和optimization_evidence仓。",
       "stages": [6],
       "affected_rule_ids": ["AR-042", "AR-045", "AR-046"],
-      "implementation_op": "OP-6",
-      "decision": "先目录组装与独立QA，再三包压缩；OP-6实施命令级门禁。6.5检查点按qa_verified、archives_verified、form_ready顺序，不要求先finish 6才能压缩。"
+      "decision": "先目录组装与独立QA，再三包压缩。6.5检查点按qa_verified、archives_verified、form_ready顺序，不要求先finish 6才能压缩。"
     },
     {
       "id": "U-20261003-07",
@@ -1034,8 +1128,7 @@
       "notice_text": "完成最终打包后，总结研究子方向、优化面介绍、baseline描述及分数、reference描述及分数，以文件形式写入最终打包文件所在文件夹。",
       "stages": [6],
       "affected_rule_ids": ["AR-043"],
-      "implementation_op": "OP-7",
-      "decision": "生成中文填表信息.md并绑定当前接受包的事实；文件位于压缩输出目录之外层，不改动已经通过QA的提交包。"
+      "decision": "生成中文填表信息.md并绑定当前接受包的事实；文件位于压缩输出目录，不改动已经通过QA的提交包。"
     }
   ],
   "schema_version": 1,

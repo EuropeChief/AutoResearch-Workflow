@@ -20,7 +20,7 @@ from .policies import effective_policy, new_policy, policy_status
 
 
 PACKAGE_ROOT = Path(__file__).resolve().parents[1]
-REPOSITORY_ROOT = PACKAGE_ROOT.parent
+REPOSITORY_ROOT = PACKAGE_ROOT
 MANIFEST_PATH = PACKAGE_ROOT / "rules" / "manifest.json"
 TASK_ID_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}\Z")
 RULE_ID_RE = re.compile(r"AR-\d{3}\Z")
@@ -101,12 +101,35 @@ def _atomic_json(path: Path, value: dict[str, Any]) -> None:
         temporary.unlink(missing_ok=True)
 
 
+def _source_issues(root: Path, entries: list[dict], invalid_code: str) -> list[dict[str, str]]:
+    """Verify a locked source once even when it also belongs to the full bundle."""
+    issues: list[dict[str, str]] = []
+    checked = set()
+    for entry in entries:
+        relative_path, expected = entry.get("path"), entry.get("sha256")
+        _require(isinstance(relative_path, str) and isinstance(expected, str)
+                 and bool(SHA256_RE.fullmatch(expected)), invalid_code, "来源锁含非法路径或哈希")
+        identity = (relative_path, expected)
+        if identity in checked:
+            continue
+        checked.add(identity)
+        try:
+            actual = _sha256(_safe_repository_file(root, relative_path))
+        except FlowError as exc:
+            issues.append({"code": exc.code, "path": relative_path, "message": exc.message})
+            continue
+        if actual != expected:
+            issues.append({"code": "SOURCE_DRIFT", "path": relative_path,
+                           "message": f"锁定 {expected}，当前 {actual}；请核对并恢复锁定原件，不覆盖来源锁"})
+    return issues
+
+
 class Registry:
     """One versioned central rule catalog plus the source files it projects."""
 
     def __init__(self, package_root: Path = PACKAGE_ROOT) -> None:
         self.package_root = package_root.resolve(strict=True)
-        self.repository_root = self.package_root.parent
+        self.repository_root = self.package_root
         self.manifest_path = self.package_root / "rules" / "manifest.json"
         self.manifest = _read_json(self.manifest_path)
         self._validate_manifest()
@@ -136,10 +159,20 @@ class Registry:
         _require("tutorial" in seen and "qa_skill" in seen, "INVALID_MANIFEST", "必须包含教程与 QA Skill 两级来源")
         _require(next(item for item in sources if item["id"] == "tutorial")["priority"] == 1, "INVALID_MANIFEST", "教程必须是第一权威")
         _require(all(item["priority"] == 2 for item in sources if item["id"] != "tutorial"), "INVALID_MANIFEST", "QA Skill 与其路由方法必须是第二权威")
-        inputs = data.get("w0_inputs", [])
-        _require(isinstance(inputs, list), "INVALID_MANIFEST", "w0_inputs 必须是列表")
-        for item in inputs:
-            _require(isinstance(item, dict) and isinstance(item.get("path"), str) and bool(SHA256_RE.fullmatch(str(item.get("sha256", "")))), "INVALID_MANIFEST", "W0 输入路径或哈希不合法")
+        checks = data.get("qa_checks")
+        _require(isinstance(checks, list) and checks and all(isinstance(c, str) and re.fullmatch(r"(?:G|B|QA|H)\d{2}", c) for c in checks)
+                 and len(set(checks)) == len(checks), "INVALID_MANIFEST", "缺少当前锁定 Skill 的检查项集合")
+        bundled = data.get("bundled_files")
+        _require(isinstance(bundled, list) and bundled, "INVALID_MANIFEST", "缺少随仓权威资料完整文件索引")
+        paths = set()
+        for item in bundled:
+            _require(isinstance(item, dict) and isinstance(item.get("path"), str)
+                     and item["path"] not in paths
+                     and bool(SHA256_RE.fullmatch(str(item.get("sha256", "")))),
+                     "INVALID_MANIFEST", "随仓资料路径重复或哈希不合法")
+            paths.add(item["path"])
+        _require(all(source["path"] in paths for source in sources),
+                 "INVALID_MANIFEST", "权威来源未纳入完整文件索引")
 
     def _validate_catalog(self) -> None:
         data = self.catalog
@@ -159,13 +192,23 @@ class Registry:
                 _require(isinstance(rule.get(field), str) and rule[field].strip(), "INVALID_CATALOG", f"{rule_id} 缺 {field}")
             refs = rule.get("source_refs")
             _require(isinstance(refs, list) and refs and all(isinstance(ref, str) and (ref.startswith("T:") or ref.startswith("Q:")) for ref in refs), "INVALID_CATALOG", f"{rule_id} 缺权威来源定位")
+            timing = rule.get("timing", {})
+            steps = {step for values in SUBSTEP_IDS.values() for step in values}
+            _require(timing.get("inform_at") in steps
+                     and all(isinstance(timing.get(key), list) and timing[key]
+                             and all(step in steps for step in timing[key]) for key in ("check_at", "due_at")),
+                     "INVALID_CATALOG", f"{rule_id} 缺合法子步骤时机")
+            _require(all(timing["inform_at"] <= step for step in timing["check_at"] + timing["due_at"]),
+                     "INVALID_CATALOG", f"{rule_id} 提前告知不得晚于检查或到期")
+            _require(rule.get("applicability") in {"all", "requires_review"}, "INVALID_CATALOG", f"{rule_id} 适用性说明缺失")
         coverage = data.get("coverage")
         _require(isinstance(coverage, dict), "INVALID_CATALOG", "规则目录缺 QA 覆盖映射")
-        expected = {f"G{n:02d}" for n in range(1, 4)} | {f"B{n:02d}" for n in range(1, 9)} | {f"QA{n:02d}" for n in range(1, 22)} | {f"H{n:02d}" for n in range(1, 7)}
+        expected = set(self.manifest["qa_checks"])
         _require(set(coverage) == expected, "INVALID_CATALOG", "G/B/QA/H 覆盖映射缺项或含未知项")
         for check_id, rule_ids in coverage.items():
             _require(isinstance(rule_ids, list) and rule_ids and all(rule_id in seen for rule_id in rule_ids), "INVALID_CATALOG", f"{check_id} 映射了不存在的规则")
-        _require(data.get("skipped_checks") == ["QA15"], "INVALID_CATALOG", "QA15 跳过口径必须显式且唯一")
+        _require(data.get("skipped_checks") == self.manifest.get("skipped_checks")
+                 and set(data["skipped_checks"]) <= expected, "INVALID_CATALOG", "跳过项须与当期 Skill 锁一致")
         notices = data.get("workflow_notices", [])
         _require(isinstance(notices, list), "INVALID_CATALOG", "workflow_notices 须为列表，不属于新增权威来源")
         notice_ids = set()
@@ -181,20 +224,38 @@ class Registry:
                      "INVALID_CATALOG", "用户通知缺原话/范围/决策，或引用了未知规则")
             notice_ids.add(notice["id"])
 
-    def check_sources(self) -> list[dict[str, str]]:
-        issues: list[dict[str, str]] = []
-        entries = [self.manifest["catalog"], *self.manifest["sources"], *self.manifest["w0_inputs"]]
-        for entry in entries:
-            relative_path = entry["path"]
-            try:
-                path = _safe_repository_file(self.repository_root, relative_path)
-                actual = _sha256(path)
-            except FlowError as exc:
-                issues.append({"code": exc.code, "path": relative_path, "message": exc.message})
+    def show(self, *, rule_id=None, step=None):
+        """Read-only obligations, never a claim that their evidence has passed."""
+        _require((rule_id is None) != (step is None), "INVALID_RULE_QUERY", "指定规则 ID 或子步骤之一")
+        _require(not self.check_sources(), "REGISTRY_DRIFT", "规则来源漂移，先核对锁定原件")
+        if step is not None:
+            _require(step in {s for values in SUBSTEP_IDS.values() for s in values},
+                     "INVALID_RULE_QUERY", "子步骤不合法")
+        rows = []
+        for rule in self.catalog["rules"]:
+            timing = rule["timing"]
+            if not (rule["id"] == rule_id if rule_id is not None else
+                    step == timing["inform_at"] or step in timing["check_at"] + timing["due_at"]):
                 continue
-            if actual != entry["sha256"]:
-                issues.append({"code": "SOURCE_DRIFT", "path": relative_path, "message": f"SHA-256 不符：锁定 {entry['sha256']}，当前 {actual}"})
-        return issues
+            locations = []
+            for ref in rule["source_refs"]:
+                filename = ref.split(":", 1)[1].split("#", 1)[0].split("/")[-1]
+                for source in self.manifest["sources"]:
+                    if (ref.startswith("T:") and source["id"] == "tutorial"
+                            or ref.startswith("Q:baseline-quality/") and source["id"].startswith("baseline")
+                            and Path(source["path"]).name == filename
+                            or ref.startswith("Q:") and not ref.startswith("Q:baseline-quality/")
+                            and source["path"].startswith("skills/autoresearch-task-qa/")
+                            and Path(source["path"]).name == filename):
+                        locations.append({"ref": ref, "path": source["path"], "sha256": source["sha256"]})
+            rows.append({**rule, "source_locations": locations, "compliance": "not_evaluated"})
+        _require(rule_id is None or rows, "INVALID_RULE_QUERY", "规则 ID 不存在")
+        return {"status": "ok", "rules": rows, "step": step,
+                "next_action": "按规则准备证据并完成实质审查；适用条件未知时保留待判断，不自动跳过"}
+
+    def check_sources(self) -> list[dict[str, str]]:
+        entries = [self.manifest["catalog"], *self.manifest["sources"], *self.manifest["bundled_files"]]
+        return _source_issues(self.repository_root, entries, "INVALID_MANIFEST")
 
     def lock_snapshot(self) -> dict[str, Any]:
         return {
@@ -203,6 +264,7 @@ class Registry:
             "catalog_sha256": self.manifest["catalog"]["sha256"],
             "catalog_path": self.manifest["catalog"]["path"],
             "sources": self.manifest["sources"],
+            "bundled_files": self.manifest["bundled_files"],
             "rule_fingerprints": {rule["id"]: _canonical_digest(rule) for rule in self.catalog["rules"]},
             "rule_stages": {rule["id"]: rule["stages"] for rule in self.catalog["rules"]},
             "rule_source_refs": {rule["id"]: rule["source_refs"] for rule in self.catalog["rules"]},
@@ -228,9 +290,10 @@ class TaskStore:
 
     @staticmethod
     def _validate_state(data: dict[str, Any]) -> None:
+        _require(data.get("schema_version") == STATE_SCHEMA_VERSION and data.get("flow_version") == FLOW_VERSION,
+                 "UNSUPPORTED_TASK_VERSION", "只支持本版本新任务及同版本恢复；请用该任务原版本流程继续。不要覆盖、删除旧状态或拼接旧轨迹，本工具不提供跨版本升级。")
         effective_policy(data)
-        _require(data.get("schema_version") == STATE_SCHEMA_VERSION and isinstance(data.get("task_id"), str) and bool(TASK_ID_RE.fullmatch(data["task_id"])), "INVALID_STATE", "任务状态 schema 或 task_id 不合法")
-        _require(data.get("flow_version") == FLOW_VERSION, "VERSION_MISMATCH", "任务状态与此 CLI 版本不符；请使用匹配版本或显式升级")
+        _require(isinstance(data.get("task_id"), str) and bool(TASK_ID_RE.fullmatch(data["task_id"])), "INVALID_STATE", "task_id 不合法")
         stages = data.get("stages")
         _require(isinstance(stages, dict) and set(stages) == set(STAGE_IDS), "INVALID_STATE", "任务状态须恰好包含六阶段")
         for stage_id in STAGE_IDS:
@@ -274,13 +337,13 @@ class TaskStore:
             _require(isinstance(exception, dict) and set(exception) == {"notice_text", "recorded_at", "scope", "affected_rule_ids", "decision"}, "INVALID_STATE", "例外记录字段不完整或有额外字段")
             _require(all(isinstance(exception[key], str) and exception[key] for key in ("notice_text", "recorded_at", "scope", "decision")) and isinstance(exception["affected_rule_ids"], list), "INVALID_STATE", "例外记录缺原话、时间、范围、规则或处理结论")
         lock = data.get("rules_lock")
-        _require(isinstance(lock, dict) and isinstance(lock.get("sources"), list) and isinstance(lock.get("rule_fingerprints"), dict) and isinstance(lock.get("rule_stages"), dict) and isinstance(lock.get("rule_source_refs"), dict), "INVALID_STATE", "规则来源锁缺失")
+        _require(isinstance(lock, dict) and isinstance(lock.get("sources"), list) and isinstance(lock.get("bundled_files"), list) and isinstance(lock.get("rule_fingerprints"), dict) and isinstance(lock.get("rule_stages"), dict) and isinstance(lock.get("rule_source_refs"), dict), "INVALID_STATE", "规则来源锁缺失")
         _require(isinstance(lock.get("catalog_path"), str) and isinstance(lock.get("manifest_path"), str) and bool(SHA256_RE.fullmatch(str(lock.get("catalog_sha256", "")))) and bool(SHA256_RE.fullmatch(str(lock.get("manifest_sha256", "")))), "INVALID_STATE", "规则来源锁哈希非法")
 
     def initialize(self, registry: Registry, task_id: str) -> dict[str, Any]:
         _require(isinstance(task_id, str) and bool(TASK_ID_RE.fullmatch(task_id)), "INVALID_TASK_ID", "task_id 仅允许字母、数字、点、下划线和连字符，首字符须为字母或数字")
         legacy_state = self.task_root / ".autoresearch"
-        _require(not legacy_state.exists() and not legacy_state.is_symlink(), "LEGACY_STATE_PRESENT", "发现旧流程 .autoresearch；W1 不自动迁移或混用旧状态")
+        _require(not legacy_state.exists() and not legacy_state.is_symlink(), "LEGACY_STATE_PRESENT", "发现旧流程 .autoresearch；请使用原流程恢复，不迁移或混用旧状态")
         _require(not self.state_dir.exists() and not self.state_dir.is_symlink(), "ALREADY_INITIALIZED", f"新流程状态已存在，不覆盖：{self.state_dir}")
         issues = registry.check_sources()
         _require(not issues, "REGISTRY_DRIFT", "中央规则来源与锁定哈希不符，先修复规则包：" + "; ".join(issue["path"] for issue in issues))
@@ -318,23 +381,13 @@ class TaskStore:
     def check(self) -> dict[str, Any]:
         data = self._load()
         lock = data["rules_lock"]
-        issues: list[dict[str, str]] = []
         entries = [
             {"path": lock["manifest_path"], "sha256": lock["manifest_sha256"]},
             {"path": lock["catalog_path"], "sha256": lock["catalog_sha256"]},
             *lock["sources"],
+            *lock["bundled_files"],
         ]
-        for entry in entries:
-            relative_path = entry.get("path")
-            expected = entry.get("sha256")
-            _require(isinstance(relative_path, str) and isinstance(expected, str) and bool(SHA256_RE.fullmatch(expected)), "INVALID_STATE", "来源锁含非法路径或哈希")
-            try:
-                actual = _sha256(_safe_repository_file(self.repository_root, relative_path))
-            except FlowError as exc:
-                issues.append({"code": exc.code, "path": relative_path, "message": exc.message})
-                continue
-            if actual != expected:
-                issues.append({"code": "SOURCE_DRIFT", "path": relative_path, "message": f"锁定 {expected}，当前 {actual}；请审查差异并显式升级"})
+        issues = _source_issues(self.repository_root, entries, "INVALID_STATE")
         return {
             "task_id": data["task_id"],
             "current_stage": data["current_stage"],
@@ -343,81 +396,3 @@ class TaskStore:
             "issues": issues,
             **{key: value for key, value in policy_status(data).items() if key != "status"},
         }
-
-    def plan_upgrade(self, registry: Registry, *, adopt_policy: bool = False) -> dict[str, Any]:
-        data = self._load()
-        issues = registry.check_sources()
-        _require(not issues, "REGISTRY_DRIFT", "中央规则来源与 manifest 不一致，不能升级")
-        old = data["rules_lock"]
-        new = registry.lock_snapshot()
-        old_sources = {source["id"]: source for source in old["sources"]}
-        new_sources = {source["id"]: source for source in new["sources"]}
-        changed_sources = sorted(source_id for source_id in set(old_sources) | set(new_sources) if old_sources.get(source_id) != new_sources.get(source_id))
-        old_fingerprints = old["rule_fingerprints"]
-        new_fingerprints = new["rule_fingerprints"]
-        changed_rules = {rule_id for rule_id in set(old_fingerprints) | set(new_fingerprints) if old_fingerprints.get(rule_id) != new_fingerprints.get(rule_id)}
-        source_refs = {
-            rule_id: sorted(set(old["rule_source_refs"].get(rule_id, [])) | set(new["rule_source_refs"].get(rule_id, [])))
-            for rule_id in set(old["rule_source_refs"]) | set(new["rule_source_refs"])
-        }
-        for source_id in changed_sources:
-            source = new_sources.get(source_id) or old_sources[source_id]
-            filename = Path(source["path"]).name
-            for rule_id, refs in source_refs.items():
-                if source_id == "tutorial" and any(ref.startswith("T:") for ref in refs):
-                    changed_rules.add(rule_id)
-                elif source_id == "qa_skill" and any(ref.startswith("Q:") for ref in refs):
-                    changed_rules.add(rule_id)
-                elif source_id.startswith("baseline") and any(ref.startswith("Q:baseline-quality/") for ref in refs):
-                    changed_rules.add(rule_id)
-                elif any(ref.startswith(f"Q:{filename}") for ref in refs):
-                    changed_rules.add(rule_id)
-        affected = sorted({
-            stage
-            for rule_id in changed_rules
-            for stage in set(old["rule_stages"].get(rule_id, [])) | set(new["rule_stages"].get(rule_id, []))
-        })
-        old_policy = effective_policy(data)
-        target_policy = old_policy if old_policy["revision"] == new_policy()["revision"] else new_policy()
-        policy_changed = adopt_policy and old_policy != target_policy
-        policy_changes = sorted(key for key in target_policy if old_policy[key] != target_policy[key]) if policy_changed else []
-        if policy_changed:
-            # OP-2 changes delivery evidence, not the prepared runtime. Reopen
-            # only delivery when this is the sole semantic policy change.
-            policy_stages = {6} if set(policy_changes) <= {"revision", "require_stability_receipt"} else {1}
-            affected = sorted(set(affected) | policy_stages)
-        changed = old != new or policy_changed
-        return {"changed": changed, "changed_sources": changed_sources, "changed_rules": sorted(changed_rules),
-                "affected_stages": affected, "new_lock": new, "policy_changed": policy_changed,
-                "policy_changes": policy_changes,
-                "workflow_notices_changed": old.get("workflow_notices", []) != new.get("workflow_notices", [])}
-
-    def upgrade(self, registry: Registry, *, apply: bool, adopt_policy: bool = False) -> dict[str, Any]:
-        plan = self.plan_upgrade(registry, adopt_policy=adopt_policy)
-        if not apply or not plan["changed"]:
-            return {key: value for key, value in plan.items() if key != "new_lock"} | {"applied": False}
-        data = self._load()
-        if plan["policy_changed"]:
-            runtime = self.state_dir / "runtime"
-            delivery_only = set(plan["policy_changes"]) <= {"revision", "require_stability_receipt"}
-            _require(delivery_only or (not runtime.exists() and not runtime.is_symlink()), "RUNTIME_ALREADY_PREPARED",
-                     "运行环境已准备，不能热切换政策；保留原政策，勿删除运行记录以绕过")
-            data["history"].append({"action": "workflow_policy_upgrade", "at": _utc_now(),
-                                    "previous_policy": effective_policy(data), "new_policy": new_policy()})
-            data["workflow_policy"] = new_policy()
-        previous_lock = data["rules_lock"]
-        data["history"].append({"action": "rules_upgrade", "at": _utc_now(), "previous_lock": previous_lock, "changed_sources": plan["changed_sources"], "changed_rules": plan["changed_rules"], "affected_stages": plan["affected_stages"]})
-        data["rules_lock"] = plan["new_lock"]
-        if plan["affected_stages"]:
-            first = min(plan["affected_stages"])
-            for stage in range(first, 7):
-                item = data["stages"][str(stage)]
-                if item["status"] == "passed":
-                    item["status"] = "needs_recheck"
-                for substep in item["substeps"].values():
-                    if substep["status"] == "passed":
-                        substep["status"] = "needs_recheck"
-            if data["current_stage"] is None or first < int(data["current_stage"]):
-                data["current_stage"] = str(first)
-        _atomic_json(self.state_path, data)
-        return {key: value for key, value in plan.items() if key != "new_lock"} | {"applied": True}

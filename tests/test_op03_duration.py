@@ -64,8 +64,7 @@ class DurationPolicyTests(unittest.TestCase):
         selected = select(self.root, decision(self.fx.proof), confirm=True)
         self.assertEqual(selected["policy"]["minimum_effective_seconds"], 25200)
         self.assertEqual(selected["assessment"]["protocol_sha256"], self.fx.lock["sha256"])
-        from autoresearch_flow.core import Registry
-        self.assertFalse(TaskStore(self.root).upgrade(Registry(), apply=True, adopt_policy=True)["changed"])
+        self.assertEqual(TaskStore(self.root).check()["workflow_policy"]["duration_policy"], selected["policy"])
         with self.assertRaises(FlowError):
             select(self.root, decision(self.fx.proof), confirm=True)
 

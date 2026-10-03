@@ -29,6 +29,10 @@ def _parser() -> argparse.ArgumentParser:
     rules = commands.add_parser("rules", help="中央规则包")
     rules_actions = rules.add_subparsers(dest="rules_action", required=True)
     rules_actions.add_parser("check", help="只读检查规则目录、来源哈希与 QA 映射")
+    rule_show = rules_actions.add_parser("show", help="按规则或子步骤显示要求、到期位置和原文来源；不判通过")
+    selection = rule_show.add_mutually_exclusive_group(required=True)
+    selection.add_argument("--id", dest="rule_id")
+    selection.add_argument("--step")
     environment = commands.add_parser("environment", help="PCA 双镜像结构/实跑证据检查，不执行 Harbor 或 QA")
     env_actions = environment.add_subparsers(dest="environment_action", required=True)
     stability = env_actions.add_parser("verify-stability", help="可选只读诊断：核已有 12h 记录，不启动容器、不写通过收据")
@@ -53,7 +57,7 @@ def _parser() -> argparse.ArgumentParser:
     task_init.add_argument("--confirm-init", action="store_true", help="必须明确确认写入新的状态目录")
     task_check = task_actions.add_parser("check", help="只读检查题目状态与锁定来源")
     task_check.add_argument("--task-root", type=Path, required=True)
-    policy = task_actions.add_parser("policy", help="只读显示冻结政策、旧状态默认值和未实现能力")
+    policy = task_actions.add_parser("policy", help="只读显示当前任务冻结政策和实现能力")
     policy.add_argument("--task-root", type=Path, required=True)
     duration = task_actions.add_parser("duration-set", help="阶段4.1、prepare之前，凭证据显式冻结10h/非训练7h政策")
     duration.add_argument("--task-root", type=Path, required=True)
@@ -71,10 +75,6 @@ def _parser() -> argparse.ArgumentParser:
             command.add_argument("--file", type=Path, required=True)
             command.add_argument("--message", required=True)
             command.add_argument("--confirm-commit", action="store_true")
-    task_upgrade = task_actions.add_parser("upgrade", help="预览或显式应用中央规则升级")
-    task_upgrade.add_argument("--task-root", type=Path, required=True)
-    task_upgrade.add_argument("--apply", action="store_true", help="写入升级和依赖失效记录；默认只预览")
-    task_upgrade.add_argument("--adopt-policy", action="store_true", help="显式采用当前政策；仅稳定性变更重开阶段 6，其他政策变更在 runtime 已准备时拒绝")
     configure = task_actions.add_parser("configure", help="登记题目类型和适配入口")
     configure.add_argument("--task-root", type=Path, required=True)
     configure.add_argument("--file", type=Path, required=True)
@@ -156,7 +156,7 @@ def _emit(payload: dict, output_format: str) -> None:
         print(f"变更规则：{', '.join(payload['changed_rules']) or '无'}；受影响阶段：{payload['affected_stages']}")
     for issue in payload.get("issues", []):
         print(f"- {issue['code']}: {issue['message']}" if isinstance(issue, dict) else f"- {issue}")
-    if payload["action"].startswith(("environment.", "experiment.", "runtime.", "delivery.", "stage.", "task.configure", "task.policy", "task.git")):
+    if payload["action"].startswith(("rules.show", "environment.", "experiment.", "runtime.", "delivery.", "stage.", "task.configure", "task.policy", "task.git")):
         print(json.dumps({key: value for key, value in payload.items() if key not in {"action", "issues"}}, ensure_ascii=False, indent=2))
     if payload.get("next_action"):
         print(f"下一步：{payload['next_action']}")
@@ -259,6 +259,8 @@ def main(argv: list[str] | None = None) -> int:
             payload = {"action": action, **result}
         elif args.command == "version":
             payload = {"action": action, "status": "ok", "flow_version": FLOW_VERSION}
+        elif args.command == "rules" and args.rules_action == "show":
+            payload = {"action": action, **Registry().show(rule_id=args.rule_id, step=args.step)}
         elif args.command == "rules":
             registry = Registry()
             issues = registry.check_sources()
@@ -299,11 +301,7 @@ def main(argv: list[str] | None = None) -> int:
             payload = {"action": action, "status": "initialized", "task_id": state["task_id"], "current_stage": state["current_stage"], "state_path": str(store.state_path), "next_action": "先 task git-status 确认范围并建立初始检查点，再登记 1.1 来源与输入；初始化不等于阶段通过"}
         elif args.task_action == "check":
             checked = TaskStore(args.task_root).check()
-            payload = {"action": action, "status": "ok" if not checked["issues"] else "blocked", **checked, "next_action": "来源漂移时先核原件差异并预览 task upgrade" if checked["issues"] else "状态合同有效；仍需执行当前阶段的实际门禁"}
-        else:
-            registry = Registry()
-            plan = TaskStore(args.task_root).upgrade(registry, apply=args.apply, adopt_policy=args.adopt_policy)
-            payload = {"action": action, "status": "upgraded" if plan["applied"] else "planned", **plan, "next_action": "核受影响阶段并重验；升级不自动判通过" if plan["applied"] else "确认差异后加 --apply；默认未修改题目状态"}
+            payload = {"action": action, "status": "ok" if not checked["issues"] else "blocked", **checked, "next_action": "来源漂移时核对并恢复该任务锁定版本，不覆盖来源锁" if checked["issues"] else "状态合同有效；仍需执行当前阶段的实际门禁"}
     except FlowError as exc:
         _emit({"action": action, "status": "blocked", "issues": [{"code": exc.code, "message": exc.message}], "next_action": "按错误说明修复；不要绕过来源锁或静默初始化"}, args.format)
         return 2

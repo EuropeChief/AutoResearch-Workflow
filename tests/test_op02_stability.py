@@ -41,51 +41,35 @@ class StabilityPolicyTests(unittest.TestCase):
         self.assertNotIn("stability", StageFlow(self.root).template("6.5")["spec"]["checks"])
         self.assertEqual(before, self.store.state_path.read_bytes())
 
-    def test_op01_upgrade_is_explicit_and_only_reopens_delivery(self):
+    def test_old_policy_is_rejected_without_touching_existing_runtime(self):
         state = json.loads(self.store.state_path.read_text())
         state["workflow_policy"].update(revision="2026-10-03.op01", require_stability_receipt=True)
-        state["current_stage"] = "6"
-        for number in range(1, 6):
-            stage = state["stages"][str(number)]
-            stage["status"] = "passed"
-            for substep in stage["substeps"].values():
-                substep["status"] = "passed"
-        state["stages"]["6"]["status"] = "in_progress"
-        state["stages"]["6"]["substeps"]["6.1"]["status"] = "passed"
         self.store.state_path.write_text(json.dumps(state))
         runtime = self.store.state_dir / "runtime"
         runtime.mkdir()
         log = runtime / "existing.log"
         log.write_text("original run evidence")
         before = self.store.state_path.read_bytes()
-        self.assertIn("stability", StageFlow(self.root).template("6.5")["spec"]["checks"])
-        self.assertFalse(self.store.upgrade(Registry(), apply=False)["changed"])
-        preview = self.store.upgrade(Registry(), apply=False, adopt_policy=True)
-        self.assertEqual(preview["affected_stages"], [6])
-        self.assertEqual(before, self.store.state_path.read_bytes())
-        self.store.upgrade(Registry(), apply=True, adopt_policy=True)
-        self.assertFalse(self.store.check()["workflow_policy"]["require_stability_receipt"])
+        with self.assertRaises(FlowError) as caught:
+            self.store.check()
+        self.assertEqual(caught.exception.code, "INVALID_POLICY")
+        self.assertEqual(self.store.state_path.read_bytes(), before)
         self.assertEqual(log.read_text(), "original run evidence")
-        upgraded = json.loads(self.store.state_path.read_text())
-        self.assertEqual(upgraded["stages"]["4"], state["stages"]["4"])
-        self.assertEqual(upgraded["stages"]["6"]["substeps"]["6.1"]["status"], "needs_recheck")
-        self.assertEqual(upgraded["rules_lock"], state["rules_lock"])
-        policy_event = next(r for r in upgraded["history"] if r["action"] == "workflow_policy_upgrade")
-        self.assertEqual(policy_event["previous_policy"], state["workflow_policy"])
 
-    def test_legacy_and_op01_do_not_silently_lose_gate(self):
+    def test_missing_or_old_policy_is_not_silently_replaced(self):
+        original = json.loads(self.store.state_path.read_text())
         for revision in (None, "2026-10-03.op01"):
-            state = json.loads(self.store.state_path.read_text())
+            state = json.loads(json.dumps(original))
             if revision is None:
-                state.pop("workflow_policy", None)
+                state.pop("workflow_policy")
             else:
-                from autoresearch_flow.policies import new_policy
-                state["workflow_policy"] = new_policy() | {"revision": revision, "require_stability_receipt": True}
+                state["workflow_policy"].update(revision=revision, require_stability_receipt=True)
             self.store.state_path.write_text(json.dumps(state))
             before = self.store.state_path.read_bytes()
-            self.assertTrue(self.store.check()["workflow_policy"]["require_stability_receipt"])
-            self.assertIn("stability", StageFlow(self.root).template("6.5")["spec"]["checks"])
-            self.assertEqual(before, self.store.state_path.read_bytes())
+            with self.assertRaises(FlowError) as caught:
+                self.store.check()
+            self.assertEqual(caught.exception.code, "INVALID_POLICY")
+            self.assertEqual(self.store.state_path.read_bytes(), before)
 
 
 class StabilityDeliveryTests(unittest.TestCase):
@@ -198,13 +182,13 @@ class StabilityDeliveryTests(unittest.TestCase):
         self.assertFalse(result["required"])
         self.assertEqual(path.read_bytes(), before)
 
-    def test_old_policy_still_requires_receipt(self):
+    def test_old_policy_is_rejected_before_delivery(self):
         state = json.loads(self.flow.store.state_path.read_text())
         state["workflow_policy"].update(revision="2026-10-03.op01", require_stability_receipt=True)
         self.flow.store.state_path.write_text(json.dumps(state))
         with self.assertRaises(FlowError) as caught:
             self.record()
-        self.assertEqual(caught.exception.code, "INVALID_EVIDENCE")
+        self.assertEqual(caught.exception.code, "INVALID_POLICY")
 
     def test_optional_evidence_cannot_escape_package(self):
         path = self.root / "outside-stability.json"

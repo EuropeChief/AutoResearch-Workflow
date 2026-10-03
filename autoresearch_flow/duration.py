@@ -10,7 +10,7 @@ from pathlib import Path
 
 from .core import TaskStore, _atomic_json, _canonical_digest, _require, _utc_now
 from .experiments import ExperimentBook, evidence
-from .policies import DURATION_SECONDS, REVISION, effective_policy
+from .policies import DURATION_SECONDS, effective_policy
 
 
 def text(value, label):
@@ -75,7 +75,6 @@ def select(root, decision, *, confirm=False):
     _require(confirm, "DURATION_CONFIRMATION_REQUIRED", "审查资格与证据后显式 --confirm-duration")
     _require(not store.check()["issues"], "SOURCE_DRIFT", "先处理来源漂移")
     state = store._load()
-    _require(effective_policy(state)["revision"] == REVISION, "POLICY_UPGRADE_REQUIRED", "旧任务须先显式采用当前政策")
     runtime = store.state_dir / "runtime"
     _require(not runtime.exists() and not runtime.is_symlink(), "DURATION_FROZEN", "runtime 已准备，不得事后降低门槛或拼接轨迹")
     _require(state["current_stage"] == "4" and state["stages"]["4"]["substeps"]["4.1"]["status"] != "passed",

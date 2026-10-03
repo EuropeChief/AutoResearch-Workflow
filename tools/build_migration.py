@@ -15,7 +15,7 @@ import tempfile
 from pathlib import Path
 
 FLOW = Path(__file__).resolve().parents[1]
-ROOT = FLOW.parent
+ROOT = FLOW
 sys.path.insert(0, str(FLOW))
 from autoresearch_flow import FLOW_VERSION
 from autoresearch_flow.core import _sha256
@@ -101,8 +101,8 @@ def main():
             if not target.is_file() or _sha256(target) != digest:
                 raise RuntimeError(f"round-trip mismatch: {relative}")
         commands = [
-            [sys.executable, "AutoResearch新流程/cli.py", "--format", "json", "rules", "check"],
-            [sys.executable, "-m", "unittest", "discover", "-s", "AutoResearch新流程/tests", "-v"],
+            [sys.executable, "cli.py", "--format", "json", "rules", "check"],
+            [sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v"],
         ]
         checks = []
         for command in commands:

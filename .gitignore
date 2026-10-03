@@ -40,6 +40,11 @@ tmp/
 *.tar.gz
 *.tgz
 *.zip
+!sources/tutorial/图片和附件/*.zip
+
+# User-maintained configuration and release outputs are not source artifacts.
+local/
+deliverables/
 
 # Editor/OS files
 .DS_Store

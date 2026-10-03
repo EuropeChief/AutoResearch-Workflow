@@ -1,39 +1,18 @@
-# OP-0 / OP-1：冻结政策与题目 Git 管理
+# 冻结政策与题目 Git 管理
 
-Git 功能初始修订：`2026-10-03.op01`；当前政策为 `2026-10-03.op03`，状态 schema 仍为1，流程版本仍为0.2.0。后续已实现的政策见 [稳定性政策](OP02_STABILITY.md)、[时长政策](OP03_DURATION.md)，不代表全部功能或新版迁移发布完成。
+任务政策随新任务冻结，Git 检查点支撑版本审查和回退；不以 Git 代替原始实验或科学证据。
 
-## 1. 已实现与尚未启用
-
-已实现：七项用户通知与正式规则分层记录、任务政策快照、旧状态只读兼容、显式政策升级，以及新任务阶段 1.1 的 Git 范围确认和真实检查点。
-
-OP-2 已取消专门12h收据门禁，OP-3 已支持经资格确认的非训练7h例外。尚未启用：TUI（OP-4）、并行调度（OP-5）、命令级QA后三包压缩（OP-6）和填表生成（OP-7）。`task policy`显示冻结政策和待实现项，不能手改状态提前开启。
-
-`rules/catalog.json`的AR-038/044按教程表达7h例外，OP-3现已接入；默认仍每条10h、exec_json。例外必须在runtime准备前确认并冻结，不允许事后降低要求。OP-2按用户通知取消专门稳定性收据要求；不改教程，也不伪称已通过12h。
-
-## 2. 政策结构与兼容
+## 政策结构
 
 ```bash
 python3 "$FLOW_ROOT/cli.py" --format json task policy --task-root "$TASK_ROOT"
 ```
 
-`workflow_policy` 保存 `schema_version`、`revision`、`git_required`、`duration_policy`、`ui_mode` 和 `require_stability_receipt`。它不保存鉴权，不替代模型 TOML，也不增加最终轨迹字段。
+`workflow_policy` 保存 schema、修订号、Git 要求、时长、运行模式和稳定性收据策略，不保存鉴权，不增加最终轨迹字段。当前修订为 `2026-10-03.public`，任务 schema 为 2。
 
-- 新初始化任务使用当前修订，`git_required=true`。
-- 缺少该字段的旧任务按旧合同只读解释，默认 10h、`exec_json`，不追加强制 Git，不写回状态。
-- 未实现的TUI或旧政策直接启用7h返回 `POLICY_NOT_IMPLEMENTED`；新政策的7h缺资格冻结返回 `DURATION_ASSESSMENT_REQUIRED`，未知schema/不一致字段返回 `INVALID_POLICY`。旧稳定性语义保留，须显式升级，不单改布尔字段。
-- `duration_policy`由OP-3贯通默认36000秒与合格例外25200秒；资格、原始证据与实际运行快照共同核对，不只判断一个数值。
+新任务要求 Git 检查点；默认每轨 10h、当前运行模式为 exec_json、专门稳定性收据可选。合格非训练 7h 例外须启动前评估并冻结，见 [时长政策](OP03_DURATION.md)；诊断边界见 [稳定性](OP02_STABILITY.md)。TUI 等尚未启用能力由 `task policy` 明确报告，不能手改状态开启。
 
-只有希望采用新政策的旧任务才显式执行：
-
-```bash
-python3 "$FLOW_ROOT/cli.py" --format json task upgrade --task-root "$TASK_ROOT" --adopt-policy
-# 审查 affected_stages、来源变化与政策变化后，在已有授权内执行：
-python3 "$FLOW_ROOT/cli.py" task upgrade --task-root "$TASK_ROOT" --adopt-policy --apply
-```
-
-不带 `--apply` 不修改文件；普通规则升级不自动采用新政策。采用 Git 新门禁会从阶段 1 重开受影响的已完成状态，原记录/实验文件不删除，仍匹配的科学证据可复用。已有 `.autoresearch-flow/runtime/` 时仍拒绝此类切换；不要删除运行记录绕过。仅从 OP-01 升级到 OP-02、只改变交付稳定性政策时允许已有 runtime，影响阶段为 6，不切换运行模式、不重开科学研究阶段。
-
-七项通知记录在 catalog 的 `workflow_notices`，不冒充第三级正式权威或新增 AR 质检项；来源锁会保留通知快照。正式规则仍 50 条、质检覆盖仍 38 项，既有 QA 口头豁免不恢复。
+当前只支持新任务和同版本恢复。缺少政策或旧修订不默认补值，旧状态只读拒绝并使用原版本处理，不提供升级命令。规则中的原始用户通知、当前执行政策和工程实现状态分别记录，不把“已批准”视为“已实现”。
 
 ## 3. 新任务：先确认仓库范围
 
@@ -103,15 +82,3 @@ python3 "$FLOW_ROOT/cli.py" --format json task git-status --task-root "$TASK_ROO
 `.autoresearch-flow/git_repository.json` 保留仓库相对位置、范围、检查点 commit、文件哈希及脏状态。它是专家侧过程记录，不是新增必交材料；同一仓库历史随任务整体搬迁时可继续定位，换仓或丢失 commit 则不能冒用旧就绪结论。
 
 程序不提供自动 hard reset、清理、历史改写或远端发布。确需回退源码时先确定范围，保留实验日志与事实，再对受影响步骤执行 `stage reopen`。原始实验发生过的事实不能随 Git 回退消失。
-
-## 6. 后续实现接续表
-
-| 后续项 | 待替换/接入的位置 |
-|---|---|
-| OP-2 | `stages.py` 6.5 收据及模板、`pca_contract.py` 可选稳定性检查、环境文档 |
-| OP-3 | `runtime.py` 运行/状态的 36000、`harbor_runtime.py` 收口、`w4_evidence.py` 时长审查、`w4_package.py` 摘要和例外检查、Prompt |
-| OP-4 | `runtime.py` 的 JSON 进程监督、`harbor_runtime.py` PTY、日志与恢复适配；不丢原始证据 |
-| OP-5 | W2 账本上的有限 GPU 队列，不重写统计协议 |
-| OP-6/7 | 6.5 具名检查点 `qa_verified → archives_verified → form_ready`；archive 校验 QA 而非依赖 finish 6 |
-
-这些位置已经登记，但本次不声称相应功能已启用。现有正式包、历史轨迹和发布证据不修改，迁移包的全量更新留给 OP-8。

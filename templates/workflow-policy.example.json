@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "revision": "2026-10-03.op03",
+  "revision": "2026-10-03.public",
   "git_required": true,
   "duration_policy": {
     "mode": "default_10h",
