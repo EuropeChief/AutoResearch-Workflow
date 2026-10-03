@@ -28,7 +28,7 @@
     {
       "mode": 436,
       "path": "RELEASE.md",
-      "sha256": "eaf4cd631d1447a2b570edd2505944982fcb720029f82d72140b6986fbcd2d98"
+      "sha256": "3e3894601879b93ba7f4514229a9e28b2c840640c5d4fa1a04e5b14980232e8a"
     },
     {
       "mode": 436,
@@ -204,6 +204,41 @@
       "mode": 436,
       "path": "model_profiles/seed.example.toml",
       "sha256": "efe71e68815ecf867e4019a3b1405b966c2239472c3f580d1ceb85a2631eb6aa"
+    },
+    {
+      "mode": 436,
+      "path": "pilots/entry_trial/README.md",
+      "sha256": "e6c1ff175e82714592caff36a17d8cad11ff08ccec39306606e45e5d0af16f8d"
+    },
+    {
+      "mode": 436,
+      "path": "pilots/entry_trial/input/starter.py",
+      "sha256": "0f8082d6c034f7f4eeb03e818eb8c55ad5a118a2b44d70be88666c090bd06e8d"
+    },
+    {
+      "mode": 436,
+      "path": "pilots/entry_trial/input/task_card.md",
+      "sha256": "21b5173d19e8d588a8b6888c53f32451bc921e4788d7f527c6cb6e1ad61db33d"
+    },
+    {
+      "mode": 436,
+      "path": "pilots/gpu_queue/README.md",
+      "sha256": "e4ecb4492dd40ef24d0cdf70a85dfde520fec5912b8bdf606d88ca4946e42588"
+    },
+    {
+      "mode": 436,
+      "path": "pilots/gpu_queue/cuda_adapter.py",
+      "sha256": "3a19700ee82fb0f73d67a14c469e6a00045c3cbc64e5f6ff1fd7580ad0c4cada"
+    },
+    {
+      "mode": 436,
+      "path": "pilots/gpu_queue/method.py",
+      "sha256": "a9ec42e36e6f38acb20b90ecb555fdc4f354d2dddda702d0caabdda9e77873d5"
+    },
+    {
+      "mode": 436,
+      "path": "pilots/gpu_queue/probe.py",
+      "sha256": "19cc6d94f78b6530fa461caee004c5eb39e82280f3337b897f424ed0c95b67eb"
     },
     {
       "mode": 436,
@@ -614,6 +649,11 @@
       "mode": 436,
       "path": "tests/test_experiment_runner.py",
       "sha256": "db1fa4c8946eddd2d7629a2aca1366f878edb8c6defa149fc9d14a233177ee79"
+    },
+    {
+      "mode": 436,
+      "path": "tests/test_gpu_pilot.py",
+      "sha256": "f1b64dba334fbb8911221ded253c6e43614441ca25db3c1d29f74a35710911be"
     },
     {
       "mode": 436,

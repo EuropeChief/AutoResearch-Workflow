@@ -1,0 +1,25 @@
+{
+  "at": "2026-10-03T15:49:01+00:00",
+  "checked_links": 87,
+  "fresh_cli_init_and_resume_status": true,
+  "model_calls": 0,
+  "native_tests": "269",
+  "package_revision": "2026-10-03.public-rules",
+  "pending": [
+    "显式真实联调/独立试用证据审阅与绑定",
+    "当前发行包验收"
+  ],
+  "python": "3.13.13",
+  "qa_coverage_count": 38,
+  "qa_revision": "v0.3.1@2026-09-30",
+  "release_ready": false,
+  "relocated_tests": "269",
+  "relocation_without_design_or_pilot_runs": true,
+  "relocation_without_host_config_or_auth": true,
+  "rule_count": 50,
+  "schema_version": 2,
+  "scope": "tool contracts, not scientific or platform acceptance",
+  "source_manifest_sha256": "b7c8301181ad08731b81ad3da712fd4a143c65b707ad9b3336950bfbd603505c",
+  "status": "contracts_passed",
+  "version": "0.3.0"
+}
