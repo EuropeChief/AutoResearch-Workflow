@@ -1,4 +1,4 @@
-"""Small v0.3.1 handoff contracts; no task execution or QA judgments."""
+"""Small v0.3.2 handoff contracts; no task execution or QA judgments."""
 from pathlib import Path
 import re
 
@@ -7,7 +7,8 @@ from .core import _read_json, _require
 QA_IDS = {f"QA{i:02d}" for i in range(1, 22)}
 G_IDS = {f"G{i:02d}" for i in range(1, 4)}
 H_IDS = {f"H{i:02d}" for i in range(1, 7)}
-NA_IDS = {"QA04", "QA15", "QA19", "H05", "H06"}
+NA_IDS = {"QA04", "QA15", "QA19", "H05"}
+HARBOR_RULESET = "harbor-compatibility-2026-10-03-v0.3.2"
 
 
 def validate_qa_report(report, *, require_pass=False):
@@ -15,11 +16,13 @@ def validate_qa_report(report, *, require_pass=False):
     _require(report.get("schema_version") == 4
              and report.get("policy", {}).get("name") == "implementation"
              and report["policy"].get("revision") == "research-quality-v3",
-             "QA_REPORT_SCHEMA", "需 v0.3.1 schema 4 / research-quality-v3 报告")
+             "QA_REPORT_SCHEMA", "需当前 schema 4 / research-quality-v3 报告")
     for name in ("overview", "runtime_review", "format_alignment", "harbor",
                  "content_gates", "review", "summary"):
         _require(isinstance(report.get(name), dict), "QA_REPORT_SCHEMA", f"缺少报告对象 {name}")
     harbor = report["harbor"]
+    _require(harbor.get("ruleset") == HARBOR_RULESET,
+             "QA_REPORT_SCHEMA", "Harbor 质检规则版本不是当前 NOP 必交版本")
     groups = [(report.get("checks"), QA_IDS),
               (report["content_gates"].get("checks"), G_IDS),
               (harbor.get("checks"), H_IDS)]
@@ -46,12 +49,20 @@ def validate_qa_report(report, *, require_pass=False):
             rows[key] = row
     _require(rows["QA15"]["status"] == "not_applicable",
              "QA_REPORT_SCHEMA", "QA15 按当前 Skill 固定跳过")
-    expected_runtime = {"pass": "evidence_consistent", "fail": "failed",
-                        "manual": "unverified", "not_applicable": "not_run"}
-    _require(harbor.get("runtime_status") == expected_runtime[rows["H06"]["status"]],
+    h06 = rows["H06"]
+    expected_runtime = ("not_run" if h06["status"] == "fail" and not h06["evidence"]
+                        else {"pass": "evidence_consistent", "fail": "failed",
+                              "manual": "unverified"}[h06["status"]])
+    _require(harbor.get("runtime_status") == expected_runtime,
              "QA_REPORT_SCHEMA", "H06 与 Harbor runtime_status 不一致")
-    _require(rows["H06"]["status"] != "not_applicable" or not rows["H06"]["evidence"],
-             "QA_REPORT_SCHEMA", "已有 Trial 证据不能标记不适用")
+    if h06["status"] == "pass":
+        trial = harbor.get("trial_evidence")
+        _require(isinstance(trial, dict) and trial.get("agent") == "nop"
+                 and isinstance(trial.get("trial_dir"), str) and trial["trial_dir"]
+                 and isinstance(trial.get("rewards"), dict) and trial["rewards"]
+                 and isinstance(trial.get("task_binding"), dict)
+                 and trial["task_binding"].get("status") == "pass",
+                 "QA_REPORT_SCHEMA", "H06 通过须有当前题包版本的 NOP Trial 原件结论")
     decision = report["summary"].get("decision")
     _require(decision in {"PASS", "FAIL", "INCOMPLETE"}, "QA_REPORT_SCHEMA", "报告总评非法")
     if require_pass or decision == "PASS":

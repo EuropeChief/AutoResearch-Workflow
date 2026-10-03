@@ -9,9 +9,9 @@
 | 规则、状态、实验/评分、QA 后三包及填表 | 离线合同与异路径部署可核；科学结论仍须实质审查，QA 在独立会话进行 |
 | 原生 Codex TUI、预算暂停、同会话恢复、只读观察 | 当前 native_tui 政策下新建 Seed CPU 任务，预检与两段同会话实测通过，见 [证据与局限](pilots/pca_cpu/TUI_PROBE.md)；未修改旧冻结记录，不代表十小时正式轨迹通过 |
 | 有限本地复验队列 | CPU 合同及[两卡 GPU 实测](pilots/gpu_queue/README.md)通过，串并行同结果、完成后无重复启动；不据此宣称共享卡独占或 Harbor GPU provider 已验证 |
-| Harbor 双镜像评分链 | 当前源码的 CPU 合成验收完成候选移交、独立 Verifier 与 reward 回收；不是正式 Hidden 数据验收 |
+| Harbor 双镜像评分链 | 当前源码的 CPU 合成验收完成候选移交、独立 Verifier 与 reward 回收；新增 NOP 必交合同已有离线回归及一次原生 `nop` CPU 合成短测（34 秒、0 异常、reward 1.0，原件见 `pilots/pca_cpu/runs/nop-20261004T001/`）。这不是正式题包或 Hidden 数据验收 |
 | 环境适配 | Harbor 0.23.0、Codex CLI 0.147.0 为已适配目标；每题镜像/资源/provider 均须预检，其他版本不自动兼容 |
-| 完整发行 | 入口与领域文档已归位；当前证据绑定和[独立新会话试用](pilots/entry_trial/README.md)全部满足后才正式发布；GPT、真实压缩与正式长程未由 CPU 短测证明 |
+| 完整发行 | 入口与领域文档已归位；独立新会话入口试用按当前指示暂缓，不能记作已通过。当前完成离线合同、NOP 合成短测和迁移预览；正式发布仍需核齐当期证据与验收条件。GPT、真实压缩与正式长程未由 CPU 短测证明 |
 
 更新规则、接口或处理使用反馈时，先读 [维护说明](MAINTAINING.md)；它不增加每题操作步骤。
 

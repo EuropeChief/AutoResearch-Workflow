@@ -1,5 +1,6 @@
 """W5 parts 1–2: state/evidence integration, no GPU or model calls."""
 import json
+import shutil
 import subprocess
 import sys
 import unittest
@@ -10,7 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import test_w2_contract as w2
 from autoresearch_flow.core import FlowError, _sha256, _canonical_digest
 from autoresearch_flow.stages import StageFlow
-from test_pca_contract import synthetic_receipt
+from test_pca_contract import synthetic_receipt, synthetic_nop
 from autoresearch_flow.task_git import TaskGit
 
 
@@ -31,6 +32,7 @@ class StageTests(unittest.TestCase):
         }.items():
             path = task / name; path.parent.mkdir(parents=True, exist_ok=True); path.write_text(content)
         self.harbor_ref = self.fx.ref("harbor-receipt.json", json.dumps(synthetic_receipt(self.root, task)))
+        self.nop_ref = self.fx.ref("nop-execution.json", json.dumps(synthetic_nop(self.root, task)))
         vcs = TaskGit(self.root)
         vcs.setup(self.root, confirm=True)
         subprocess.run(["git", "-C", str(self.root), "config", "user.name", "Synthetic Test"], check=True)
@@ -39,7 +41,8 @@ class StageTests(unittest.TestCase):
 
     def record(self, step, checks=None, **changes):
         if step == "2.1" and checks is None:
-            checks = {"harbor_task": "workspace/harbor_task", "harbor_execution": self.harbor_ref}
+            checks = {"harbor_task": "workspace/harbor_task", "harbor_execution": self.harbor_ref,
+                      "nop_execution": self.nop_ref}
         if step == "3.5" and checks is not None:
             checks = {**checks, "harbor_task": "workspace/harbor_task", "harbor_execution": self.scoring_receipt(checks['score_contract'])}
         spec = {"step": step, "status": "passed", "reviewer": "synthetic expert",
@@ -199,7 +202,8 @@ class StageTests(unittest.TestCase):
         score = self.fx.ref("score-statistics.json", json.dumps({"protocol_sha256": report["protocol_sha256"],
              "upper_bound": 16, "metric_ceiling": 100, "rationale": "synthetic", "evidence": [self.fx.proof]}))
         checks = {"protocol_id": "p1", "baseline_review": review, "score_contract": score, "statistical_review": ref,
-                  "harbor_task": "workspace/harbor_task", "harbor_execution": self.scoring_receipt(score)}
+                  "harbor_task": "workspace/harbor_task", "harbor_execution": self.scoring_receipt(score),
+                  "nop_execution": self.nop_ref}
         self.assertIn("statistical_review", self.flow._gate("3.5", checks))
         del checks["statistical_review"]
         with self.assertRaises(FlowError):
@@ -240,6 +244,19 @@ class StageTests(unittest.TestCase):
         self.assertEqual(refs[0], self.fx.proof)
         with self.assertRaises(FlowError):
             self.flow.reference(["../outside"])
+
+    def test_package_nop_gate_uses_only_final_package_evidence(self):
+        package = self.root / "final-package"
+        shutil.copytree(self.root / "workspace/harbor_task", package / "workspace/harbor_task")
+        shutil.copytree(self.root / "expert_evidence", package / "expert_evidence")
+        receipt = package / "expert_evidence/nop_execution.json"
+        receipt.write_bytes((self.root / self.nop_ref["path"]).read_bytes())
+        packaged_ref = {"path": receipt.relative_to(self.root).as_posix(), "sha256": _sha256(receipt)}
+        with patch.object(self.flow, "_package", return_value={"package_path": str(package)}):
+            result = self.flow._gate("6.2", {"nop_execution": packaged_ref})
+            self.assertEqual(result["nop_execution"]["agent"], "nop")
+            with self.assertRaises(FlowError):
+                self.flow._gate("6.2", {"nop_execution": self.nop_ref})
 
     def test_partial_work_can_resume_without_completion_claim(self):
         self.record("1.1", status="in_progress")

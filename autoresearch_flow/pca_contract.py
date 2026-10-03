@@ -5,6 +5,8 @@ import math
 import re
 import stat
 import tomllib
+import importlib.util
+import sys
 from datetime import datetime
 from pathlib import Path
 
@@ -131,6 +133,63 @@ Receipt is an internal workflow document. Its filename is not a platform require
             "agent_image": receipt["agent_image"], "verifier_image": receipt["verifier_image"],
             "official_hidden_pending": receipt["data_scope"] != "official_hidden",
             "receipt_sha256": _canonical_digest(receipt)}
+
+
+def _bundled_trial_validator():
+    """Load the read-only trial validator from this flow's pinned QA Skill copy."""
+    scripts = Path(__file__).resolve().parents[1] / "skills/autoresearch-task-qa/scripts"
+    docker_spec = importlib.util.spec_from_file_location("docker_paths", scripts / "docker_paths.py")
+    module_path = scripts / "harbor_review.py"
+    spec = importlib.util.spec_from_file_location("_flow_bundled_harbor_review", module_path)
+    _require(docker_spec is not None and docker_spec.loader is not None
+             and spec is not None and spec.loader is not None, "NOP_VALIDATOR_MISSING",
+             "流程包缺少随包 QA Skill 的 Harbor 原件校验器")
+    docker_module = importlib.util.module_from_spec(docker_spec)
+    module = importlib.util.module_from_spec(spec)
+    previous = sys.modules.get("docker_paths")
+    sys.modules["docker_paths"] = docker_module
+    try:
+        docker_spec.loader.exec_module(docker_module)
+        spec.loader.exec_module(module)
+    finally:
+        if previous is None:
+            del sys.modules["docker_paths"]
+        else:
+            sys.modules["docker_paths"] = previous
+    return module.validate_trial_evidence
+
+
+def check_nop_record(root: Path, record: dict, task_root: Path) -> dict:
+    """Check authored NOP references against one Trial and the current task version."""
+    root = Path(root).resolve()
+    structural = check_task(task_root)
+    _require(isinstance(record, dict) and record.get("schema_version") == 1
+             and record.get("kind") == "nop_trial"
+             and record.get("task_sha256") == structural["task_sha256"],
+             "NOP_VERSION_STALE", "NOP 原件记录须绑定当前完整题包版本")
+    files = record.get("trial_files")
+    _require(isinstance(files, dict) and set(files) == {"config", "result", "reward", "log"},
+             "NOP_EVIDENCE_INVALID", "NOP 原件须引用同一 Trial 的配置、结果、reward 和日志")
+    refs = [evidence(root, files[key]).relative_to(root).as_posix()
+            for key in ("config", "result", "reward", "log")]
+    binding = record.get("trial_task_binding")
+    _require(isinstance(binding, dict) and isinstance(binding.get("summary"), str)
+             and binding["summary"].strip() and isinstance(binding.get("evidence"), list)
+             and binding["evidence"], "NOP_VERSION_UNVERIFIED", "NOP 须引用当前题包的真实版本依据")
+    version_refs = [evidence(root, item).relative_to(root).as_posix()
+                    for item in binding["evidence"]]
+    try:
+        trial = _bundled_trial_validator()(root, refs, Path(task_root).resolve(),
+            {"summary": binding["summary"], "evidence": version_refs})
+    except (ValueError, OSError) as exc:
+        raise FlowError("NOP_EVIDENCE_INVALID", str(exc)) from exc
+    _require(trial["agent"] == "nop", "NOP_AGENT_INVALID", "Trial 的 Agent 必须为 nop")
+    _require(trial["task_binding"]["status"] == "pass", "NOP_VERSION_UNVERIFIED",
+             "NOP Trial 与当前题包版本关联尚未完成")
+    return {"status": "evidence_checked_not_independent_replay", "agent": "nop",
+            "trial_dir": trial["trial_dir"], "rewards": trial["rewards"],
+            "task_sha256": structural["task_sha256"],
+            "record_sha256": _canonical_digest(record)}
 
 
 def check_stability(root: Path, receipt: dict, *, expected_image: str) -> dict:

@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "kind": "nop_trial",
+  "task_sha256": "REPLACE_WITH_ENVIRONMENT_CHECK_TASK_DIGEST",
+  "trial_files": {
+    "config": {"path": "expert_evidence/nop_trial/ACTUAL_TRIAL_ID/config.json", "sha256": "REPLACE_WITH_REAL_SHA256"},
+    "result": {"path": "expert_evidence/nop_trial/ACTUAL_TRIAL_ID/result.json", "sha256": "REPLACE_WITH_REAL_SHA256"},
+    "reward": {"path": "expert_evidence/nop_trial/ACTUAL_TRIAL_ID/verifier/reward.txt", "sha256": "REPLACE_WITH_REAL_SHA256"},
+    "log": {"path": "expert_evidence/nop_trial/ACTUAL_TRIAL_ID/trial.log", "sha256": "REPLACE_WITH_REAL_SHA256"}
+  },
+  "trial_task_binding": {
+    "summary": "根据真实构建/配置原件说明本 Trial 与当前题包版本的对应关系",
+    "evidence": [
+      {"path": "expert_evidence/nop_trial/ACTUAL_TRIAL_ID/build-version.log", "sha256": "REPLACE_WITH_REAL_SHA256"}
+    ]
+  }
+}

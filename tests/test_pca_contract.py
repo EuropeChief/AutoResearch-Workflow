@@ -9,7 +9,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from autoresearch_flow.core import FlowError, _sha256
 from autoresearch_flow.trajectory import validate_round, raw_public_metric
-from autoresearch_flow.pca_contract import check_task, check_execution_receipt, check_stability, task_digest
+from autoresearch_flow.pca_contract import check_task, check_execution_receipt, check_nop_record, check_stability, task_digest
 
 
 def synthetic_receipt(root, task):
@@ -26,6 +26,31 @@ def synthetic_receipt(root, task):
             "data_authorization": ref(log), "command": ["synthetic-harbor"], "reward": ref(reward),
             "observations": {name: {"passed": True, "locator": "line 1 SYNTHETIC",
                                    "evidence": ref(log)} for name in names}}
+
+
+def synthetic_nop(root, task):
+    trial = root / "expert_evidence/nop_trial/synthetic"
+    (trial / "verifier").mkdir(parents=True, exist_ok=True)
+    config = trial / "config.json"
+    result = trial / "result.json"
+    reward = trial / "verifier/reward.txt"
+    log = trial / "trial.log"
+    build = root / "expert_evidence/build-version.txt"
+    config.write_text(json.dumps({"agent": {"name": "nop"}, "task": {"name": task.name,
+        "task_toml_sha256": _sha256(task / "task.toml")}}))
+    result.write_text(json.dumps({"agent_info": {"name": "nop"}, "task_name": task.name,
+        "verifier_environment_mode": "separate", "finished_at": "2026-10-04T00:01:00Z",
+        "exception_info": None, "verifier_result": {"rewards": {"reward": 0.0}}}))
+    reward.write_text("0\n")
+    log.write_text("SYNTHETIC ONLY: build and verifier completed\n")
+    build.write_text("SYNTHETIC task version " + task_digest(task) + "\n")
+    def ref(path):
+        return {"path": path.relative_to(root).as_posix(), "sha256": _sha256(path)}
+    return {"schema_version": 1, "kind": "nop_trial", "task_sha256": task_digest(task),
+            "trial_files": {k: ref(p) for k, p in {"config": config, "result": result,
+                "reward": reward, "log": log}.items()},
+            "trial_task_binding": {"summary": "synthetic version binding",
+                                   "evidence": [ref(build)]}}
 
 
 class EnvironmentContractTests(unittest.TestCase):
@@ -99,6 +124,34 @@ class EnvironmentContractTests(unittest.TestCase):
         with self.assertRaises(FlowError): check_stability(self.root, stability, expected_image="other")
         stability['stable_seconds'] = 50000
         with self.assertRaises(FlowError): check_stability(self.root, stability, expected_image=receipt['agent_image'])
+
+    def test_nop_zero_reward_passes_and_wrong_identity_does_not(self):
+        record = synthetic_nop(self.root, self.task)
+        result = check_nop_record(self.root, record, self.task)
+        self.assertEqual(result["agent"], "nop")
+        self.assertEqual(result["rewards"], {"reward": 0.0})
+        config = self.root / record["trial_files"]["config"]["path"]
+        data = json.loads(config.read_text()); data["agent"]["name"] = "oracle"
+        config.write_text(json.dumps(data))
+        record["trial_files"]["config"]["sha256"] = _sha256(config)
+        with self.assertRaises(FlowError):
+            check_nop_record(self.root, record, self.task)
+
+    def test_nop_rejects_stale_task_and_missing_or_conflicting_evidence(self):
+        record = synthetic_nop(self.root, self.task)
+        record["task_sha256"] = "0" * 64
+        with self.assertRaises(FlowError): check_nop_record(self.root, record, self.task)
+        record["task_sha256"] = task_digest(self.task)
+        log = self.root / record["trial_files"]["log"]["path"]
+        log.write_text("")
+        record["trial_files"]["log"]["sha256"] = _sha256(log)
+        with self.assertRaises(FlowError): check_nop_record(self.root, record, self.task)
+        log.write_text("SYNTHETIC ONLY\n")
+        record["trial_files"]["log"]["sha256"] = _sha256(log)
+        reward = self.root / record["trial_files"]["reward"]["path"]
+        reward.write_text("1\n")
+        record["trial_files"]["reward"]["sha256"] = _sha256(reward)
+        with self.assertRaises(FlowError): check_nop_record(self.root, record, self.task)
 
 
 def round_record(number=1, summary="调整方法，公开评测成功。"):

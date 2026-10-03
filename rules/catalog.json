@@ -823,9 +823,9 @@
       "statement": "已有 Job/Trial 配置须核任务/provider/agent/入口及有效覆盖；最终评分 verifier 未禁用，迭代期仅公开 Dev。H05 无配置可静态不适用，但教程真实 separate/artifacts 自验仍须完成。"
     },
     {
-      "evidence": "Trial 记录",
+      "evidence": "当前题包版本的 NOP Trial 原件与有效候选 Harbor 实跑记录",
       "id": "AR-036",
-      "timing": {"inform_at":"2.1","check_at":["2.1","3.5","4.1","6.5"],"due_at":["4.1","6.5"]},
+      "timing": {"inform_at":"2.1","check_at":["2.1","3.5","4.1","6.2","6.5"],"due_at":["4.1","6.5"]},
       "applicability": "requires_review",
       "reviewer": "程序＋专家＋平台",
       "source_refs": [
@@ -839,7 +839,7 @@
         5,
         6
       ],
-      "statement": "教程要求目标 Harbor 真实端到端自验及同一 Trial 的配置、结果、reward、日志和版本绑定；无正式 Hidden 权限用授权自验数据。Skill H06 无 Trial 可静态不适用并记 not_run，不代表教程自验通过。NOP 推荐、Oracle 非必交，已有其他有效 Trial 同样核验。"
+      "statement": "当前题包版本必须提交一次 NOP Trial 原件，含同次 config.json、result.json、有效 reward、非空日志及任务版本关联；缺失时 H06/QA17 失败，runtime_status=not_run，0 分本身不失败。另须验证目标 Harbor 的有效候选移交、独立 Verifier 与评分链路；NOP 不替代有效候选实跑。无正式 Hidden 权限可用授权同接口自验数据，Oracle 非必交。"
     },
     {
       "evidence": "启动配置、实际可见集、会话与目录",
@@ -982,7 +982,7 @@
       "stages": [
         6
       ],
-      "statement": "最终 QA 只对确定版本提交包取证并使用当前 schema 4 / research-quality-v3：先 G01–G03，再 QA01–QA21 和 H01–H06；QA15 固定跳过。旧口头豁免不能把适用项的 fail/manual 改写为通过，只有 Skill 明示允许的 not_applicable 可采用。"
+      "statement": "最终 QA 只对确定版本提交包取证并使用当前 schema 4 / research-quality-v3：先 G01–G03，再 QA01–QA21 和 H01–H06；QA15 固定跳过，H06 必查且不能标不适用。旧口头豁免不能把适用项的 fail/manual 改写为通过，只有 Skill 明示允许的 not_applicable 可采用。"
     },
     {
       "evidence": "report.json/md/txt、包哈希、逐项映射",

@@ -199,7 +199,7 @@ def main():
         assert state["current_stage"] == "1"
     report = {"schema_version": 2, "status": "released" if args.release else "contracts_passed",
               "release_ready": args.release,
-              "pending": [] if args.release else ["显式真实联调/独立试用证据审阅与绑定", "当前发行包验收"],
+              "pending": [] if args.release else ["独立新会话入口试用暂缓；正式发行包尚未验收"],
               "at": _utc_now(), "version": FLOW_VERSION, "qa_revision": registry.manifest.get("qa_revision"),
               "package_revision": registry.manifest.get("package_revision"),
               "python": sys.version.split()[0], "rule_count": len(registry.catalog["rules"]),

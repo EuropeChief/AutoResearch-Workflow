@@ -72,4 +72,4 @@ python3 "$FLOW_ROOT/cli.py" stage reopen --task-root "$TASK_ROOT" --step 6.1 --f
 
 题目类型与适配入口在环境验收前通过 `task configure --file ...` 登记，见 [配置模板](../../templates/task-config.example.json)。`task check` 只查流程状态/来源；恢复任务应再运行 `stage status` 检查已登记证据。
 
-QA v0.3.1：6.3 可绑定失败/未完成报告以安排返修；6.4/6.5 须当前独立报告已完成且 PASS。适用项不得使用旧 exception/platform_only 关闭。仅 QA15 固定跳过；QA04/19、H05/06 可按原文及报告一致地 not_applicable。Harbor 动态门禁来源为教程；Skill 的静态 not_run 不解除该要求。
+QA v0.3.2：6.3 可绑定缺 NOP 的 FAIL/not_run 报告以安排返修；6.4/6.5 须当前独立报告已完成且 PASS。适用项不得使用旧 exception/platform_only 关闭。仅 QA15 固定跳过；QA04/19、H05 可按原文及报告一致地 not_applicable，H06 必查。Harbor 动态门禁来源为教程；缺 NOP 的 not_run 与 H06/QA17 失败，不能用于收口。

@@ -10,6 +10,7 @@ from pathlib import Path
 
 import test_op02_stability as fixtures
 from test_qa_contract import synthetic_report
+from test_pca_contract import synthetic_nop
 from autoresearch_flow.core import FlowError
 from autoresearch_flow.w4_package import check_package
 from autoresearch_flow.pca_contract import task_digest
@@ -81,6 +82,8 @@ class ArchiveTests(unittest.TestCase):
         receipt = json.loads(self.fx.receipt.read_text())
         receipt["task_sha256"] = task_digest(self.source / "workspace/harbor_task")
         self.fx.receipt.write_text(json.dumps(receipt))
+        self.fx.nop_receipt.write_text(json.dumps(synthetic_nop(self.source,
+            self.source / "workspace/harbor_task")))
         self.fx.rebind()
         before = check_package(self.source)["package_sha256"]
         result = self.delivery.archive(self.source, name="synthetic-benchmark", checks=self.fx.checks)

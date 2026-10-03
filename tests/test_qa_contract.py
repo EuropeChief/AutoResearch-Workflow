@@ -1,4 +1,4 @@
-"""v0.3.1 contract regressions using explicitly synthetic reports."""
+"""v0.3.2 contract regressions using explicitly synthetic reports."""
 import copy
 import unittest
 
@@ -23,8 +23,11 @@ def synthetic_report(package=None):
         "review": {"completed": True},
         "summary": {"decision": "PASS"},
         "harbor": {
-            "checks": [row(f"H{i:02d}", "not_applicable" if i >= 5 else "pass") for i in range(1, 7)],
-            "runtime_status": "not_run", "static_status": "pass", "qa17_status": "pass",
+            "ruleset": "harbor-compatibility-2026-10-03-v0.3.2",
+            "checks": [row(f"H{i:02d}", "not_applicable" if i == 5 else "pass") for i in range(1, 7)],
+            "runtime_status": "evidence_consistent", "static_status": "pass", "qa17_status": "pass",
+            "trial_evidence": {"agent": "nop", "trial_dir": "expert_evidence/nop_trial/t1",
+                               "rewards": {"reward": 0.0}, "task_binding": {"status": "pass"}},
             "hidden_review": {"status": "pass"}, "artifact_contract": {"status": "pass"},
             "path_contract": {"status": "pass", "findings": []}
         }
@@ -32,9 +35,30 @@ def synthetic_report(package=None):
 
 
 class QaContractTests(unittest.TestCase):
-    def test_static_pass_allows_no_trial_without_claiming_execution(self):
+    def test_pass_requires_nop_evidence(self):
         result = validate_qa_report(synthetic_report(), require_pass=True)
-        self.assertEqual(result["runtime_status"], "not_run")
+        self.assertEqual(result["runtime_status"], "evidence_consistent")
+
+    def test_missing_nop_failure_can_be_attached_but_not_closed(self):
+        report = synthetic_report()
+        for key in ("H06", "QA17"):
+            row = next(x for x in report["harbor"]["checks"] + report["checks"] if x["id"] == key)
+            row.update(status="fail", evidence=[], remediation="补 NOP", acceptance_evidence="NOP 原件")
+        report["harbor"].update(runtime_status="not_run", qa17_status="fail", trial_evidence=None)
+        report["summary"]["decision"] = "FAIL"
+        validate_qa_report(report)
+        with self.assertRaises(FlowError):
+            validate_qa_report(report, require_pass=True)
+
+    def test_old_optional_nop_pass_and_wrong_agent_are_rejected(self):
+        for mutation in ("old_ruleset", "not_applicable", "wrong_agent", "missing_trial"):
+            report = synthetic_report()
+            if mutation == "old_ruleset": report["harbor"]["ruleset"] = "harbor-compatibility-2026-09-30-v0.3.1"
+            if mutation == "not_applicable": report["harbor"]["checks"][-1]["status"] = "not_applicable"
+            if mutation == "wrong_agent": report["harbor"]["trial_evidence"]["agent"] = "candidate"
+            if mutation == "missing_trial": report["harbor"]["trial_evidence"] = None
+            with self.subTest(mutation=mutation), self.assertRaises(FlowError):
+                validate_qa_report(report, require_pass=True)
 
     def test_old_schema_and_removed_or_duplicate_items_are_rejected(self):
         for mutation in ("schema", "revision", "duplicate", "missing"):
@@ -64,10 +88,10 @@ class QaContractTests(unittest.TestCase):
 
     def test_trial_evidence_and_runtime_status_cannot_be_hidden(self):
         r = synthetic_report()
-        r["harbor"]["checks"][-1]["evidence"] = ["trial/result.json"]
+        r["harbor"]["checks"][-1]["evidence"] = []
         with self.assertRaises(FlowError): validate_qa_report(r)
         r = synthetic_report()
-        r["harbor"]["runtime_status"] = "evidence_consistent"
+        r["harbor"]["runtime_status"] = "not_run"
         with self.assertRaises(FlowError): validate_qa_report(r)
 
     def test_path_fail_and_unfinished_review_cannot_claim_pass(self):

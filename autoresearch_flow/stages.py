@@ -17,7 +17,7 @@ from .runtime import Runtime, TRACKS
 from .w4_evidence import DeliveryEvidence
 from .w4_package import check_package
 from .qa_contract import validate_qa_report
-from .pca_contract import check_task, check_execution_receipt, check_stability
+from .pca_contract import check_task, check_execution_receipt, check_nop_record, check_stability
 from .policies import effective_policy
 from .task_git import TaskGit
 
@@ -128,7 +128,7 @@ class StageFlow:
                          and reported[item["id"]] <= {"pass", "passed", "通过"},
                          "QA_UNRESOLVED", "不得把独立报告的未通过项手动改写为通过；返修后重新独立质检")
             if item.get("status") in {"skip", "not_applicable"}:
-                allowed = {"QA15"} if item["status"] == "skip" else {"QA04", "QA15", "QA19", "H05", "H06"}
+                allowed = {"QA15"} if item["status"] == "skip" else {"QA04", "QA15", "QA19", "H05"}
                 _require(item["id"] in allowed and item["id"] in reported
                          and reported[item["id"]] == {"not_applicable"},
                          "QA_UNRESOLVED", "不适用须与当前 Skill 及独立报告一致")
@@ -164,8 +164,9 @@ class StageFlow:
                      "阶段 1.1 须完成 Git 范围确认及首个真实检查点；先执行 task git-status")
             return result
         if step == "2.1":
-            return check_execution_receipt(self.root,
+            execution = check_execution_receipt(self.root,
                 _read_json(evidence(self.root, checks.get("harbor_execution"))), self._harbor_path(checks))
+            return {**execution, "nop_execution": self._nop_record(checks, self.root, self._harbor_path(checks))}
         if step in {"2.3", "2.4", "2.5", "3.2", "3.3", "3.4", "3.5", "5.2"}:
             _text(protocol, "protocol_id")
         if step == "2.3":
@@ -202,16 +203,18 @@ class StageFlow:
                     _read_json(evidence(self.root, checks.get("harbor_execution"))),
                     self._harbor_path(checks), frozen_scoring=True,
                     score_contract_sha256=_canonical_digest(contract))
+                result["nop_execution"] = self._nop_record(checks, self.root, self._harbor_path(checks))
             return result
         if step == "4.1":
             from .duration import snapshot as duration_snapshot
             duration = duration_snapshot(self.root)
             execution = check_execution_receipt(self.root,
                 _read_json(evidence(self.root, checks.get("harbor_execution"))), self._harbor_path(checks))
+            nop = self._nop_record(checks, self.root, self._harbor_path(checks))
             statuses = {t: Runtime(self.root).status(t) for t in TRACKS}
             _require(all(s["preflight"] and s["preflight"]["ready"] for s in statuses.values()),
                      "PREFLIGHT_REQUIRED", "两组都须完成当前配置的真实 Public/Dev 预检")
-            return {"tracks": statuses, "harbor_execution": execution, "duration_snapshot": duration,
+            return {"tracks": statuses, "harbor_execution": execution, "nop_execution": nop, "duration_snapshot": duration,
                     "approval": self._approval(checks.get("approval"), "stage-4-start")}
         if step == "4.4":
             delivery = DeliveryEvidence(self.root)
@@ -228,6 +231,10 @@ class StageFlow:
             return DeliveryEvidence(self.root).best_verification()
         if step.startswith("6."):
             result = self._package(checks)
+            if step in {"6.2", "6.5"}:
+                package = Path(result["package_path"])
+                result["nop_execution"] = self._nop_record(checks, package,
+                    package / "workspace/harbor_task", package_only=True)
             if step == "6.5":
                 # Final evidence must be contained in the final package, not rescued from working files.
                 package = Path(result["package_path"])
@@ -361,6 +368,13 @@ class StageFlow:
                  "INVALID_PATH", "harbor_task 须为题目内相对目录")
         return self.root / path
 
+    def _nop_record(self, checks, root, task_root, *, package_only=False):
+        path = evidence(self.root, checks.get("nop_execution"))
+        if package_only:
+            _require(path.is_relative_to(root / "expert_evidence"), "PACKAGE_EVIDENCE_BOUNDARY",
+                     "NOP 记录须位于最终包 expert_evidence 内")
+        return check_nop_record(root, _read_json(path), task_root)
+
     def template(self, step):
         state = self.store._load()
         self._step(state, step)
@@ -370,6 +384,8 @@ class StageFlow:
             checks["harbor_task"] = "workspace/harbor_task"
         if step in {"2.1", "3.5", "4.1", "6.5"}:
             checks["harbor_execution"] = {"path": "<任务内真实 Harbor 记录 JSON；6.5 须位于最终包内>", "sha256": "<SHA-256>"}
+        if step in {"2.1", "3.5", "4.1", "6.2", "6.5"}:
+            checks["nop_execution"] = {"path": "<expert_evidence 内 NOP 原件引用 JSON；6.2/6.5 须位于最终包内>", "sha256": "<SHA-256>"}
         if step == "6.5" and effective_policy(state)["require_stability_receipt"]:
             checks["stability"] = {"path": "<任务内最终包中的 12h 稳定性记录 JSON>", "sha256": "<SHA-256>"}
         if step in {"2.3", "2.4", "2.5", "3.2", "3.3", "3.4", "3.5", "5.2"}:

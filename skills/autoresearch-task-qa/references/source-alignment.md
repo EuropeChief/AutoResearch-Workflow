@@ -1,6 +1,6 @@
 # 来源、版本与适用范围
 
-本次三期对齐日期：2026-09-30，版本 v0.3.1。以用户确认的三期要求和[专家线下标注教程V3](https://bytedance.larkoffice.com/docx/DJhEdv0oTod4sExGgu6cp00onHg)（本次修改前 revision 222）为准；下表保留二期来源快照，用于追溯未改变的内容门与证据规则。
+本次版本 v0.3.2（2026-10-03），沿用 2026-09-30 的三期对齐依据，并按用户确认将当前题包版本的一次 NOP 自检记录设为必交。三期依据为用户确认的要求和[专家线下标注教程V3](https://bytedance.larkoffice.com/docx/DJhEdv0oTod4sExGgu6cp00onHg)（三期修改前 revision 222）；下表保留二期来源快照，用于追溯内容门与证据规则。
 
 | 来源 | 读取版本 | 采用内容 |
 |---|---|---|
@@ -13,7 +13,7 @@
 
 2026-09-30 三期口径：Agent 与 Verifier 分别以 `environment/Dockerfile`、`tests/Dockerfile` 构建；显式 separate。公开 Dev 必须保留供 Agent 迭代，最终私有 Hidden 留在独立 Verifier。Hidden 是私有测试用例、标签、基准或评估生成逻辑等，训练与非训练任务均适用；目录名可不同，也可有依据地生成或安全注入。检查材料、来源与真实调用关系，不要求固定非空 `tests/hidden_assets/`。这覆盖历史附件将全部 tests 复制进 Agent 的做法。
 
-NOP 在本次作为推荐自检保留，尚未升级为算法确认的必交项。缺少 NOP 不单独判失败，不能把组员 v0.3 新增的硬门槛误写成用户已确认要求。已提交的 NOP 或其他 Trial 按目标版本核对；无运行证据明确记录 not_run。Oracle Trial 仍非必交。官方 [Separate verifier](https://docs.harborframework.com/core-concepts/tasks/separate-verifier) 说明独立环境及产物移交；[NOP 实现](https://github.com/harbor-framework/harbor/blob/main/src/harbor/agents/nop.py) 不执行求解操作，已有 Starter 并不会因此被清空。
+2026-10-03 用户确认：必交一次当前题包版本的 NOP 自检记录，用于证明题包能构建并跑通 Harness。核对正常结束、独立 Verifier 执行及有效 reward，可复用平台已有同版本记录；缺少记录使 H06 与 QA17 fail，运行状态记 not_run。任务版本对应关系可引用已有配置、日志或专家说明。NOP 的 0 分本身不判失败。Oracle Trial 仍非必交。官方 [Separate verifier](https://docs.harborframework.com/core-concepts/tasks/separate-verifier) 说明独立环境及产物移交；[NOP 实现](https://github.com/harbor-framework/harbor/blob/main/src/harbor/agents/nop.py) 不执行求解操作，已有 Starter 并不会因此被清空。
 
 ## 本次明确裁定
 

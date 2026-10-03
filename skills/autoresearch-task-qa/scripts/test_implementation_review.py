@@ -422,14 +422,15 @@ class ImplementationReviewTests(unittest.TestCase):
         self.assertEqual(result["checks"][17]["status"], "fail")
         self.assertEqual(result["checks"][20]["status"], "fail")
 
-    def test_no_nop_does_not_fail_static_review(self):
+    def test_no_nop_blocks_qa17(self):
         import shutil
         shutil.rmtree(self.root / "run-a")
         review = self.review()
         from test_harbor_review import valid_review
         review["harbor"] = valid_review()
         result = qa.apply_review(self.report(), review, self.root)
-        self.assertEqual(result["checks"][16]["status"], "pass")
+        self.assertEqual(result["checks"][16]["status"], "fail")
+        self.assertEqual(result["summary"]["decision"], "FAIL")
         self.assertEqual(result["harbor"]["runtime_status"], "not_run")
         self.assertIn("动态运行未验证", qa.compact_markdown(result))
 

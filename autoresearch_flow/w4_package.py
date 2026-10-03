@@ -562,16 +562,17 @@ class DeliveryPackage:
         checked = check_package(package_root)
         record = {"schema_version": 1, "package_path": checked["package_path"],
                   "package_sha256": checked["package_sha256"], "created_at": _utc_now(),
-                  "qa_contract": {"skill_version": "0.3.1", "schema_version": 4,
+                  "qa_contract": {"skill_version": "0.3.2", "schema_version": 4,
                                   "policy_revision": "research-quality-v3", "skipped_checks": ["QA15"]},
-                  "instruction": "请在独立新会话对 package_path 最终包只读运行当前 autoresearch-task-qa，并按路由审 Baseline；报告写包外。撤销旧 QA 口头豁免，QA15 按 Skill 固定跳过；H05/H06 无材料可按原文不适用。静态通过不替代教程端到端自验。"}
+                  "instruction": "请在独立新会话对 package_path 最终包只读运行当前 autoresearch-task-qa，并按路由审 Baseline；报告写包外。QA15 按 Skill 固定跳过，H05 无配置可不适用；H06 必须核当前题包版本的 NOP Trial 原件，缺失则 H06/QA17 失败。静态通过不替代教程端到端自验。"}
         parent = self.directory / "qa" / checked["package_sha256"]
         parent.mkdir(parents=True, exist_ok=True)
         path = parent / "handoff.json"
         if path.exists():
             existing = _read_json(path)
-            _require(existing["package_path"] == checked["package_path"],
-                     "QA_HANDOFF_DRIFT", "相同哈希的交接路径发生变化")
+            _require(existing.get("package_path") == checked["package_path"]
+                     and existing.get("qa_contract") == record["qa_contract"],
+                     "QA_HANDOFF_DRIFT", "既有交接路径或质检版本与当前合同不一致，须重新生成当前版本交接")
             record = existing
         else:
             _atomic_json(path, record)

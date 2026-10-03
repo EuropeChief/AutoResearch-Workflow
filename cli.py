@@ -16,7 +16,7 @@ from autoresearch_flow.runtime import Runtime
 from autoresearch_flow.w4_evidence import DeliveryEvidence
 from autoresearch_flow.w4_package import DeliveryPackage, check_package
 from autoresearch_flow.stages import StageFlow
-from autoresearch_flow.pca_contract import check_task, check_execution_receipt, check_stability
+from autoresearch_flow.pca_contract import check_task, check_execution_receipt, check_nop_record, check_stability
 from autoresearch_flow.policies import policy_status
 from autoresearch_flow.task_git import TaskGit
 
@@ -40,12 +40,13 @@ def _parser() -> argparse.ArgumentParser:
     stability.add_argument("--task-root", type=Path, required=True, help="记录及其原始证据的范围根；最终交付时为包根")
     stability.add_argument("--file", type=Path, required=True)
     stability.add_argument("--agent-image", required=True, help="实际已验证的 Agent 镜像不可变标识")
-    for name in ("check", "verify-record"):
+    for name in ("check", "verify-record", "verify-nop-record"):
         command = env_actions.add_parser(name)
         command.add_argument("--harbor-task", type=Path, required=True)
-        if name == "verify-record":
+        if name in {"verify-record", "verify-nop-record"}:
             command.add_argument("--task-root", type=Path, required=True)
             command.add_argument("--file", type=Path, required=True)
+        if name == "verify-record":
             command.add_argument("--final", action="store_true")
             command.add_argument("--score-contract", type=Path, help="独立的评分合同 JSON；非完整标注 JSON")
             command.add_argument("--best-method", type=Path)
@@ -186,6 +187,10 @@ def main(argv: list[str] | None = None) -> int:
                 _require(args.file.resolve().is_relative_to(args.task_root.resolve()),
                          "PACKAGE_EVIDENCE_BOUNDARY", "稳定性记录须在指定证据根内")
                 result = check_stability(args.task_root.resolve(), _read_json(args.file), expected_image=args.agent_image)
+            elif args.environment_action == "verify-nop-record":
+                _require(args.file.resolve().is_relative_to(args.task_root.resolve()),
+                         "PACKAGE_EVIDENCE_BOUNDARY", "NOP 记录须位于指定证据根内")
+                result = check_nop_record(args.task_root, _read_json(args.file), args.harbor_task)
             else:
                 result = check_task(args.harbor_task) if args.environment_action == "check" else check_execution_receipt(
                     args.task_root, _read_json(args.file), args.harbor_task, final=args.final,

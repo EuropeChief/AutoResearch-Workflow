@@ -1,7 +1,7 @@
 {
   "catalog": {
     "path": "rules/catalog.json",
-    "sha256": "88758e2e78340495ebfb70711265cd16a4833ce3ada3b4951fd5fa9c10d9ae62"
+    "sha256": "f75918e89ec64dfbef888a28dbf5b177b327e3ecbc9e3ce9d1ad2a18cec9b7b4"
   },
   "flow_version": "0.3.0",
   "schema_version": 1,
@@ -22,8 +22,8 @@
       "path": "skills/autoresearch-task-qa/SKILL.md",
       "priority": 2,
       "scope": "global",
-      "sha256": "584db44ea949220ec44582b98590be3984d50e4d3c0272690fc6c21d4b638fd6",
-      "version": "v0.3.1@2026-09-30",
+      "sha256": "8e26ea0d396ecc600874f3a8f9ffd00d304035ecfddfe5d11860b0aa75d987f3",
+      "version": "v0.3.2@2026-10-03",
       "origin_path": ".codex/skills/autoresearch-task-qa/SKILL.md"
     },
     {
@@ -31,8 +31,8 @@
       "path": "skills/autoresearch-task-qa/references/source-alignment.md",
       "priority": 2,
       "scope": "global",
-      "sha256": "93e8eb3ba75b2b14d2b9300284330c3c1192965eca7d76002c847bcbc48e2499",
-      "version": "v0.3.1@2026-09-30",
+      "sha256": "9cd48cee3720f8ece81c6bb13c814b87545d86d55209df160d82c1c1ee870e4c",
+      "version": "v0.3.2@2026-10-03",
       "origin_path": ".codex/skills/autoresearch-task-qa/references/source-alignment.md"
     },
     {
@@ -41,7 +41,7 @@
       "priority": 2,
       "scope": "global",
       "sha256": "3304e93def3129922fe7544bca7fd6a778aa6df1270aa9259ee1ee6ef71d0724",
-      "version": "v0.3.1@2026-09-30",
+      "version": "v0.3.2@2026-10-03",
       "origin_path": ".codex/skills/autoresearch-task-qa/references/research-quality.md"
     },
     {
@@ -49,8 +49,8 @@
       "path": "skills/autoresearch-task-qa/references/implementation-policy.md",
       "priority": 2,
       "scope": "global",
-      "sha256": "863832ac7277bc3cce0f51f3d346b03c0e8600e19b5403dc99e58b156c9d331e",
-      "version": "v0.3.1@2026-09-30",
+      "sha256": "8bf21e9a975f62444768b3664ba7f40b437c801f1eecaf56ab0808cd32edc6ad",
+      "version": "v0.3.2@2026-10-03",
       "origin_path": ".codex/skills/autoresearch-task-qa/references/implementation-policy.md"
     },
     {
@@ -58,8 +58,8 @@
       "path": "skills/autoresearch-task-qa/references/submission-format.md",
       "priority": 2,
       "scope": "global",
-      "sha256": "535903a11526c125d51511e0752554f9b7df73605458d1b94da5ca3702aa0c3e",
-      "version": "v0.3.1@2026-09-30",
+      "sha256": "1e49f4a8eb2b9842a225ac6d6efb1b1ad6b557ea14ff1da32bfa42b6170f75a6",
+      "version": "v0.3.2@2026-10-03",
       "origin_path": ".codex/skills/autoresearch-task-qa/references/submission-format.md"
     },
     {
@@ -67,8 +67,8 @@
       "path": "skills/autoresearch-task-qa/references/docker-path-contract.md",
       "priority": 2,
       "scope": "global",
-      "sha256": "10afe94e54542906b7bc4ef911f2f43d1373a5e7459738606bbfb1ddc8631e60",
-      "version": "v0.3.1@2026-09-30",
+      "sha256": "1745a3267a85d7a2dac6158da85b20e7c0eb6f73e401668f4c97231cf11ac80d",
+      "version": "v0.3.2@2026-10-03",
       "origin_path": ".codex/skills/autoresearch-task-qa/references/docker-path-contract.md"
     },
     {
@@ -76,8 +76,8 @@
       "path": "skills/autoresearch-task-qa/references/harbor-harness.md",
       "priority": 2,
       "scope": "global",
-      "sha256": "f701dd2e07e1adfb40d8ae56f14c5440296aab8e6a824d205f13592084a9ba2c",
-      "version": "v0.3.1@2026-09-30",
+      "sha256": "ae7878890146f026970eee053fc3591a6db4966fc859b40f68343bb63fb41b20",
+      "version": "v0.3.2@2026-10-03",
       "origin_path": ".codex/skills/autoresearch-task-qa/references/harbor-harness.md"
     },
     {
@@ -85,7 +85,7 @@
       "path": "skills/autoresearch-task-qa/references/implementation-report.md",
       "priority": 2,
       "scope": "global",
-      "sha256": "be02e4ad45ad1596413308cab46d7fde5f64e36f01a26635230757c452b4b5e8",
+      "sha256": "2e7298f57f00611855a294d5caa5a1c6ff45d58b69cd0d7a3e3dbfdf9f8cbe63",
       "version": "v0.3.1@2026-09-30",
       "origin_path": ".codex/skills/autoresearch-task-qa/references/implementation-report.md"
     },
@@ -117,8 +117,8 @@
       "origin_path": ".codex/skills/autoresearch-task-qa/references/exposure-manifest.md"
     }
   ],
-  "qa_revision": "v0.3.1@2026-09-30",
-  "package_revision": "2026-10-03.public-rules",
+  "qa_revision": "v0.3.2@2026-10-03",
+  "package_revision": "2026-10-04.nop-required",
   "bundled_files": [
     {
       "path": "skills/autoresearch-baseline-quality/agents/openai.yaml",
@@ -138,7 +138,7 @@
     },
     {
       "path": "skills/autoresearch-task-qa/references/docker-path-contract.md",
-      "sha256": "10afe94e54542906b7bc4ef911f2f43d1373a5e7459738606bbfb1ddc8631e60"
+      "sha256": "1745a3267a85d7a2dac6158da85b20e7c0eb6f73e401668f4c97231cf11ac80d"
     },
     {
       "path": "skills/autoresearch-task-qa/references/exposure-manifest.md",
@@ -146,15 +146,15 @@
     },
     {
       "path": "skills/autoresearch-task-qa/references/harbor-harness.md",
-      "sha256": "f701dd2e07e1adfb40d8ae56f14c5440296aab8e6a824d205f13592084a9ba2c"
+      "sha256": "ae7878890146f026970eee053fc3591a6db4966fc859b40f68343bb63fb41b20"
     },
     {
       "path": "skills/autoresearch-task-qa/references/implementation-policy.md",
-      "sha256": "863832ac7277bc3cce0f51f3d346b03c0e8600e19b5403dc99e58b156c9d331e"
+      "sha256": "8bf21e9a975f62444768b3664ba7f40b437c801f1eecaf56ab0808cd32edc6ad"
     },
     {
       "path": "skills/autoresearch-task-qa/references/implementation-report.md",
-      "sha256": "be02e4ad45ad1596413308cab46d7fde5f64e36f01a26635230757c452b4b5e8"
+      "sha256": "2e7298f57f00611855a294d5caa5a1c6ff45d58b69cd0d7a3e3dbfdf9f8cbe63"
     },
     {
       "path": "skills/autoresearch-task-qa/references/precheck-policy.md",
@@ -174,15 +174,15 @@
     },
     {
       "path": "skills/autoresearch-task-qa/references/source-alignment.md",
-      "sha256": "93e8eb3ba75b2b14d2b9300284330c3c1192965eca7d76002c847bcbc48e2499"
+      "sha256": "9cd48cee3720f8ece81c6bb13c814b87545d86d55209df160d82c1c1ee870e4c"
     },
     {
       "path": "skills/autoresearch-task-qa/references/submission-format.md",
-      "sha256": "535903a11526c125d51511e0752554f9b7df73605458d1b94da5ca3702aa0c3e"
+      "sha256": "1e49f4a8eb2b9842a225ac6d6efb1b1ad6b557ea14ff1da32bfa42b6170f75a6"
     },
     {
       "path": "skills/autoresearch-task-qa/scripts/audit_collection.py",
-      "sha256": "465561e2da63401826476820792c4b0eed7f1b7cf5127b43d95da97ca06c4b69"
+      "sha256": "7e6ab90759c4beb3a864ee2bf592918d14090aa366421f195ff07ce0abfbe94c"
     },
     {
       "path": "skills/autoresearch-task-qa/scripts/audit_task.py",
@@ -198,11 +198,11 @@
     },
     {
       "path": "skills/autoresearch-task-qa/scripts/harbor_review.py",
-      "sha256": "378a0ef87fff52e2128b526a3c0eb1da5d9ff8fa557625608a2d58bc5783530b"
+      "sha256": "639e7502a00b0d74867ad13e19a576a0c3471656b3f25f3a59ac691b7177ca6e"
     },
     {
       "path": "skills/autoresearch-task-qa/scripts/implementation_review.py",
-      "sha256": "b82881bd612d9d51abafcf4fd1bfb09568393843b82c6e967241ad4ad07dae39"
+      "sha256": "909f4b439f6273f39798a94985e512f9d563a6c036c8f9f545200ae9dc21eacb"
     },
     {
       "path": "skills/autoresearch-task-qa/scripts/submission_format.py",
@@ -210,7 +210,7 @@
     },
     {
       "path": "skills/autoresearch-task-qa/scripts/test_audit_collection.py",
-      "sha256": "6b83edd9f7e8c7c66d4f6588053ac9143cceab84391f760ce196dcd7742b7552"
+      "sha256": "e069469cb33c47eb1a0183dbfeb506f894a4dea6c4a0208d839eebbd2aa71cf6"
     },
     {
       "path": "skills/autoresearch-task-qa/scripts/test_audit_task.py",
@@ -226,11 +226,11 @@
     },
     {
       "path": "skills/autoresearch-task-qa/scripts/test_harbor_review.py",
-      "sha256": "471dc706b2c340e2c2763c1707ce688f30081b2fa08acbada8fbdfba2c6ea8b9"
+      "sha256": "78561f1b0b0f40f6ce871d71265107a56da070735b4cc8a2e4898b25da82d0bc"
     },
     {
       "path": "skills/autoresearch-task-qa/scripts/test_implementation_review.py",
-      "sha256": "2e03066b733297ec04b892dc7c07179dd0e8f29a14d9e84268b11346e1f31e2b"
+      "sha256": "1b791f9ad129f8a914f98c05b4007da04a5fb7726e60ca7faeeba4a73b0f335f"
     },
     {
       "path": "skills/autoresearch-task-qa/scripts/test_submission_format.py",
@@ -238,7 +238,7 @@
     },
     {
       "path": "skills/autoresearch-task-qa/SKILL.md",
-      "sha256": "584db44ea949220ec44582b98590be3984d50e4d3c0272690fc6c21d4b638fd6"
+      "sha256": "8e26ea0d396ecc600874f3a8f9ffd00d304035ecfddfe5d11860b0aa75d987f3"
     },
     {
       "path": "sources/tutorial/AutoResearch 专家线下标注教程｜PCA 双镜像对齐版.md",

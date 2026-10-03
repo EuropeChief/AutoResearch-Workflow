@@ -9,7 +9,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import test_w4_contract as w4
-from test_pca_contract import synthetic_receipt
+from test_pca_contract import synthetic_receipt, synthetic_nop
 from test_qa_contract import synthetic_report
 
 from autoresearch_flow.core import (
@@ -97,6 +97,8 @@ class StabilityDeliveryTests(unittest.TestCase):
                        candidate_manifest={"path": "candidate.json", "sha256": _sha256(manifest)})
         self.receipt = self.package / "harbor.json"
         self.receipt.write_text(json.dumps(receipt))
+        self.nop_receipt = self.package / "expert_evidence/nop_execution.json"
+        self.nop_receipt.write_text(json.dumps(synthetic_nop(self.package, task)))
         self.flow = StageFlow(self.root)
         state = json.loads(self.flow.store.state_path.read_text())
         state["current_stage"] = "6"
@@ -122,7 +124,8 @@ class StabilityDeliveryTests(unittest.TestCase):
             "conclusion": "synthetic only", "dispositions": [
                 {"id": r["id"], "status": r["status"], "rationale": "synthetic"} for r in rows]}))
         self.checks = {"package_root": str(self.package.relative_to(self.root)),
-                       "harbor_execution": self.fx.ref(self.receipt), "qa_review": self.fx.ref(review)}
+                       "harbor_execution": self.fx.ref(self.receipt),
+                       "nop_execution": self.fx.ref(self.nop_receipt), "qa_review": self.fx.ref(review)}
 
     def record(self):
         return self.flow.record({"step": "6.5", "status": "passed", "reviewer": "synthetic",
