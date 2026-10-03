@@ -14,6 +14,7 @@
 | `finish` | `--run-id b-1 --file result-envelope.json` | 保存原始证据索引和结果；无效成功声明保存后立即返回 recorded_invalid |
 | `report` | `--protocol p1` | B/R 全 seed 配对、均值、样本标准差、3σ/5σ |
 | `report` | `--protocol p1 --role best_method` | 仅汇总唯一最终方法的同协议复验；也可选择 baseline 或 reference |
+| `execute` | `--plan retest-plan.json` | 执行已选唯一最终方法的有限本地队列，直接复用 start/finish/report；不是新的评分入口 |
 | `baseline-check` | `--protocol p1 --phase 2 --file review.json` | 核 B01–B08 专家结论、证据与版本；阶段 3 使用 `--phase 3` |
 | `score-check` | `--protocol p1 --file score-contract.json` | 复算锚点、分数区间、U 方向与 ceiling，检查 U 论证引用 |
 
@@ -74,6 +75,50 @@
 - 原始 NaN/Inf 文件保留为失败证据；账本及 CLI JSON 中将非有限值记为 null，运行不得通过。
 
 真实重训、资源量是否如实、完整依赖索引及重载是否由干净进程完成，需要专家沿日志和执行代码核验。程序不把元数据声明当成真实性证明。
+
+### 最终方法的本地复验队列
+
+前提：已 `delivery best-select`，已锁定正式协议和全部 seed，用户明确授权所用资源。此入口运行**专家维护的可信评测适配器**，不替代 Harbor、独立 Verifier 或候选隔离；不得直接在宿主机执行未经隔离的 Agent 源码。适配器负责调用本题已有可信评测路径，原样落实协议及设备限制；本队列只管调度和证据。
+
+`retest-plan.json` 示例（占位哈希和路径须由当前任务实际索引替换）：
+
+```json
+{
+  "schema_version": 1,
+  "id": "final-retest",
+  "protocol_id": "p1",
+  "seeds": [1, 2, 3, 4, 5],
+  "selection": {"path": ".autoresearch-flow/delivery/best_versions/<版本>/selection.json", "sha256": "<真实哈希>"},
+  "adapter_files": [{"path": "evaluation/retest_adapter.py", "sha256": "<真实哈希>"}],
+  "command": ["python3", "{adapter_root}/evaluation/retest_adapter.py", "{request}"],
+  "output_root": "retests/final",
+  "timeout_seconds": 7200,
+  "resources": {
+    "gpu_ids": ["4", "6"], "gpus_per_run": 1, "max_parallel": 2, "cpu_threads": 4,
+    "metric_sensitive": false, "hardware_sensitive": true,
+    "authorization": {"path": "records/retest-resource-approval.md", "sha256": "<真实哈希>"}
+  }
+}
+```
+
+- `seeds` 必须等于协议全集，不因示例固定为 5；`timeout_seconds` 是本次计划的**单 seed** 上限，示例不是通用预算规定。CPU 使用 `gpu_ids=[] / gpus_per_run=0`。授权文件保留真实允许的卡、并发和适用范围，程序核引用，不替用户授予资源权限。
+- `adapter_files` 包含影响执行的全部适配器源码与配置。队列复制适配器和当前最终方法到各 seed 的独立目录；新进程、独立工作目录、原始 seed 和 `PYTHONHASHSEED`（取 32 位）分开记录，不共享本题已训练终态。适配器仍须显式设置 Python/NumPy/框架 RNG，并遵守 `training_origin=initialization`；环境变量本身不能证明训练独立。
+- 命令是 argv，只有 `{adapter_root}`、`{request}` 两个替换变量，不使用 shell。request 包含 W2 `run` 绑定、完整 `protocol`、方法/输出目录、分配设备、源码副本哈希和计划指纹。适配器必须同步等待全部子作业完成，不得启动脱离监督的后台作业；Docker/Harbor 适配器也必须在超时或信号中断时清理**自己的**容器。
+- 适配器写 `adapter-result.json`：沿用上述 W2 结果字段（execution 由监督器实际观测补入），额外写 `devices`，CPU 为 `["cpu"]`、GPU 为实际使用的 UUID 列表。GPU 适配器应实际检查可见设备与 CUDA 运算，并将分配 UUID 显式传给 Docker/Harbor，不能认为宿主 `CUDA_VISIBLE_DEVICES` 会自动配置容器。训练型增加 `artifacts={"model":"model.bin","artifact":"artifact.json","reload_log":"reload.log"}`，均为本次目录内相对路径。适配器声明不替代专家沿运行日志的真实性检查。
+- GPU 只从授权列表中选择无观测计算作业的设备；同用户队列用设备锁避免同卡重叠，忙卡不抢占。硬件敏感时限制同型号/驱动并冻结实际 UUID；时延/吞吐敏感时要求串行，并由专家落实外部争用控制。本地观察与互斥不等同于独占共享服务器。CPU 线程数、每次 GPU 数、协议 batch/步数/数据/精度/评分不得为了并行而更改。
+
+在流程根执行：
+
+```bash
+python3 cli.py --format json experiment execute --task-root <题目目录> --plan <计划文件>
+python3 cli.py --format json experiment report --task-root <题目目录> --protocol p1 --role best_method
+```
+
+长任务可在专家的 tmux 中前台运行。卡忙且没有本队列活跃进程时返回 `waiting_for_resources` 和待执行 seed，稍后用**同一命令、同一计划**继续；`running` 表示发现上次监督进程遗留的活跃作业，绝不重复启动。完成由账本全 seed 检查决定，不看某时刻 GPU 空闲。
+
+每个正常启动的 seed 保留 `launch-intent.json`、`request.json`、`run.log`、实际 `execution.json`、未经改写的 `adapter-result.json`、规范化 `result.receipt.json`、用于断点入账的 `ledger-result.json` 及训练附件；启动前中断时不补造尚未产生的请求或结果。恢复先对齐启动意图和 W2 账本，避免两者写入之间中断后遗漏运行。退出码不可得时如实记 null，不从结果文件推断成功；日志和原结果不覆盖。启动失败或监督进程丢失状态记 `infra_error`；非零方法退出记 failed、超时记 timeout、输出错误记 format_error，均不进入均值。只有已入账的基础设施失败可显式 `--retry-infra <run_id>`，旧尝试保留；适配器不能自行把方法失败标为可重试 infra_error。其他真实外部异常需专家给出证据按既有 W2 手动登记流程处理，不由错误字符串猜测。
+
+这些内部工作文件按证明需要整理，不要求整套队列目录进入提交包。CPU 实进程和模拟设备合同测试已覆盖队列行为；真实 GPU 小探针尚待独立授权与动态验收，不以离线测试宣称已通过。
 
 ## 统计、评分与审查
 

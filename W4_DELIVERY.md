@@ -17,7 +17,7 @@
 1. `trajectory-finalize --task-root TASK --track codex|seed [--file CORRECTIONS.json]`：读取 Agent 自写 JSONL，每行恰好为 PCA 八字段，轮次从 1 连续。score 为真实 Public/Dev 原始指标，不是归一化分数。允许用 `--file` 提供有原行哈希、理由和证据的逐行修订；原件和最终版保留。缺失事实不可从日志猜写。
 2. `trajectory-review --task-root TASK --track codex|seed --file REVIEW.json`：专家按每轮摘要核对可定位的真实操作/评分记录，填 `consistent: true` 才能进入组包。工具只验记录、引用与哈希，`consistent` 的事实判断由专家承担。
 3. `best-select --task-root TASK --file SELECTION.json`：比较两组有效 Public/Dev 评分，快照唯一最终源码。若两组都没有正向合法方法，未修改 Starter 仅在当期权威原文与已有明确授权允许时采用，并解释来源和未提升原因；不得默认为最佳 Agent 方法。
-4. `best-verify --task-root TASK --file VERIFICATION.json`：该源码哈希须与 W2 `best_method` 正式 seed 复验完全一致，并提交干净任务快照重跑结果、日志、命令、起止时间、退出码与专家结论。
+4. `best-verify --task-root TASK --file VERIFICATION.json`：该源码哈希须与 W2 `best_method` 正式 seed 复验完全一致，并提交干净任务快照重跑结果、日志、命令、起止时间、退出码与专家结论。可先使用 [W2 本地复验队列](W2_EXPERIMENTS.md#最终方法的本地复验队列) 按明确授权资源串行或并行执行；队列完成不代替本步核验。
 5. `build --task-root TASK --file PACKAGE.json`：复制明确来源、生成不可混入制作日志的版本目录；先做结构/字段/引用及 B/R/U 线性归一化检查，再绑定 B/R 正式逐次原始 result 哈希与同协议均值、两组有效时长及唯一方法复验。输出 `package_path` 与 `package_sha256`。
 6. `check --package-root PACKAGE`：**只读取提交包内部**的格式和必要文件；结果 `format_checked_not_qa` 不代表正式 QA。
 7. `archive --task-root TASK --package-root PACKAGE [--max-part-bytes N]`：按排序文件、固定 ZIP 时间戳和 UTF-8 文件名生成可复现 ZIP；默认超过 300 MiB 分卷。分卷按编号拼接即为原 ZIP；校验每卷及整包 SHA-256。ZIP 放在交付包外。

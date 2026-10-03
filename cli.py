@@ -11,6 +11,7 @@ from pathlib import Path
 from autoresearch_flow import FLOW_VERSION
 from autoresearch_flow.core import FlowError, Registry, TaskStore, _read_json, _canonical_digest, _require
 from autoresearch_flow.experiments import FAILED_RUN_STATUSES, ExperimentBook, baseline_check, score_check
+from autoresearch_flow.experiment_runner import ExperimentRunner
 from autoresearch_flow.runtime import Runtime
 from autoresearch_flow.w4_evidence import DeliveryEvidence
 from autoresearch_flow.w4_package import DeliveryPackage, check_package
@@ -95,7 +96,7 @@ def _parser() -> argparse.ArgumentParser:
             command.add_argument("--path", action="append", required=True)
     experiment = commands.add_parser("experiment", help="正式协议、运行登记与统计")
     actions = experiment.add_subparsers(dest="experiment_action", required=True)
-    for name in ("lock", "extend", "start", "finish", "report", "baseline-check", "score-check"):
+    for name in ("lock", "extend", "start", "finish", "report", "baseline-check", "score-check", "execute"):
         command = actions.add_parser(name)
         command.add_argument("--task-root", type=Path, required=True)
         if name in {"lock", "extend", "start", "finish", "baseline-check", "score-check"}:
@@ -108,6 +109,10 @@ def _parser() -> argparse.ArgumentParser:
             command.add_argument("--phase", type=int, choices=(2, 3), required=True)
         if name == "report":
             command.add_argument("--role", choices=("baseline", "reference", "best_method"))
+        if name == "execute":
+            command.add_argument("--plan", type=Path, required=True)
+            command.add_argument("--retry-infra", action="append", default=[], metavar="RUN_ID",
+                                 help="显式重试本队列已登记的外部异常；不允许重试方法失败")
     runtime = commands.add_parser("runtime", help="Codex 双轨启动、预检、原始日志与计时")
     actions = runtime.add_subparsers(dest="runtime_action", required=True)
     for name in ("prepare", "check", "preflight", "run", "resume", "finalize", "recover", "status", "exclude"):
@@ -256,6 +261,8 @@ def main(argv: list[str] | None = None) -> int:
                 result = book.finish(args.run_id, value)
             elif args.experiment_action == "report":
                 result = book.report(args.protocol, (args.role,) if args.role else ("baseline", "reference"))
+            elif args.experiment_action == "execute":
+                result = ExperimentRunner(args.task_root).execute(_read_json(args.plan), retry_of=args.retry_infra)
             elif args.experiment_action == "baseline-check":
                 result = baseline_check(book, args.protocol, value, args.phase)
             else:
