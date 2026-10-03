@@ -19,7 +19,7 @@ python3 "$FLOW_ROOT/cli.py" --format json stage status --task-root "$TASK_ROOT"
 
 3. 以输出的 `current_stage`、`next_step`、证据/来源漂移及待补跨方法项目恢复工作；阅读 [六阶段操作说明](SIX_STAGES.md) 中当前阶段和所指模块文档。`stage status` 不写状态，也不发起训练或模型调用。
 4. 用 `rules show --step <当前子步骤>` 查看相关规则、提前采证提示和原文位置，必要时用 `rules show --id AR-024` 定位单项。条件项标为 `requires_review` 时须判断适用性，不能默认跳过。权威顺序为当期锁定专家教程 → 项目方质检 Skill；用户明确通知仅按记录范围作为例外。规则提炼不替代原文，争议回查 `rules/manifest.json` 锁定的本仓原件；无需复制到题目目录。
-5. 在已有授权和预算内推进当前子步骤。真实执行后用 `stage record` 登记证据；阶段退出前用 `stage finish` 记录教程核对、专家结论及既有用户确认。不要直接改 `state.json`。接口见 [状态与证据](STAGE_STATE.md)。
+5. 在已有授权和预算内推进当前子步骤；可先用 `stage check --step` 只读查看现有检查结果。真实执行并完成实质审查后用 `stage record` 登记证据；阶段退出用 `stage finish` 自动重核，记录结论和必要确认，不重复抄教程章节。遇到歧义/遗漏仍须回查原文。不要直接改 `state.json`。接口见 [状态与证据](STAGE_STATE.md)。
 6. 交接时说明当前步骤、实际完成项、缺证/异常和下一条命令；确保这些信息已落在任务文件中。终端会话或聊天记忆不替代状态与原始证据。
 
 若阶段已全部完成，继续核查证据/当前包是否变化、是否有平台反馈；`current_stage=null` 只表示专家本地阶段完成。

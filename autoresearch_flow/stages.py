@@ -10,7 +10,7 @@ import re
 from contextlib import contextmanager
 from pathlib import Path
 
-from .core import (FlowError, TaskStore, STAGE_IDS, SUBSTEP_IDS, _atomic_json,
+from .core import (FlowError, Registry, TaskStore, STAGE_IDS, SUBSTEP_IDS, _atomic_json,
                    _canonical_digest, _read_json, _require, _sha256, _utc_now)
 from .experiments import ExperimentBook, baseline_check, evidence, score_check
 from .runtime import Runtime, TRACKS
@@ -30,12 +30,10 @@ LABELS = {
     "5": ("选唯一合法最佳方法", "同协议正式复验", "干净快照重跑", "绑定最终方法和结论"),
     "6": ("组装最小包", "包内格式检查", "独立会话 QA", "返修与独立复检", "本地备齐交付"),
 }
-TUTORIAL_SECTIONS = {
-    "1": ["T:PCA:L18–34", "T:PCA:L80–116", "T:PCA:L160"],
-    "2": ["T:PCA:L38–72", "T:PCA:L118–324", "T:PCA:L350–449"],
-    "3": ["T:PCA:L338–543"],
-    "4": ["T:PCA:L549–646"], "5": ["T:PCA:L660–668", "T:PCA:L878–884"],
-    "6": ["T:PCA:L670–952"],
+REVIEW_REQUIREMENTS = {
+    "1.2": {"AR-002": "结合题面、允许修改范围及已有代码审查方法空间；仅宣称允许算法修改不足以通过"},
+    "1.3": {"AR-003": "说明 Starter/Baseline/Reference 候选依据；此时只确认方向，不提前冻结未经验证的锚点"},
+    "2.2": {"AR-002": "结合已实现接口与实际可修改代码复核优化面，不只复述阶段 1 的设计声明"},
 }
 
 
@@ -54,7 +52,7 @@ class StageFlow:
         self.store._load()
         with (self.store.state_dir / "stages.lock").open("a") as stream:
             fcntl.flock(stream, fcntl.LOCK_EX)
-            _require(not self.store.check()["issues"], "SOURCE_DRIFT", "先检查权威来源变化并显式升级")
+            _require(not self.store.check()["issues"], "SOURCE_DRIFT", "先核对并恢复任务锁定的权威原件")
             state = self.store._load()
             yield state
             self.store._validate_state(state)
@@ -278,7 +276,78 @@ class StageFlow:
                     self._qa_coverage(_read_json(report), review["dispositions"])
                     result["qa_review_sha256"] = checks["qa_review"]["sha256"]
             return result
-        return {"status": "expert_recorded", "note": "语义/真实性由署名专家沿引用证据判断"}
+        return {"status": "not_applicable", "note": "本步骤无额外机器门禁；不代表科研审查通过"}
+
+    def _reviews(self, step, spec):
+        """Validate attributed decisions, not the truth of scientific reasoning."""
+        required = REVIEW_REQUIREMENTS.get(step, {})
+        if not required:
+            return {"status": "handled_by_module" if step in {"2.5", "3.3", "3.5"}
+                    else "not_required", "scientific_conclusion_certified": False}
+        reviews = spec.get("reviews", [])
+        _require(isinstance(reviews, list) and all(isinstance(r, dict) for r in reviews),
+                 "INVALID_STAGE_RECORD", "reviews 须为审查记录数组")
+        ids = [r.get("rule_id") for r in reviews]
+        _require(len(ids) == len(set(ids)) and set(ids) == set(required),
+                 "SCIENTIFIC_REVIEW_REQUIRED", "须逐项完成当前实质审查：" + ", ".join(required))
+        for review in reviews:
+            _text(review.get("rationale"), "实质审查结论及理由")
+            _require(isinstance(review.get("evidence"), list) and review["evidence"],
+                     "SCIENTIFIC_REVIEW_REQUIRED", "审查不能仅凭声明，须引用实际题面、接口、代码或研究证据")
+            for ref in review["evidence"]:
+                evidence(self.root, ref)
+            _require(review.get("status") == "pass" and review.get("unresolved") == [],
+                     "SCIENTIFIC_REVIEW_REQUIRED", "尚待补证或未决的实质审查不能通过；记录待补证并保留到期阶段")
+        return {"status": "recorded", "reviews": reviews, "scientific_conclusion_certified": False}
+
+    def _resolve_checks(self, state, step, supplied):
+        """Reuse explicit, still-valid earlier inputs; never invent file locations."""
+        _require(isinstance(supplied, dict), "INVALID_STAGE_RECORD", "checks 须为对象")
+        checks = dict(supplied)
+        needed = set(self.template(step)["spec"]["checks"]) - {"approval", "stability"}
+        if step in {"3.3", "3.4", "3.5"}:
+            needed.add("statistical_review")
+        ordered = [s for steps in SUBSTEP_IDS.values() for s in steps]
+        for earlier in reversed(ordered[:ordered.index(step)]):
+            if needed <= checks.keys():
+                break
+            if self._step(state, earlier)["status"] != "passed":
+                continue
+            record = self._receipt(state, earlier)
+            for key, value in record["spec"].get("checks", {}).items():
+                if key in needed and key not in checks:
+                    checks[key] = value
+        return checks
+
+    def check(self, step, spec=None):
+        """Read-only check of existing facts; does not record or approve a step."""
+        state = self.store._load()
+        sub = self._step(state, step)
+        _require(not self.store.check()["issues"], "SOURCE_DRIFT", "先恢复任务锁定的权威原件")
+        if spec is None:
+            spec = self._receipt(state, step)["spec"] if sub["status"] == "passed" else {"step": step}
+        _require(isinstance(spec, dict) and spec.get("step", step) == step,
+                 "INVALID_STAGE_RECORD", "检查输入须对应指定子步骤")
+        issues = []
+        checks = {}
+        try:
+            self._check_refs(spec)
+            checks = self._resolve_checks(state, step, spec.get("checks", {}))
+            result = self._gate(step, checks)
+            machine = {"status": "passed", "result": result}
+        except FlowError as exc:
+            machine = {"status": "blocked", "code": exc.code, "message": exc.message}
+            issues.append({"code": exc.code, "message": exc.message})
+        try:
+            semantic = self._reviews(step, spec)
+        except FlowError as exc:
+            semantic = {"status": "awaiting_evidence", "code": exc.code, "message": exc.message}
+            issues.append({"code": exc.code, "message": exc.message})
+        return {"status": "blocked" if issues else "checked", "step": step,
+                "machine_check": machine, "semantic_review": semantic, "issues": issues,
+                "resolved_checks": checks,
+                "scientific_conclusion_certified": False,
+                "next_action": "完成实质审查和实际工作后再登记；检查本身不推进状态"}
 
     def _harbor_path(self, checks):
         value = checks.get("harbor_task")
@@ -312,9 +381,13 @@ class StageFlow:
             checks["package_root"] = "<任务内最终包目录>"
             if step in {"6.4", "6.5"}:
                 checks["qa_review"] = {"path": "<独立报告逐项处置 JSON>", "sha256": "<SHA-256>"}
+        reviews = [{"rule_id": rule, "status": "awaiting_evidence", "rationale": hint,
+                    "evidence": [], "unresolved": ["<实际未决事项，解决后清空>"], "due_stage": int(stage)}
+                   for rule, hint in REVIEW_REQUIREMENTS.get(step, {}).items()]
         return {"status": "template", "spec": {"step": step, "status": "passed", "reviewer": "<专家>",
                 "summary": "<实际完成的工作和结论>", "inputs": [], "outputs": [],
-                "evidence": [{"path": "<任务内证据相对路径>", "sha256": "<SHA-256>"}], "checks": checks}}
+                "evidence": [{"path": "<任务内证据相对路径>", "sha256": "<SHA-256>"}], "checks": checks,
+                **({"reviews": reviews} if reviews else {})}}
 
     def status(self):
         checked = self.store.check()
@@ -341,7 +414,10 @@ class StageFlow:
                     issues.append({"code": exc.code, "stage": stage, "message": exc.message})
         current = state["current_stage"]
         next_step = next((s for s, v in state["stages"][current]["substeps"].items() if v["status"] != "passed"), None) if current else None
-        rules = [r for r, stages in state["rules_lock"]["rule_stages"].items() if current and int(current) in stages]
+        rows = Registry(self.store.repository_root).show(step=next_step)["rules"] if next_step and not checked["issues"] else []
+        rules = [r["id"] for r in rows]
+        prepare = [{"rule_id": r["id"], "evidence": r["evidence"], "due_at": r["timing"]["due_at"],
+                    "applicability": r["applicability"]} for r in rows if r["timing"]["inform_at"] == next_step]
         pending = []
         for item in state["stages"].values():
             for sub in item["substeps"].values():
@@ -360,9 +436,14 @@ class StageFlow:
                 "next_step": next_step, "next_step_label": LABELS[current][int(next_step.split(".")[1])-1] if next_step else None,
                 "next_action": "先处理证据/来源漂移，必要时 stage reopen" if issues else
                     "先 task git-status / git-setup / git-preview / git-checkpoint，再登记 1.1 的来源与输入" if git_setup else
-                    f"stage template --step {next_step}；完成实际工作后 stage record" if next_step else
-                    f"stage finish --stage {current}，登记章节核对及确认" if current else "本地备齐；等待平台反馈",
-                "rule_ids": rules, "tutorial_sections": TUTORIAL_SECTIONS.get(current, []),
+                    f"rules show --step {next_step}；stage check --step {next_step}；完成实际工作和实质审查后 stage record" if next_step else
+                    f"stage finish --stage {current}，重核证据并登记结论及必要确认" if current else "本地备齐；等待平台反馈",
+                "rule_ids": rules, "required_rules": [{key: r[key] for key in ("id", "timing", "applicability", "source_refs")}
+                                                        for r in rows],
+                "prepare_evidence": prepare,
+                "semantic_review_requirements": [{"rule_id": key, "guidance": value}
+                                                 for key, value in REVIEW_REQUIREMENTS.get(next_step, {}).items()],
+                "scientific_conclusion_certified": False,
                 "pending_cross_method_checks": pending, "issues": issues}
 
     def record(self, spec):
@@ -390,9 +471,11 @@ class StageFlow:
                 _require(str(spec.get("due_stage")) == stage, "INVALID_DEFERRAL",
                          "整个未完成子步骤不能跨阶段通过；B03/B07 跨方法部分由 baseline-check 专门登记")
             self._check_refs(spec)
+            spec = {**spec, "checks": self._resolve_checks(state, step, spec.get("checks", {}))}
             gate = self._gate(step, spec.get("checks", {})) if spec["status"] == "passed" else {"status": spec["status"]}
+            semantic = self._reviews(step, spec) if spec["status"] == "passed" else {"status": "awaiting_evidence"}
             record = {"schema_version": 1, "rules_lock_sha256": _canonical_digest(state["rules_lock"]),
-                      "spec": spec, "gate": gate, "at": _utc_now()}
+                      "spec": spec, "gate": gate, "semantic_review": semantic, "at": _utc_now()}
             directory = self.store.state_dir / "stage_records"
             directory.mkdir(exist_ok=True)
             path = directory / (step + "-" + _canonical_digest(record) + ".json")
@@ -400,12 +483,14 @@ class StageFlow:
             ref = {"path": str(path.relative_to(self.root)), "sha256": _sha256(path)}
             sub.update(status=spec["status"], reviewer=spec["reviewer"], evidence=[ref["path"]],
                        inputs=[r["path"] for r in spec.get("inputs", [])], outputs=[r["path"] for r in spec.get("outputs", [])],
-                       depends_on=list(earlier), rule_ids=[r for r, stages in state["rules_lock"]["rule_stages"].items() if int(stage) in stages],
+                       depends_on=list(earlier), rule_ids=[r["id"] for r in Registry(self.store.repository_root).show(step=step)["rules"]],
                        due_stage=stage if spec["status"] == "awaiting_evidence" else None)
             sub["history"].append({"action": "record", "at": _utc_now(), "receipt": ref})
             state["stages"][stage]["status"] = "failed" if spec["status"] == "failed" else "in_progress"
             state["history"].append({"action": "stage_record", "step": step, "receipt": ref, "at": _utc_now()})
-        return {"status": "failed" if spec["status"] == "failed" else "recorded", "step": step, "step_status": spec["status"], "receipt": ref, "gate": gate}
+        return {"status": "failed" if spec["status"] == "failed" else "recorded", "step": step,
+                "step_status": spec["status"], "receipt": ref, "gate": gate,
+                "semantic_review": semantic, "scientific_conclusion_certified": False}
 
     def finish(self, stage, spec):
         with self._edit() as state:
@@ -414,18 +499,21 @@ class StageFlow:
                      "STAGE_INCOMPLETE", "本阶段仍有未通过子步骤")
             _text(spec.get("reviewer"), "reviewer")
             _text(spec.get("conclusion"), "conclusion")
-            source = spec.get("tutorial_review")
-            tutorial = next(s for s in state["rules_lock"]["sources"] if s["id"] == "tutorial")
-            _require(isinstance(source, dict) and source.get("sha256") == tutorial["sha256"]
-                     and isinstance(source.get("sections"), list) and source["sections"],
-                     "TUTORIAL_REVIEW_MISSING", "退出前须核锁定教程章节并记录补漏结论")
-            _text(source.get("findings"), "原文差异/遗漏检查结论")
-            _text(source.get("resolution"), "差异/遗漏处理")
+            source = spec.get("source_review")
+            if source is not None:
+                _require(isinstance(source, dict), "INVALID_STAGE_RECORD", "原文疑义记录须为对象")
+                _text(source.get("findings"), "实际发现的原文疑义/遗漏")
+                _text(source.get("resolution"), "原文疑义/遗漏的处理依据")
+                _require(isinstance(source.get("evidence"), list) and source["evidence"],
+                         "MISSING_EVIDENCE", "原文疑义处置须有可核引用")
+                for ref in source["evidence"]:
+                    evidence(self.root, ref)
             approvals = self._approval(spec.get("approval"), "stage-" + stage) if stage in {"1", "2", "3", "6"} else None
             gates = {}
             for step in SUBSTEP_IDS[stage]:
                 record = self._receipt(state, step)
                 gates[step] = self._gate(step, record["spec"].get("checks", {}))
+                self._reviews(step, record["spec"])
             if stage in {"2", "3"}:
                 protocol_ids = {self._receipt(state, s)["spec"]["checks"]["protocol_id"]
                                 for s in SUBSTEP_IDS[stage]
@@ -446,7 +534,8 @@ class StageFlow:
                          "PACKAGE_VERSION_MISMATCH", "阶段 6 各步骤必须对应同一个最终包；返修后从 6.1 重验")
             state["stages"][stage]["status"] = "passed"
             state["history"].append({"action": "stage_finish", "stage": stage, "at": _utc_now(),
-                                     "spec": spec, "gates": gates, "approval": approvals})
+                                     "spec": spec, "gates": gates, "approval": approvals,
+                                     "rules_lock_sha256": _canonical_digest(state["rules_lock"])})
             state["current_stage"] = str(int(stage)+1) if stage != "6" else None
         return {"status": "stage_completed", "stage": stage, "current_stage": state["current_stage"],
                 "note": "专家本地阶段结论；不代表平台审核通过"}

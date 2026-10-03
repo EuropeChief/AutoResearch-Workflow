@@ -45,6 +45,11 @@ class StageTests(unittest.TestCase):
         spec = {"step": step, "status": "passed", "reviewer": "synthetic expert",
                 "summary": "合成证据，不能冒充真实标注", "evidence": [self.fx.proof],
                 "checks": checks or {}, **changes}
+        rule = {"1.2": "AR-002", "1.3": "AR-003", "2.2": "AR-002"}.get(step)
+        if rule:
+            spec.setdefault("reviews", [{"rule_id": rule, "status": "pass",
+                "rationale": "Synthetic fixture; not a real scientific judgment",
+                "evidence": [self.fx.proof], "unresolved": []}])
         return self.flow.record(spec)
 
     def scoring_receipt(self, score):
@@ -56,10 +61,7 @@ class StageTests(unittest.TestCase):
         approval = self.fx.ref(f"approval-{stage}.json", json.dumps({
             "approved_by": "synthetic user", "approved": True, "scope": f"stage-{stage}",
             "decision": "测试中明确确认", "evidence": [self.fx.proof]}))
-        source = next(x for x in self.flow.store._load()["rules_lock"]["sources"] if x["id"] == "tutorial")
-        return {"reviewer": "expert", "conclusion": "synthetic complete", "approval": approval,
-                "tutorial_review": {"sha256": source["sha256"], "sections": ["test fixture"],
-                                    "findings": "合成原文核对", "resolution": "不声称真实验收"}}
+        return {"reviewer": "expert", "conclusion": "synthetic complete", "approval": approval}
 
     def stage_one(self):
         for step in ("1.1", "1.2", "1.3", "1.4"):
@@ -110,17 +112,18 @@ class StageTests(unittest.TestCase):
         status = json.loads(result.stdout)
         self.assertEqual(status["next_step"], "1.2")
         self.assertTrue(status["rule_ids"])
-        self.assertTrue(status["tutorial_sections"])
+        self.assertTrue(status["required_rules"])
         self.assertEqual(StageFlow(self.root).status()["next_step"], "1.2")
 
-    def test_finish_requires_tutorial_and_real_confirmation_reference(self):
+    def test_finish_requires_real_confirmation_and_checks_optional_source_findings(self):
         for step in ("1.1", "1.2", "1.3", "1.4"):
             self.record(step)
         spec = self.finish_spec("1")
-        spec["tutorial_review"]["sha256"] = "0"*64
+        spec["source_review"] = {"findings": "Synthetic ambiguity", "resolution": "reviewed",
+                                 "evidence": []}
         with self.assertRaises(FlowError) as caught:
             self.flow.finish("1", spec)
-        self.assertEqual(caught.exception.code, "TUTORIAL_REVIEW_MISSING")
+        self.assertEqual(caught.exception.code, "MISSING_EVIDENCE")
         spec = self.finish_spec("1")
         del spec["approval"]
         with self.assertRaises(FlowError):

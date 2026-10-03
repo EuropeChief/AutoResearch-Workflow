@@ -80,11 +80,13 @@ def _parser() -> argparse.ArgumentParser:
     configure.add_argument("--file", type=Path, required=True)
     stage = commands.add_parser("stage", help="六阶段状态、证据登记、冻结与返修")
     actions = stage.add_subparsers(dest="stage_action", required=True)
-    for name in ("status", "template", "record", "finish", "reopen", "ref"):
+    for name in ("status", "check", "template", "record", "finish", "reopen", "ref"):
         command = actions.add_parser(name)
         command.add_argument("--task-root", type=Path, required=True)
-        if name in {"template", "reopen"}:
+        if name in {"check", "template", "reopen"}:
             command.add_argument("--step", required=True)
+        if name == "check":
+            command.add_argument("--file", type=Path)
         if name == "finish":
             command.add_argument("--stage", choices=tuple(str(i) for i in range(1, 7)), required=True)
         if name in {"record", "finish", "reopen"}:
@@ -188,6 +190,8 @@ def main(argv: list[str] | None = None) -> int:
             flow = StageFlow(args.task_root)
             if args.stage_action == "status":
                 result = flow.status()
+            elif args.stage_action == "check":
+                result = flow.check(args.step, _read_json(args.file) if args.file else None)
             elif args.stage_action == "template":
                 result = flow.template(args.step)
             elif args.stage_action == "record":

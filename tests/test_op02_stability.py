@@ -144,10 +144,8 @@ class StabilityDeliveryTests(unittest.TestCase):
         approval = self.root / "approval.json"
         approval.write_text(json.dumps({"approved_by": "synthetic", "approved": True, "scope": "stage-6",
             "decision": "synthetic fixture only", "evidence": [self.fx.ref(self.receipt)]}))
-        source = next(s for s in state["rules_lock"]["sources"] if s["id"] == "tutorial")
         self.flow.finish("6", {"reviewer": "synthetic", "conclusion": "synthetic closure",
-            "approval": self.fx.ref(approval), "tutorial_review": {"sha256": source["sha256"],
-            "sections": ["synthetic AR-010 and U-20261003-03"], "findings": "synthetic", "resolution": "synthetic"}})
+            "approval": self.fx.ref(approval)})
         self.assertIsNone(self.flow.store.check()["current_stage"])
 
     def test_failed_environment_observation_still_blocks(self):
