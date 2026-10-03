@@ -20,9 +20,12 @@
 4. `best-verify --task-root TASK --file VERIFICATION.json`：该源码哈希须与 W2 `best_method` 正式 seed 复验完全一致，并提交干净任务快照重跑结果、日志、命令、起止时间、退出码与专家结论。可先使用 [W2 本地复验队列](W2_EXPERIMENTS.md#最终方法的本地复验队列) 按明确授权资源串行或并行执行；队列完成不代替本步核验。
 5. `build --task-root TASK --file PACKAGE.json`：复制明确来源、生成不可混入制作日志的版本目录；先做结构/字段/引用及 B/R/U 线性归一化检查，再绑定 B/R 正式逐次原始 result 哈希与同协议均值、两组有效时长及唯一方法复验。输出 `package_path` 与 `package_sha256`。
 6. `check --package-root PACKAGE`：**只读取提交包内部**的格式和必要文件；结果 `format_checked_not_qa` 不代表正式 QA。
-7. `archive --task-root TASK --package-root PACKAGE [--max-part-bytes N]`：按排序文件、固定 ZIP 时间戳和 UTF-8 文件名生成可复现 ZIP；默认超过 300 MiB 分卷。分卷按编号拼接即为原 ZIP；校验每卷及整包 SHA-256。ZIP 放在交付包外。
-8. `qa-handoff --task-root TASK --package-root PACKAGE`：生成独立新会话使用的准确路径与目录哈希。用户手动运行只读质检。
-9. `qa-bind --task-root TASK --package-root PACKAGE --report REPORT.json`：只接受报告 `source.path` 与本包相同的机器可读报告，并检查包哈希未变化；保存状态 `attached_unreviewed`。当前会话再审阅报告和返修，新包必须重新质检。
+7. `qa-handoff --task-root TASK --package-root PACKAGE`：生成独立新会话使用的准确路径与快照哈希；用户手动运行只读质检，QA 前不正式压缩。
+8. `qa-bind --task-root TASK --package-root PACKAGE --report REPORT.json`：绑定机器可读报告，状态为 `attached_unreviewed`。若 QA 在另一目录扫描，程序核完整相对路径、内容和权限与本包相同，不修改原报告；扫描目录须仍可读取。当前会话逐项审阅报告并返修，新包须重新独立质检。
+9. `archive --task-root TASK --package-root PACKAGE --name semantic-benchmark [--file CHECKS.json] [--max-part-bytes N]`：命令入口核当前独立 QA 已完成且 PASS、处置无未解决项、包内教程自验证据齐全，再生成三份 ZIP。`CHECKS.json` 是 6.5 的 `checks` 对象（非整个步骤记录）；省略项只复用先前有效登记，缺证拒绝。完整包外层用语义化英文名，不含题号；另两包只取该最终包中的 `workspace/harbor_task/`、`optimization_evidence/`。保留中文 UTF-8 名称和 Unix 权限。超过 **300,000,000 字节**才分卷，默认每卷最多 **290,000,000 字节**；完整 ZIP 仍保留。输出目录在 `.autoresearch-flow/delivery/archives/`，内含三包、所需分卷、`archives.json`、`SHA256SUMS.txt` 和 `上传说明.md`。每包流式解压核 CRC/路径/内容/权限，每卷核大小和按编号字节拼接哈希；分卷不是可单独解压的 ZIP。
+10. `form --task-root TASK --package-root PACKAGE --file FORM.json`：三包核验后，在同一输出目录生成 `填表信息.md` 和包外绑定 `form.json`。按[模板](templates/delivery-form.example.json)提供四段有包内源码/说明依据的中文概述；Baseline/Reference 原始均值、归一化分数、方向、split 和次数从当前包读取，不能填 Agent 最佳分数替代 Reference。程序核来源与数值，责任 Agent/专家核方法叙述，不编造未做的试跑；人工改过的文件不会静默覆盖。
+
+6.5 的进度为 `qa_verified → archives_verified → form_ready`。`stage check` 可报告中间进度，但只有三者闭合才能登记 6.5 `passed` 并 `finish 6`，压缩本身不依赖先完成阶段 6。任何加删文件、内容或权限变化使旧 QA/归档绑定失效。对不影响方法的说明修订不要求重跑训练，但修订后的最终包仍须新会话 QA。重打包生成新的外部版本绑定，不向被 QA 接受的源包加文件。
 
 ## 输入 JSON 的最小形状
 
@@ -64,7 +67,7 @@
 {"protocol_id":"<W2 正式协议 ID>","workspace_directory":"<任务内待交 workspace 相对目录>","optimization_directory":"<任务内待交 optimization_evidence 相对目录>","expert_document":{"path":"<专家作业说明文档>","sha256":"<SHA-256>"},"expert_annotation":{"path":"<expert_annotation.json>","sha256":"<SHA-256>"},"run_summary":{"path":"<run_summary.json>","sha256":"<SHA-256>"}}
 ```
 
-所有引用使用**任务根内相对路径和 SHA-256**；训练型任务的模型、日志、checkpoint 应在 `optimization_directory` 下按教程保留。构建时从 W2 读取 `evaluation_protocol` 并补入包内 comparison_summary；非训练任务不强制模型，确定性非训练任务可按已冻结协议单次评估，随机/训练型及高方差重复数保持 W2 要求。专家说明、标注 JSON 与摘要须按当期教程填写；工具只核可机械判断的字段及与 W2/W3 台账的基本一致性。
+上述制作期引用使用**任务根内相对路径和 SHA-256**；`FORM.json` 各段 `sources` 特别使用**最终包根内**相对路径，其 `checks` 仍用任务根。训练型任务的模型、日志、checkpoint 按教程保留。构建时从 W2 补入 `comparison_summary.evaluation_protocol` 和 `formal_aggregates`（正式 B/R 均值、次数、seeds 及评分口径），供包内填表取证；不以包外报告补缺。非训练任务不强制模型，确定性非训练任务可按冻结协议单次评估，其他重复数保持 W2 要求。专家文件仍按当期教程填写；工具只核机械可判断的字段与台账一致性。
 
 ## 验收边界
 

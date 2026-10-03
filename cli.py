@@ -132,20 +132,22 @@ def _parser() -> argparse.ArgumentParser:
     delivery = commands.add_parser("delivery", help="Agent 轨迹整理、最终方法、包与独立 QA 交接")
     actions = delivery.add_subparsers(dest="delivery_action", required=True)
     for name in ("trajectory-finalize", "trajectory-review", "best-select", "best-verify",
-                 "build", "check", "archive", "qa-handoff", "qa-bind"):
+                 "build", "check", "archive", "form", "qa-handoff", "qa-bind"):
         command = actions.add_parser(name)
         if name != "check":
             command.add_argument("--task-root", type=Path, required=True)
         if name in {"trajectory-finalize", "trajectory-review"}:
             command.add_argument("--track", choices=("codex", "seed"), required=True)
-        if name in {"trajectory-review", "best-select", "best-verify", "build"}:
+        if name in {"trajectory-review", "best-select", "best-verify", "build", "form"}:
             command.add_argument("--file", type=Path, required=True)
         if name == "trajectory-finalize":
             command.add_argument("--file", type=Path, help="可选的逐行修订记录 JSON；缺省为原样整理")
-        if name in {"check", "archive", "qa-handoff", "qa-bind"}:
+        if name in {"check", "archive", "form", "qa-handoff", "qa-bind"}:
             command.add_argument("--package-root", type=Path, required=True)
         if name == "archive":
-            command.add_argument("--max-part-bytes", type=int, default=300 * 1024 * 1024)
+            command.add_argument("--name", required=True, help="完整包语义化英文名称，不含题号")
+            command.add_argument("--file", type=Path, help="6.5 checks 对象；未提供项仅复用已登记的有效引用")
+            command.add_argument("--max-part-bytes", type=int, default=290_000_000)
         if name == "qa-bind":
             command.add_argument("--report", type=Path, required=True)
     return parser
@@ -223,7 +225,10 @@ def main(argv: list[str] | None = None) -> int:
             elif args.delivery_action == "build":
                 result = DeliveryPackage(args.task_root).build(_read_json(args.file))
             elif args.delivery_action == "archive":
-                result = DeliveryPackage(args.task_root).archive(args.package_root, args.max_part_bytes)
+                result = DeliveryPackage(args.task_root).archive(args.package_root, args.max_part_bytes,
+                    name=args.name, checks=_read_json(args.file) if args.file else None)
+            elif args.delivery_action == "form":
+                result = DeliveryPackage(args.task_root).form(args.package_root, _read_json(args.file))
             elif args.delivery_action == "qa-handoff":
                 result = DeliveryPackage(args.task_root).qa_handoff(args.package_root)
             else:

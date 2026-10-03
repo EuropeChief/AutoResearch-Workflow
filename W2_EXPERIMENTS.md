@@ -34,6 +34,7 @@
 |---|---|
 | `schema_version / id` | `1` / 唯一协议 ID |
 | `metric` | `{"name":"本题原始指标","direction":"maximize或minimize"}` |
+| `split` | 正式交付必填的数据划分名称（如 `dev`），与实际 `fixed.data` 对应；锁定后不可从标注文件补写或改名。未填写的探索协议不能直接用于最终组包 |
 | `seeds` | 不重复非负整数；训练型或随机任务至少 3 个，声明 high_variance 时至少 5 个 |
 | `training / evaluation_mode` | 布尔值 / `random` 或 `deterministic`；零样本方差不自动改变声明 |
 | `fixed` | 至少包含 `data / preprocessing / evaluator` 的 SHA-256；可追加必须固定的协议内容指纹 |

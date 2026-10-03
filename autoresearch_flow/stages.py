@@ -275,6 +275,9 @@ class StageFlow:
                         _text(item.get("rationale"), "QA 处置理由")
                     self._qa_coverage(_read_json(report), review["dispositions"])
                     result["qa_review_sha256"] = checks["qa_review"]["sha256"]
+            if step == "6.5":
+                from .w4_package import DeliveryPackage
+                result.update(DeliveryPackage(self.root).delivery_state(result))
             return result
         return {"status": "not_applicable", "note": "本步骤无额外机器门禁；不代表科研审查通过"}
 
@@ -473,6 +476,9 @@ class StageFlow:
             self._check_refs(spec)
             spec = {**spec, "checks": self._resolve_checks(state, step, spec.get("checks", {}))}
             gate = self._gate(step, spec.get("checks", {})) if spec["status"] == "passed" else {"status": spec["status"]}
+            if step == "6.5" and spec["status"] == "passed":
+                _require(gate.get("delivery_phase") == "form_ready", "DELIVERY_INCOMPLETE",
+                         "先完成独立 QA、三包核验及填表文件，再登记 6.5 完成")
             semantic = self._reviews(step, spec) if spec["status"] == "passed" else {"status": "awaiting_evidence"}
             record = {"schema_version": 1, "rules_lock_sha256": _canonical_digest(state["rules_lock"]),
                       "spec": spec, "gate": gate, "semantic_review": semantic, "at": _utc_now()}
@@ -530,6 +536,8 @@ class StageFlow:
                 _require(configs, "CONFIG_MISSING", "缺少题目适配登记")
                 self._check_refs(configs[-1]["spec"])
             if stage == "6":
+                _require(gates["6.5"].get("delivery_phase") == "form_ready", "DELIVERY_INCOMPLETE",
+                         "交付产物尚未全部完成或绑定已过期")
                 _require(len({g["package_sha256"] for g in gates.values()}) == 1,
                          "PACKAGE_VERSION_MISMATCH", "阶段 6 各步骤必须对应同一个最终包；返修后从 6.1 重验")
             state["stages"][stage]["status"] = "passed"

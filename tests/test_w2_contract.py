@@ -22,12 +22,19 @@ class W2Tests(unittest.TestCase):
         self.book = ExperimentBook(self.root)
         self.method = self.ref("method.py", "# synthetic method")
         self.proof = self.ref("reason.md", "Synthetic expert evidence, not a real finding.")
-        self.p = {"schema_version": 1, "id": "p1", "metric": {"name": "quality", "direction": "maximize"},
+        self.p = {"schema_version": 1, "id": "p1", "split": "dev", "metric": {"name": "quality", "direction": "maximize"},
                   "seeds": [1, 2, 3], "training": False, "evaluation_mode": "random",
                   "fixed": {"data": "a"*64, "preprocessing": "b"*64, "evaluator": "c"*64},
                   "budget": {"updates": {"mode": "exact", "value": 100, "unit": "steps"}},
                   "rationale": "Synthetic common budget.", "reload_tolerance": 0.001}
         self.lock = self.book.lock(self.p)
+
+    def test_report_retains_frozen_metric_and_split_identity(self):
+        self.p["metric"]["name"] = "changed-outside-lock"
+        self.p["split"] = "hidden"
+        report = self.book.report("p1")
+        self.assertEqual(report["metric"], {"name": "quality", "direction": "maximize"})
+        self.assertEqual(report["split"], "dev")
 
     def ref(self, name, text):
         path = self.root / name

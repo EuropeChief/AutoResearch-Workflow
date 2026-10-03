@@ -7,7 +7,9 @@ from __future__ import annotations
 
 import hashlib
 import math
+import re
 import shutil
+import stat
 import tempfile
 import tomllib
 import zipfile
@@ -27,10 +29,145 @@ EXPERT_FILES = {"专家作业说明文档.md", "best_method", "expert_annotation
 OPT_FILES = {"训练证据说明.md", "baseline_runs", "reference_runs", "comparison_summary.json"}
 
 
-def _tree_digest(root: Path) -> str:
+def package_snapshot(root: Path) -> list[dict]:
+    """Portable content + path + mode identity, including empty directories."""
     _require(root.is_dir() and not root.is_symlink(), "PACKAGE_MISSING", "提交包目录不存在")
-    _require(not any(p.is_symlink() for p in root.rglob("*")), "PACKAGE_SYMLINK", "提交包不得含符号链接")
-    return _canonical_digest(_files(root, root))
+    entries = []
+    for path in [root, *sorted(root.rglob("*"))]:
+        _require(not path.is_symlink() and (path.is_file() or path.is_dir()),
+                 "PACKAGE_SYMLINK", "提交包只允许普通文件和目录，不含链接/设备/套接字")
+        item = {"path": path.relative_to(root).as_posix(), "mode": stat.S_IMODE(path.stat().st_mode),
+                "type": "directory" if path.is_dir() else "file"}
+        if path.is_file():
+            item.update(sha256=_sha256(path), bytes=path.stat().st_size)
+        entries.append(item)
+    return entries
+
+
+def _tree_digest(root: Path) -> str:
+    return _canonical_digest(package_snapshot(root))
+
+
+def _zip_name(prefix, row):
+    name = prefix if row["path"] == "." else prefix + "/" + row["path"]
+    return name + "/" if row["type"] == "directory" else name
+
+
+def _write_zip(root, path, prefix):
+    with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=6, allowZip64=True) as out:
+        for row in package_snapshot(root):
+            info = zipfile.ZipInfo(_zip_name(prefix, row), date_time=(1980, 1, 1, 0, 0, 0))
+            info.create_system = 3
+            kind = stat.S_IFDIR if row["type"] == "directory" else stat.S_IFREG
+            info.external_attr = (kind | row["mode"]) << 16
+            info.compress_type = zipfile.ZIP_DEFLATED
+            if row["type"] == "directory":
+                info.external_attr |= 0x10
+                out.writestr(info, b"")
+            else:
+                with (root / row["path"]).open("rb") as source, out.open(info, "w", force_zip64=True) as target:
+                    shutil.copyfileobj(source, target, length=1024 * 1024)
+
+
+def _verify_zip(root, path, prefix):
+    """Stream-decompress every member; verify CRC, bytes, paths and Unix modes."""
+    _require(path.is_file() and not path.is_symlink(), "ARCHIVE_INVALID", "ZIP 缺失或为链接")
+    expected = {_zip_name(prefix, row): row for row in package_snapshot(root)}
+    with zipfile.ZipFile(path) as archive:
+        members = archive.infolist()
+        _require(len(members) == len(expected) and {m.filename for m in members} == set(expected),
+                 "ARCHIVE_INVALID", "ZIP 文件/目录集合与接受包不符")
+        for member in members:
+            row = expected[member.filename]
+            _require(stat.S_IMODE(member.external_attr >> 16) == row["mode"] and member.create_system == 3,
+                     "ARCHIVE_INVALID", "ZIP 丢失 Unix 权限")
+            _require(member.filename.isascii() or member.flag_bits & 0x800,
+                     "ARCHIVE_INVALID", "非 ASCII 文件名未使用 UTF-8 标志")
+            digest = hashlib.sha256()
+            with archive.open(member) as data:
+                while block := data.read(1024 * 1024):
+                    digest.update(block)
+            if row["type"] == "file":
+                _require(digest.hexdigest() == row["sha256"] and member.file_size == row["bytes"],
+                         "ARCHIVE_INVALID", "ZIP 解包内容与源文件不同")
+    return {"path": path.name, "sha256": _sha256(path), "bytes": path.stat().st_size, "prefix": prefix,
+            "parts": [], "upload": "single_zip"}
+
+
+def _split_zip(path, maximum, limit):
+    if path.stat().st_size <= limit:
+        return
+    with path.open("rb") as source:
+        number = 1
+        while source.tell() < path.stat().st_size:
+            with path.with_name(f"{path.name}.part{number:03d}").open("xb") as part:
+                remaining = maximum
+                while remaining and (block := source.read(min(remaining, 1024 * 1024))):
+                    part.write(block)
+                    remaining -= len(block)
+            number += 1
+
+
+def _verify_upload(path, entry, maximum, limit):
+    if entry["bytes"] <= limit:
+        return entry
+    combined = hashlib.sha256()
+    parts = []
+    for number in range(1, (entry["bytes"] + maximum - 1) // maximum + 1):
+        part = path.with_name(f"{path.name}.part{number:03d}")
+        expected = min(maximum, entry["bytes"] - (number - 1) * maximum)
+        _require(part.is_file() and not part.is_symlink() and part.stat().st_size == expected,
+                 "ARCHIVE_INVALID", "分卷缺失、大小不符或为链接")
+        digest = hashlib.sha256()
+        with part.open("rb") as source:
+            while block := source.read(1024 * 1024):
+                digest.update(block)
+                combined.update(block)
+        parts.append({"path": part.name, "sha256": digest.hexdigest(), "bytes": expected})
+    _require(combined.hexdigest() == entry["sha256"], "ARCHIVE_INVALID", "分卷拼接哈希不等于完整 ZIP")
+    return {**entry, "parts": parts, "upload": "byte_parts"}
+
+
+def _archive_support(archives):
+    checksums, instructions = [], ["# 上传说明", "", "完整 ZIP 保留用于本地归档。超过上传上限的 ZIP 只上传其全部分卷，不同时上传完整 ZIP。",
+                                   "分卷为字节拼接格式，不是可分别解压的 ZIP 或原生多卷 ZIP。接收方按以下明确顺序重组后再解压。", ""]
+    for role in ("submission", "harbor_task", "optimization_evidence"):
+        entry = archives[role]
+        for item in [entry, *entry["parts"]]:
+            checksums.append(f'{item["sha256"]}  {item["path"]}')
+        instructions.extend([f'## {entry["path"]}', ""])
+        if entry["parts"]:
+            names = " ".join(p["path"] for p in entry["parts"])
+            instructions.extend(["```sh", f'cat {names} > {entry["path"]}', "```", ""])
+        else:
+            instructions.extend(["直接上传此 ZIP，无需拼接。", ""])
+        instructions.extend([f'完整文件 SHA-256：`{entry["sha256"]}`。', ""])
+    instructions.extend(["保留全部文件时可运行 `sha256sum -c SHA256SUMS.txt`。",
+                         "中文文件名使用 UTF-8；Linux 解压建议 `unzip`，其读取 Unix 权限字段保留脚本可执行位。",
+                         "`archives.json` 绑定独立 QA、源包快照及三份压缩包；这些材料均在提交包之外。", ""])
+    return {"SHA256SUMS.txt": "\n".join(checksums) + "\n", "上传说明.md": "\n".join(instructions)}
+
+
+def _archive_scopes(root, name):
+    return {"submission": (root, name), "harbor_task": (root / "workspace/harbor_task", "harbor_task"),
+            "optimization_evidence": (root / "optimization_evidence", "optimization_evidence")}
+
+
+def _verify_archives(root, directory, manifest):
+    scopes = _archive_scopes(root, manifest["name"])
+    _require(set(manifest.get("archives", {})) == set(scopes), "ARCHIVE_INVALID", "必须且仅有三个归档范围")
+    for role, (source, prefix) in scopes.items():
+        path = directory / (prefix + ".zip")
+        try:
+            entry = _verify_zip(source, path, prefix)
+        except (OSError, zipfile.BadZipFile, RuntimeError) as exc:
+            raise FlowError("ARCHIVE_INVALID", "ZIP 损坏或无法读取") from exc
+        entry = _verify_upload(path, entry, manifest["max_part_bytes"], manifest["upload_limit_bytes"])
+        _require(entry == manifest["archives"][role], "ARCHIVE_DRIFT", "已有归档与当前源包/收据不同，禁止覆盖")
+    for name, content in _archive_support(manifest["archives"]).items():
+        path = directory / name
+        _require(path.is_file() and not path.is_symlink() and path.read_text(encoding="utf-8") == content,
+                 "ARCHIVE_DRIFT", "归档校验清单或上传说明发生变化")
 
 
 def _trajectory(path: Path) -> int:
@@ -215,6 +352,14 @@ class DeliveryPackage:
         optimization = _safe_tree(self.root, spec.get("optimization_directory"))
         source_files = {key: evidence(self.root, spec.get(key)) for key in
                         ("expert_document", "expert_annotation", "run_summary")}
+        score = _read_json(source_files["expert_annotation"]).get("score_contract")
+        _require(isinstance(score, dict), "ANNOTATION_SCHEMA", "expert_annotation 缺 score_contract 对象")
+        metric = report.get("metric", {})
+        identity = {"protocol": report.get("protocol_id"), "metric": metric.get("name"),
+                    "direction": metric.get("direction"), "split": report.get("split")}
+        _require(all(isinstance(v, str) and v and score.get(k) == v for k, v in identity.items())
+                 and identity["protocol"] == spec["protocol_id"], "BR_METRIC_MISMATCH",
+                 "W2 正式协议/指标/方向/split 缺失或与评分合同不一致；不得重新贴标签")
         support = spec.get("support_files", [])
         _require(isinstance(support, list), "PACKAGE_SPEC", "support_files 须为按需支撑证据列表")
         support_targets = set()
@@ -286,6 +431,9 @@ class DeliveryPackage:
             _require("evaluation_protocol" not in comparison or comparison["evaluation_protocol"] == protocol,
                      "PROTOCOL_MISMATCH", "comparison_summary 与 W2 冻结协议不一致")
             comparison["evaluation_protocol"] = protocol
+            comparison["formal_aggregates"] = {**identity,
+                "seeds": report["seeds"], **{role: {"mean": report["groups"][role]["mean"], "n": report["groups"][role]["count"]}
+                                            for role in ("baseline", "reference")}}
             _atomic_json(summary_path, comparison)
             if duration["policy"]["mode"] == "non_training_7h":
                 from .duration_delivery import export as export_duration_evidence
@@ -328,48 +476,87 @@ class DeliveryPackage:
                      "package_sha256": _tree_digest(target), "created_at": _utc_now()})
         return check_package(target)
 
-    def archive(self, package_root: Path, max_part_bytes: int = 300 * 1024 * 1024) -> dict:
-        checked = check_package(package_root)
-        _require(type(max_part_bytes) is int and max_part_bytes > 0, "INVALID_PART_SIZE", "分卷大小须为正整数")
-        root = Path(package_root).resolve(strict=True)
-        name = root.name + "-" + checked["package_sha256"][:12]
-        directory = self.directory / "archives" / name
-        directory.mkdir(parents=True, exist_ok=True)
-        archive = directory / (name + ".zip")
-        with tempfile.NamedTemporaryFile(prefix=".archive-", suffix=".zip", dir=directory, delete=False) as temp:
-            candidate = Path(temp.name)
-        try:
-            with zipfile.ZipFile(candidate, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=6, allowZip64=True) as out:
-                for path in sorted(p for p in root.rglob("*") if p.is_file()):
-                    relative = path.relative_to(root).as_posix()
-                    info = zipfile.ZipInfo(relative, date_time=(1980, 1, 1, 0, 0, 0))
-                    info.compress_type = zipfile.ZIP_DEFLATED
-                    info.flag_bits |= 0x800
-                    info.external_attr = 0o100644 << 16
-                    with path.open("rb") as source, out.open(info, "w") as target:
-                        shutil.copyfileobj(source, target, length=1024 * 1024)
-            if archive.exists():
-                _require(_sha256(archive) == _sha256(candidate), "ARCHIVE_DRIFT",
-                         "已有归档与确定性重建结果不同")
-            else:
-                candidate.replace(archive)
-        finally:
-            candidate.unlink(missing_ok=True)
-        parts = []
-        if archive.stat().st_size > max_part_bytes:
-            with archive.open("rb") as source:
-                index = 1
-                while block := source.read(max_part_bytes):
-                    part = directory / f"{archive.name}.part{index:03d}"
-                    if not part.exists():
-                        part.write_bytes(block)
-                    _require(_sha256(part) == hashlib.sha256(block).hexdigest(),
-                             "ARCHIVE_DRIFT", "现有分卷不匹配")
-                    parts.append({"path": str(part), "sha256": _sha256(part), "bytes": len(block)})
-                    index += 1
-        return {"status": "archived", "package_sha256": checked["package_sha256"],
-                "archive": str(archive), "archive_sha256": _sha256(archive), "parts": parts,
-                "upload": "parts_in_order" if parts else "single_zip"}
+    def archive(self, package_root: Path, max_part_bytes: int = 290_000_000, *, name=None, checks=None,
+                upload_limit_bytes: int = 300_000_000) -> dict:
+        # Reuse the current read-only tutorial + independent-QA gate. It does not
+        # require finish(6), run a QA skill, or advance a stage.
+        from .stages import StageFlow
+        root = Path(package_root).resolve()
+        _require(root.is_relative_to(self.root), "PACKAGE_EVIDENCE_BOUNDARY", "归档仅接受本题目内最终目录")
+        supplied = {**(checks or {}), "package_root": root.relative_to(self.root).as_posix()}
+        gate = StageFlow(self.root).check("6.5", {"step": "6.5", "checks": supplied})
+        _require(gate["status"] == "checked", "ARCHIVE_NOT_ACCEPTED", str(gate["issues"]))
+        checked = gate["machine_check"]["result"]
+        _require(isinstance(name, str) and re.fullmatch(r"[a-z][a-z0-9]*(?:-[a-z0-9]+)*", name)
+                 and not re.search(r"(?:tob|auto|task|question|problem)-?\d", name),
+                 "INVALID_ARCHIVE_NAME", "完整包须用语义化英文名称，不含题号；子仓名固定")
+        _require(type(upload_limit_bytes) is int and 0 < upload_limit_bytes <= 300_000_000,
+                 "INVALID_UPLOAD_LIMIT", "上传上限须为正整数且不超过 300,000,000 字节")
+        _require(type(max_part_bytes) is int and 0 < max_part_bytes <= min(290_000_000, upload_limit_bytes),
+                 "INVALID_PART_SIZE", "分卷大小须为正整数且不超过 290,000,000 字节")
+        binding = {"schema_version": 1, "package_sha256": checked["package_sha256"],
+                   "report_sha256": checked["report_sha256"], "qa_review_sha256": checked["qa_review_sha256"],
+                   "name": name, "max_part_bytes": max_part_bytes, "upload_limit_bytes": upload_limit_bytes}
+        parent = self.directory / "archives"
+        parent.mkdir(exist_ok=True)
+        directory = parent / (name + "-" + _canonical_digest(binding)[:16])
+        scopes = _archive_scopes(root, name)
+        if not directory.exists():
+            with tempfile.TemporaryDirectory(prefix=".preparing-", dir=parent) as temporary:
+                staging = Path(temporary)
+                archives = {}
+                for role, (source, prefix) in scopes.items():
+                    path = staging / (prefix + ".zip")
+                    _write_zip(source, path, prefix)
+                    _split_zip(path, max_part_bytes, upload_limit_bytes)
+                    archives[role] = _verify_upload(path, _verify_zip(source, path, prefix),
+                                                    max_part_bytes, upload_limit_bytes)
+                for filename, content in _archive_support(archives).items():
+                    (staging / filename).write_text(content, encoding="utf-8")
+                _require(_tree_digest(root) == binding["package_sha256"], "QA_PACKAGE_DRIFT", "压缩期间源包发生变化")
+                _atomic_json(staging / "archives.json", {**binding, "archives": archives})
+                staging.rename(directory)
+        manifest = _read_json(directory / "archives.json")
+        _require(all(manifest.get(k) == v for k, v in binding.items()), "ARCHIVE_DRIFT", "归档绑定发生变化")
+        _verify_archives(root, directory, manifest)
+        _atomic_json(self.directory / "archives_current.json", {"path": str((directory / "archives.json").relative_to(self.root)),
+                     "sha256": _sha256(directory / "archives.json")})
+        return {"status": "archives_verified", **manifest, "output_directory": str(directory)}
+
+    def delivery_state(self, checked: dict) -> dict:
+        """Read back external outputs for this exact QA-accepted version only."""
+        pointer = self.directory / "archives_current.json"
+        if not pointer.exists():
+            return {"delivery_phase": "qa_verified"}
+        ref = _read_json(pointer)
+        path = evidence(self.root, ref)
+        manifest = _read_json(path)
+        if any(manifest.get(key) != checked[key] for key in
+               ("package_sha256", "report_sha256", "qa_review_sha256")):
+            return {"delivery_phase": "qa_verified"}
+        _verify_archives(Path(checked["package_path"]), path.parent, manifest)
+        result = {"delivery_phase": "archives_verified", "archives_manifest": ref,
+                  "output_directory": str(path.parent)}
+        if (path.parent / "form.json").exists():
+            from .delivery_form import verify
+            result.update(delivery_phase="form_ready", form=verify(Path(checked["package_path"]), path))
+        return result
+
+    def form(self, package_root: Path, spec: dict) -> dict:
+        from .stages import StageFlow
+        from .delivery_form import write
+        root = Path(package_root).resolve()
+        _require(root.is_relative_to(self.root), "PACKAGE_EVIDENCE_BOUNDARY", "填表仅接受本题目内最终目录")
+        checks = {**spec.get("checks", {}), "package_root": root.relative_to(self.root).as_posix()}
+        gate = StageFlow(self.root).check("6.5", {"checks": checks})
+        _require(gate["status"] == "checked", "FORM_NOT_ACCEPTED", str(gate["issues"]))
+        result = gate["machine_check"]["result"]
+        _require(result["delivery_phase"] in {"archives_verified", "form_ready"},
+                 "FORM_ARCHIVES_REQUIRED", "须先完成独立 QA 后的三包压缩与核验")
+        path = evidence(self.root, result["archives_manifest"])
+        form = write(root, path, spec)
+        _require(_tree_digest(root) == result["package_sha256"], "QA_PACKAGE_DRIFT", "填表期间源包发生变化")
+        return form
 
     def qa_handoff(self, package_root: Path) -> dict:
         checked = check_package(package_root)
@@ -413,14 +600,20 @@ class DeliveryPackage:
         qa = _read_json(report)
         validate_qa_report(qa)
         source = qa.get("source")
-        _require(isinstance(source, dict) and isinstance(source.get("path"), str)
-                 and Path(source["path"]).resolve() == Path(checked["package_path"]),
-                 "QA_SCOPE_MISMATCH", "质检报告扫描路径不是本次最终包")
+        _require(isinstance(source, dict) and isinstance(source.get("path"), str),
+                 "QA_SCOPE_MISMATCH", "质检报告未给明确扫描目录")
+        scanned = Path(source["path"])
+        _require(scanned.is_absolute() and not scanned.is_symlink() and scanned.is_dir(),
+                 "QA_SCOPE_MISMATCH", "质检扫描目录须存在，才能核验异路径同快照")
+        scanned_hash = _tree_digest(scanned)
+        _require(scanned_hash == checked["package_sha256"], "QA_SCOPE_MISMATCH",
+                 "质检扫描目录的路径集合、内容或权限与最终包不同")
         if source.get("sha256") is not None:
             _require(source["sha256"] == checked["package_sha256"], "QA_PACKAGE_DRIFT",
                      "质检报告记录的包哈希不匹配")
         record = {"schema_version": 1, "package_sha256": checked["package_sha256"],
                   "package_path": checked["package_path"], "report_path": str(report),
+                  "scanned_path": str(scanned.resolve()), "scanned_sha256": scanned_hash,
                   "report_sha256": _sha256(report), "attached_at": _utc_now(),
                   "status": "attached_unreviewed"}
         directory = self.directory / "qa" / checked["package_sha256"] / "reports"

@@ -1,0 +1,23 @@
+{
+  "reviewer": "填写核对最终代码与说明的 Agent/专家名称",
+  "research_subdirection": {
+    "text": "填写中文研究子方向，不写题号",
+    "sources": [{"path": "expert_evidence/expert_annotation.json", "sha256": "<包内文件实际 SHA-256>"}]
+  },
+  "optimization_surface": {
+    "text": "概述最终题面允许的方法空间与固定约束",
+    "sources": [{"path": "expert_evidence/expert_annotation.json", "sha256": "<实际 SHA-256>"}]
+  },
+  "baseline_description": {
+    "text": "依据最终正式 Baseline 代码说明方法，不把 naive Starter 混同正式锚点",
+    "sources": [{"path": "workspace/harbor_task/<实际正式 Baseline 代码路径>", "sha256": "<实际 SHA-256>"}]
+  },
+  "reference_description": {
+    "text": "依据最终 Reference 代码说明方法，不使用 Agent 最佳方法或未发生的试跑描述",
+    "sources": [{"path": "workspace/reference/<实际方法代码路径>", "sha256": "<实际 SHA-256>"}]
+  },
+  "checks": {
+    "harbor_execution": {"path": "<题目内最终包中 Harbor 执行记录>", "sha256": "<实际 SHA-256>"},
+    "qa_review": {"path": "<题目内独立 QA 逐项审阅记录>", "sha256": "<实际 SHA-256>"}
+  }
+}

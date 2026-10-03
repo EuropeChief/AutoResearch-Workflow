@@ -128,16 +128,28 @@ class StabilityDeliveryTests(unittest.TestCase):
         return self.flow.record({"step": "6.5", "status": "passed", "reviewer": "synthetic",
             "summary": "synthetic only", "evidence": [self.fx.ref(self.receipt)], "checks": self.checks})
 
+    def form_spec(self):
+        def field(text, relative):
+            return {"text": text, "sources": [{"path": relative, "sha256": _sha256(self.package / relative)}]}
+        annotation = "expert_evidence/expert_annotation.json"
+        return {"reviewer": "synthetic fixture only", "checks": self.checks,
+            "research_subdirection": field("合成研究方向，仅测试交付程序", annotation),
+            "optimization_surface": field("合成方法实现空间，不代表真实研究", annotation),
+            "baseline_description": field("合成基线实现，仅作夹具", "workspace/harbor_task/environment/starter/method.py"),
+            "reference_description": field("合成参考方法，仅作夹具", "workspace/reference/method.py")}
+
     def test_delivery_without_soak_records_not_run(self):
-        result = self.record()
-        self.assertEqual(result["step_status"], "passed")
-        self.assertEqual(result["gate"]["stability"], {"status": "not_run", "required": False})
+        result = self.flow.check("6.5", {"checks": self.checks})
+        self.assertEqual(result["status"], "checked")
+        self.assertEqual(result["machine_check"]["result"]["stability"], {"status": "not_run", "required": False})
 
     def test_stage_six_can_finish_without_stability_record(self):
         state = json.loads(self.flow.store.state_path.read_text())
         for substep in state["stages"]["6"]["substeps"].values():
             substep["status"] = "pending"
         self.flow.store.state_path.write_text(json.dumps(state))
+        self.fx.package.archive(self.package, name="synthetic-benchmark", checks=self.checks)
+        self.fx.package.form(self.package, self.form_spec())
         for number in range(1, 6):
             self.flow.record({"step": f"6.{number}", "status": "passed", "reviewer": "synthetic",
                 "summary": "synthetic only", "evidence": [self.fx.ref(self.receipt)], "checks": self.checks})
@@ -175,7 +187,7 @@ class StabilityDeliveryTests(unittest.TestCase):
         before = path.read_bytes()
         self.rebind()
         self.checks["stability"] = self.fx.ref(path)
-        result = self.record()["gate"]["stability"]
+        result = self.flow.check("6.5", {"checks": self.checks})["machine_check"]["result"]["stability"]
         self.assertEqual(result["status"], "evidence_checked_not_stress_test")
         self.assertFalse(result["required"])
         self.assertEqual(path.read_bytes(), before)

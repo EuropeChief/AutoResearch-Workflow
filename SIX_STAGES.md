@@ -60,4 +60,4 @@ PCA 版须分别制作 environment/ 和 tests/ 两个构建 context。2.1 登记
 
 `qa-handoff` 给出版本确定的包路径与哈希，由用户在新会话只读运行质检 Skill；带回 `report.json` 后 `qa-bind`，当前会话逐项审阅。问题按最早受影响阶段 `reopen`，返修重包后用户再独立 QA。格式/说明修订不影响方法结果时复用原实验证据；不得借用包外文件填补包内缺证。
 
-用 [QA 处置模板](templates/qa-review.example.json) 记录独立报告全部适用项及未解决本地项。按 v0.3.1 撤销旧 QA 口头豁免，仅采用 Skill 允许的不适用项。须 schema 4 独立报告完成且 PASS、版本绑定一致、教程真实自验证据齐备及用户确认交付后 finish 6。`delivery archive` 生成可复现 UTF-8 ZIP 及需要的分卷，平台审核结论另行记录。
+用 [QA 处置模板](templates/qa-review.example.json) 记录独立报告全部适用项及未解决本地项，仅采用当前 Skill 允许的不适用项。6.5 按 `qa_verified → archives_verified → form_ready` 推进：独立报告完成且 PASS、版本与教程自验证据齐全后，`delivery archive` 核验三包；`delivery form` 在包外生成六项填表材料，最后经用户确认 `finish 6`。操作与输入见 [W4 交付](W4_DELIVERY.md#顺序与命令)，平台审核结论另记。

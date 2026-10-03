@@ -51,6 +51,8 @@ def validate_protocol(p):
     _require(isinstance(p.get("id"), str) and bool(TASK_ID_RE.fullmatch(p["id"])), "INVALID_PROTOCOL", "协议 ID 不合法")
     metric = p.get("metric", {})
     _require(isinstance(metric, dict) and isinstance(metric.get("name"), str) and metric["name"] and metric.get("direction") in {"maximize", "minimize"}, "INVALID_PROTOCOL", "指标须有名称和方向")
+    if "split" in p:
+        _require(isinstance(p["split"], str) and p["split"].strip(), "INVALID_PROTOCOL", "split 须为非空数据划分名称")
     _require(type(p.get("training")) is bool and p.get("evaluation_mode") in {"random", "deterministic"}, "INVALID_PROTOCOL", "声明 training 和 evaluation_mode")
     seeds = p.get("seeds")
     _require(isinstance(seeds, list) and seeds and all(type(s) is int and s >= 0 for s in seeds) and len(seeds) == len(set(seeds)), "INVALID_SEEDS", "seed 须为非负整数且不重复")
@@ -241,6 +243,7 @@ class ExperimentBook:
             groups[role] = {"values": values, "count": len(ordered), "mean": statistics.mean(ordered) if ordered else None, "sample_std": statistics.stdev(ordered) if len(ordered) > 1 else None, "method_sha256": selected[0]["method_sha256"] if selected else None}
         report = {"status": "blocked" if issues else "ok", "protocol_id": protocol_id, "protocol_sha256": record["sha256"], "metric": p["metric"], "seeds": p["seeds"], "groups": groups, "issues": issues, "attempts": [{"run_id": r["run_id"], "role": r["role"], "seed": r["seed"], "status": r["status"], "retry_of": r["retry_of"]} for r in attempts]}
         report["experiment_sha256"] = _canonical_digest({"protocol": record, "runs": attempts})
+        report["split"] = p.get("split")  # Missing identity is not inferred from an annotation.
         report["evaluation_protocol"] = {"training": p["training"], "evaluation_mode": p["evaluation_mode"],
                                          "high_variance": p.get("high_variance", False), "seeds": p["seeds"]}
         report["source_results"] = {r["run_id"]: (r.get("result") or {}).get("evidence", {}).get("result") for r in attempts}

@@ -158,9 +158,10 @@ class DeliveryTests(unittest.TestCase):
                     refs[run_id] = self.ref(self.root / "draft-optimization" /
                                             f"{role}_runs" / f"seed_{seed}" / "result.json")
             return {"status": "ok", "experiment_sha256": "e-br", "seeds": [1, 2, 3],
+                    "protocol_id": "p1", "metric": {"name": "accuracy", "direction": "maximize"}, "split": "dev",
                     "evaluation_protocol": {"training": True, "evaluation_mode": "random", "high_variance": False, "seeds": [1, 2, 3]},
                     "attempts": attempts, "source_results": refs,
-                    "groups": {"baseline": {"mean": 0.1}, "reference": {"mean": 0.2}}}
+                    "groups": {"baseline": {"mean": 0.1, "count": 3}, "reference": {"mean": 0.2, "count": 3}}}
         return report
 
     def test_agent_jsonl_is_only_trajectory_source_and_requires_review(self):
@@ -184,6 +185,38 @@ class DeliveryTests(unittest.TestCase):
         self.assertEqual((version / "source.jsonl").read_bytes(), raw)
         self.assertEqual(json.loads((version / "final.json").read_text())["rounds"][0]["method_summary"], "修正后的准确表述")
 
+    def test_package_refuses_w2_metric_or_split_relabeling(self):
+        best = self.prepare_best()
+        spec = self.prepare_package_sources()
+        for changes in ({"metric": {"name": "f1", "direction": "maximize"}},
+                        {"metric": {"name": "accuracy", "direction": "minimize"}},
+                        {"split": "hidden"}, {"split": None}, {"protocol_id": "other"}):
+            def report(protocol, roles=("baseline", "reference")):
+                value = self.reports(best)(protocol, roles)
+                return {**value, **changes} if roles != ("best_method",) else value
+            with self.subTest(changes=changes), \
+                 patch("autoresearch_flow.w4_evidence.ExperimentBook.report", side_effect=report), \
+                 patch("autoresearch_flow.w4_package.ExperimentBook.report", side_effect=report):
+                with self.assertRaises(FlowError) as caught:
+                    self.package.build(spec)
+                self.assertEqual(caught.exception.code, "BR_METRIC_MISMATCH")
+
+    def test_invalid_score_identity_has_structured_error_before_build(self):
+        best = self.prepare_best()
+        spec = self.prepare_package_sources()
+        path = self.root / "annotation.json"
+        original = json.loads(path.read_text())
+        for value in (None, [], "invalid"):
+            doc = {**original, "score_contract": value}
+            path.write_text(json.dumps(doc))
+            spec["expert_annotation"] = self.ref(path)
+            with self.subTest(value=value), \
+                 patch("autoresearch_flow.w4_evidence.ExperimentBook.report", side_effect=self.reports(best)), \
+                 patch("autoresearch_flow.w4_package.ExperimentBook.report", side_effect=self.reports(best)):
+                with self.assertRaises(FlowError) as caught:
+                    self.package.build(spec)
+                self.assertEqual(caught.exception.code, "ANNOTATION_SCHEMA")
+
     def test_package_boundary_archive_and_old_qa_binding(self):
         best = self.prepare_best()
         spec = self.prepare_package_sources()
@@ -200,14 +233,8 @@ class DeliveryTests(unittest.TestCase):
                              capture_output=True, text=True)
         self.assertEqual(cli.returncode, 0, cli.stderr)
         self.assertEqual(json.loads(cli.stdout)["status"], "format_checked_not_qa")
-        archive1 = self.package.archive(package_root, max_part_bytes=100)
-        archive2 = self.package.archive(package_root, max_part_bytes=100)
-        self.assertEqual(archive1["archive_sha256"], archive2["archive_sha256"])
-        self.assertTrue(archive1["parts"])
-        self.assertEqual(b"".join(Path(part["path"]).read_bytes() for part in archive1["parts"]),
-                         Path(archive1["archive"]).read_bytes())
-        with zipfile.ZipFile(archive1["archive"]) as zipped:
-            self.assertIn("expert_evidence/专家作业说明文档.md", zipped.namelist())
+        with self.assertRaises(FlowError):
+            self.package.archive(package_root, name="synthetic-benchmark")
         handoff = self.package.qa_handoff(package_root)
         self.assertEqual(handoff["status"], "awaiting_independent_qa")
         report = self.root / "report.json"
