@@ -7,6 +7,7 @@ import tempfile
 import unittest
 import shutil
 
+from autoresearch_flow import FLOW_VERSION
 from tools.release_evidence import validate_bindings, validate_evidence
 
 
@@ -33,7 +34,8 @@ class ReleaseEvidenceTests(unittest.TestCase):
         self.write('origin.json', snapshot)
         self.write('raw.json', {'explicitly_synthetic': True, 'observation': 'fixture'})
         self.write('review.md', 'Synthetic reviewer: inspected fixture observations, not actual live evidence.\n')
-        self.data = {'schema_version': 1, 'limitations': ['Synthetic unit fixture only'], 'checks': []}
+        self.data = {'schema_version': 1, 'release_version': FLOW_VERSION,
+                     'limitations': ['Synthetic unit fixture only'], 'checks': []}
         for gate, claims in {
             'native_runtime': ['native_tui', 'same_thread_resume', 'observer_detach', 'logs_and_timing', 'short_run_not_final'],
             'harbor_transfer': ['candidate_transfer', 'independent_verifier', 'reward_retrieval'],
@@ -64,6 +66,19 @@ class ReleaseEvidenceTests(unittest.TestCase):
         self.manifest.write_text(json.dumps(self.data))
         return validate_bindings(self.manifest, self.flow, self.files)
 
+    def waive_independent_trial(self, *, gate='independent_trial'):
+        reason = 'Independent new-session trial skipped for the first formal release by explicit user instruction.'
+        authorization = {'kind': 'first_release_exception', 'release_version': '1.0.0',
+                         'scope': 'independent_trial', 'approved_by': 'user',
+                         'approved_at': '2026-10-04', 'reason': reason}
+        self.write('authorization.json', authorization)
+        check = next(c for c in self.data['checks'] if c['id'] == gate)
+        check.clear()
+        check.update({'id': gate, 'status': 'waived', 'mode': 'explicit_user_authorization',
+                      'waiver': {'approved_by': 'user', 'approved_at': '2026-10-04',
+                                 'reason': reason, 'approval': self.ref('authorization.json')}})
+        self.data['limitations'].append('Independent new-session trial waived for first release 1.0.0.')
+
     def test_explicit_reused_evidence_keeps_origin_and_rejects_dependency_or_raw_drift(self):
         result = self.validate()
         self.assertEqual(len(result['checks']), 4)
@@ -90,6 +105,26 @@ class ReleaseEvidenceTests(unittest.TestCase):
                 if change == 'claim': check['claims']['same_thread_resume'] = False
                 if change == 'raw': check['evidence'] = []
                 with self.assertRaises(ValueError): self.validate()
+
+    def test_only_first_release_independent_trial_can_be_explicitly_waived(self):
+        self.install_synthetic_results()
+        self.waive_independent_trial()
+        self.validate()
+        bound = validate_evidence(self.manifest, self.flow, self.files)
+        waiver = next(item for item in bound['checks'] if item['id'] == 'independent_trial')
+        self.assertEqual(waiver['status'], 'waived')
+        self.assertEqual(waiver['mechanical_result'], 'waived_by_user')
+        self.assertTrue(all(item['mechanical_result'] == 'passed'
+                            for item in bound['checks'] if item['id'] != 'independent_trial'))
+
+        self.data['release_version'] = '1.0.1'
+        with self.assertRaisesRegex(ValueError, 'version mismatch'):
+            self.validate()
+
+    def test_first_release_waiver_cannot_be_used_for_another_gate(self):
+        self.waive_independent_trial(gate='gpu_dispatch')
+        with self.assertRaisesRegex(ValueError, 'only independent_trial'):
+            self.validate()
 
     def test_deleted_imported_module_and_executable_mode_drift_reject_reuse(self):
         dependency = self.flow/'autoresearch_flow/core.py'
@@ -156,7 +191,7 @@ class ReleaseEvidenceTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'source changed.*native_runtime'):
             self.validate()
 
-    def install_synthetic_results(self, pending_resume=False):
+    def install_synthetic_results(self, pending_resume=False, paused_resume=False):
         from test_w3_contract import RuntimeTests
         fixture = RuntimeTests()
         fixture.setUp()
@@ -166,6 +201,8 @@ class ReleaseEvidenceTests(unittest.TestCase):
         fixture.runtime.run('seed', 1, confirm_cost=True)
         if pending_resume:
             fixture.backend.mode = 'pending'
+        elif paused_resume:
+            fixture.backend.mode = 'budget_pause'
         fixture.runtime.run('seed', 1, resume=True, confirm_cost=True)
         shutil.copytree(fixture.root, self.evidence/'pilot')
         base = 'pilot/.autoresearch-flow/runtime/seed/'
@@ -245,6 +282,17 @@ class ReleaseEvidenceTests(unittest.TestCase):
         self.install_synthetic_results(pending_resume=True)
         with self.assertRaisesRegex(ValueError, 'resume.*successful'):
             validate_evidence(self.manifest, self.flow, self.files)
+
+    def test_budget_paused_resume_with_successful_public_work_is_not_final_completion(self):
+        self.install_synthetic_results(paused_resume=True)
+        result = validate_evidence(self.manifest, self.flow, self.files)
+        native = next(c for c in result['checks'] if c['id'] == 'native_runtime')
+        self.assertEqual(native['mechanical_result'], 'passed')
+        state = json.loads((self.evidence/'pilot/.autoresearch-flow/runtime/seed/state.json').read_text())
+        last = state['segments'][-1]
+        self.assertEqual(last['status'], 'budget_exhausted')
+        self.assertNotIn('turn.completed', last['event_counts'])
+        self.assertFalse((self.evidence/'pilot/.autoresearch-flow/runtime/seed/harbor/final_attempt.json').exists())
 
 
 if __name__ == '__main__':

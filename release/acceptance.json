@@ -1,24 +1,217 @@
 {
-  "at": "2026-10-03T18:22:11+00:00",
+  "at": "2026-10-03T19:10:09+00:00",
   "checked_links": 96,
   "fresh_cli_init_and_resume_status": true,
   "model_calls": 0,
-  "native_tests": "282",
-  "package_revision": "2026-10-04.nop-required",
-  "pending": [
-    "独立新会话入口试用暂缓；正式发行包尚未验收"
-  ],
+  "native_tests": "285",
+  "package_revision": "1.0.0",
+  "pending": [],
   "python": "3.13.13",
   "qa_coverage_count": 38,
   "qa_revision": "v0.3.2@2026-10-03",
-  "release_ready": false,
-  "relocated_tests": "282",
+  "release_evidence": {
+    "checks": [
+      {
+        "bound_source_count": 20,
+        "claims": {
+          "logs_and_timing": true,
+          "native_tui": true,
+          "observer_detach": true,
+          "same_thread_resume": true,
+          "short_run_not_final": true
+        },
+        "evidence": [
+          {
+            "path": "pca_cpu/runs/release-seed-v100-approved-20261004/result.json",
+            "sha256": "c5263f8a08dc56eacdbaa4bc49a565eddb7ac995dcb0a02cb320c288d7b67523"
+          },
+          {
+            "path": "pca_cpu/runs/release-seed-v100-approved-20261004/.autoresearch-flow/runtime/seed/state.json",
+            "sha256": "245b3fbb66af570732d6972d47c441d60e43c551ab90e9fba2b64036b67de040"
+          },
+          {
+            "path": "pca_cpu/runs/release-seed-v100-approved-20261004/.autoresearch-flow/runtime/seed/formal/output/trajectory.jsonl",
+            "sha256": "a244ff15d5b9e3ec3bbab963017e07afb87764ae4195d56180cffc9b6abffbef"
+          },
+          {
+            "path": "pca_cpu/runs/release-seed-v100-approved-20261004/observer.json",
+            "sha256": "cc313c2dc143750f839bc6f253d9aa50b312fab1aa12e7364816cba50e6715e2"
+          },
+          {
+            "path": "pca_cpu/runs/release-seed-v100-approved-20261004/.autoresearch-flow/runtime/seed/logs/60ef35106df04e45badf5dc5f51dcb8b/events.jsonl",
+            "sha256": "3a54fa80c64d5dce35170e0e05a3f52ab0fc265644684d4fbb46020ad97ba31c"
+          },
+          {
+            "path": "pca_cpu/runs/release-seed-v100-approved-20261004/.autoresearch-flow/runtime/seed/logs/60ef35106df04e45badf5dc5f51dcb8b/native.jsonl",
+            "sha256": "63c03fde83f7a9614593dee3ebe7a8617699e9fcce0d20abbac88c8f094e1847"
+          },
+          {
+            "path": "pca_cpu/runs/release-seed-v100-approved-20261004/.autoresearch-flow/runtime/seed/logs/60ef35106df04e45badf5dc5f51dcb8b/screen.txt",
+            "sha256": "199c60f9987784eaad3d6212e298ef956d04477e857597430f315c79ef78a004"
+          },
+          {
+            "path": "pca_cpu/runs/release-seed-v100-approved-20261004/.autoresearch-flow/runtime/seed/logs/cbfd1fa453d64bf6a77319d2ede61e65/events.jsonl",
+            "sha256": "5bcd9114384f24168f92cb0257a559d0ff26deed1983bdc9e244e79ae9fd744a"
+          },
+          {
+            "path": "pca_cpu/runs/release-seed-v100-approved-20261004/.autoresearch-flow/runtime/seed/logs/cbfd1fa453d64bf6a77319d2ede61e65/native.jsonl",
+            "sha256": "27f0f29a410ef67866a300fe1affe6c93f07325b8d08b97f235ef42719b8e61e"
+          },
+          {
+            "path": "pca_cpu/runs/release-seed-v100-approved-20261004/.autoresearch-flow/runtime/seed/logs/cbfd1fa453d64bf6a77319d2ede61e65/screen.txt",
+            "sha256": "b1ff36e74f1709dfd7572bf129f1826d45641231f6e0b02f0fc46954dd587a05"
+          },
+          {
+            "path": "pca_cpu/runs/release-seed-v100-approved-20261004/.autoresearch-flow/runtime/seed/logs/1ac87693e29647d28e346706b5c81c0b/events.jsonl",
+            "sha256": "3e3abd9834b2c1ca2b524210a51cff1e945e289fdec385168bfb8c9df47cd7d4"
+          },
+          {
+            "path": "pca_cpu/runs/release-seed-v100-approved-20261004/.autoresearch-flow/runtime/seed/logs/1ac87693e29647d28e346706b5c81c0b/native.jsonl",
+            "sha256": "0c7945e10d1e4d90faeacc87b1e876488d60ab76919af00af623fef3b64343a5"
+          },
+          {
+            "path": "pca_cpu/runs/release-seed-v100-approved-20261004/.autoresearch-flow/runtime/seed/logs/1ac87693e29647d28e346706b5c81c0b/screen.txt",
+            "sha256": "4b7b423ce6928db4e1f8e1610e4e55a96de5cb01c5da3f57c18b2e896a4bfd04"
+          },
+          {
+            "path": "pca_cpu/runs/release-seed-v100-approved-20261004/.autoresearch-flow/runtime/seed/logs/556935ca13124661ba976f53c5f116ac/events.jsonl",
+            "sha256": "5d7ac4e7ae83e47d5e52859febe818c3f00ae1f45f0b83039e9778ab17f80c19"
+          },
+          {
+            "path": "pca_cpu/runs/release-seed-v100-approved-20261004/.autoresearch-flow/runtime/seed/logs/556935ca13124661ba976f53c5f116ac/native.jsonl",
+            "sha256": "94dda547b06b7c4c7a3a7947c31854f11c050c91078aa7fb04224a79447c04fe"
+          },
+          {
+            "path": "pca_cpu/runs/release-seed-v100-approved-20261004/.autoresearch-flow/runtime/seed/logs/556935ca13124661ba976f53c5f116ac/screen.txt",
+            "sha256": "2d17fd0b87d36fa99ac6e770f026f13bb718cbf5292964d7692e43d9bf763c9a"
+          }
+        ],
+        "id": "native_runtime",
+        "mechanical_result": "passed",
+        "mode": "fresh",
+        "origin_at": "2026-10-03T18:49:02+00:00",
+        "origin_sources": {
+          "path": "pca_cpu/runs/release-seed-v100-approved-20261004/origin_sources.json",
+          "sha256": "0aba32c44a8ecdbbe33f9f8c4c0346477a60356a0fe04eded0a61a7bbef104b2"
+        },
+        "origin_version": "1.0.0",
+        "result": {
+          "path": "pca_cpu/runs/release-seed-v100-approved-20261004/result.json",
+          "sha256": "c5263f8a08dc56eacdbaa4bc49a565eddb7ac995dcb0a02cb320c288d7b67523"
+        },
+        "review": {
+          "path": "pca_cpu/runs/release-seed-v100-approved-20261004/REVIEW.md",
+          "sha256": "11b753bbefdb1a49a3a8807df9c86e7a79312afc904d67248f7b530107847627"
+        },
+        "reviewer": "Codex 发布维护 Agent",
+        "status": "passed"
+      },
+      {
+        "bound_source_count": 14,
+        "claims": {
+          "candidate_transfer": true,
+          "independent_verifier": true,
+          "reward_retrieval": true
+        },
+        "evidence": [
+          {
+            "path": "pca_cpu/runs/harbor-20261003T184915314137Z/result.json",
+            "sha256": "75b5886e2b4adc51326c9e5f5ecfecc8ef487cb59b8505d46403b5095b30878b"
+          },
+          {
+            "path": "pca_cpu/runs/harbor-20261003T184915314137Z/report.json",
+            "sha256": "200a36fe9714ec191fad307810b26436a65948d2eaaea34ca8c50c1104debf56"
+          }
+        ],
+        "id": "harbor_transfer",
+        "mechanical_result": "passed",
+        "mode": "fresh",
+        "origin_at": "2026-10-03T18:49:08+00:00",
+        "origin_sources": {
+          "path": "pca_cpu/runs/harbor-20261003T184915314137Z/origin_sources.json",
+          "sha256": "24cf3cee774fc7fc686a42331c6f7b05b349989c37c40a31f0cf875580488a3b"
+        },
+        "origin_version": "1.0.0",
+        "result": {
+          "path": "pca_cpu/runs/harbor-20261003T184915314137Z/result.json",
+          "sha256": "75b5886e2b4adc51326c9e5f5ecfecc8ef487cb59b8505d46403b5095b30878b"
+        },
+        "review": {
+          "path": "pca_cpu/runs/harbor-20261003T184915314137Z/REVIEW.md",
+          "sha256": "2b024d97554630caf6a8ae98a8dc5844d7457bc8df449658e0a214d62064adfe"
+        },
+        "reviewer": "Codex 发布维护 Agent",
+        "status": "passed"
+      },
+      {
+        "bound_source_count": 14,
+        "claims": {
+          "actual_gpu_execution": true,
+          "authorized_devices": true,
+          "no_duplicate_jobs": true
+        },
+        "evidence": [
+          {
+            "path": "gpu_queue/runs/release-gpu-v100-20261004/result.json",
+            "sha256": "dca0d8499bf2a31383f34fa59dfcdc15689bf4b02730fe1e9a07bbd141d63013"
+          }
+        ],
+        "id": "gpu_dispatch",
+        "mechanical_result": "passed",
+        "mode": "fresh",
+        "origin_at": "2026-10-03T18:50:36.346491+00:00",
+        "origin_sources": {
+          "path": "gpu_queue/runs/release-gpu-v100-20261004/origin_sources.json",
+          "sha256": "0ad9625ab1f5fdbb1eb97aceeacdb8233c8cbf690cb5c5179067f29076430ff4"
+        },
+        "origin_version": "1.0.0",
+        "result": {
+          "path": "gpu_queue/runs/release-gpu-v100-20261004/result.json",
+          "sha256": "dca0d8499bf2a31383f34fa59dfcdc15689bf4b02730fe1e9a07bbd141d63013"
+        },
+        "review": {
+          "path": "gpu_queue/runs/release-gpu-v100-20261004/REVIEW.md",
+          "sha256": "f0a63b41191f3821777250d5f7f631ed8622e15be286dd3456e4576f52f2761c"
+        },
+        "reviewer": "Codex 发布维护 Agent",
+        "status": "passed"
+      },
+      {
+        "id": "independent_trial",
+        "mechanical_result": "waived_by_user",
+        "mode": "explicit_user_authorization",
+        "status": "waived",
+        "waiver": {
+          "approval": {
+            "path": "pca_cpu/runs/release-seed-v100-approved-20261004/first-release-authorization.json",
+            "sha256": "6a8fa62831c565b3093f61e36d5629b77b5542e8419e46de98d6f53a16e2b7ac"
+          },
+          "approved_at": "2026-10-04",
+          "approved_by": "user",
+          "reason": "Independent new-session trial skipped for the first formal release by explicit user instruction."
+        }
+      }
+    ],
+    "limitations": [
+      "Independent new-session trial waived for first release 1.0.0 by explicit user instruction.",
+      "CPU synthetic Seed supervision is bounded, not a 10h scientific trajectory or proof of compaction.",
+      "GPT, other providers, actual tasks and Harbor GPU provider are not proven by these probes.",
+      "Raw pilot logs, model credentials and local configuration are not distributed.",
+      "A narrowly authorized AppArmor exception was used only for this CPU pilot; it is not a default.",
+      "Bundled authoritative QA Skill is unmodified; one upstream self-test still asserts older report wording."
+    ],
+    "manifest_sha256": "a81595e59e706ddd9930eaed01d147bc34e87d28e34468c3b0038c3f65134d46",
+    "schema_version": 1,
+    "validation_scope": "integrity and source applicability; claim semantics reviewed in linked records"
+  },
+  "release_ready": true,
+  "relocated_tests": "285",
   "relocation_without_design_or_pilot_runs": true,
   "relocation_without_host_config_or_auth": true,
   "rule_count": 50,
   "schema_version": 2,
   "scope": "tool contracts, not scientific or platform acceptance",
-  "source_manifest_sha256": "e5a9d602c1d1d049fb04cd930f00af71c94009d0f2f73776dfd34b3076b92705",
-  "status": "contracts_passed",
-  "version": "0.3.0"
+  "source_manifest_sha256": "d5539d7fd8b371f41055637b5020104106bfbab42dc08d501fbcbb57545825ed",
+  "status": "released",
+  "version": "1.0.0"
 }

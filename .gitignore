@@ -12,6 +12,7 @@ htmlcov/
 **/.autoresearch-flow/
 pilots/*/build/
 pilots/*/runs/
+pilots/.release-evidence-*.json
 runtime/
 runs/
 build/
@@ -45,6 +46,10 @@ tmp/
 # User-maintained configuration and release outputs are not source artifacts.
 local/
 deliverables/
+# Superseded receipts remain locally and in Git history, not in a fresh clone.
+release/history/
+release/offline_docker_probe.json
+release/op*_acceptance_*.json
 
 # Editor/OS files
 .DS_Store

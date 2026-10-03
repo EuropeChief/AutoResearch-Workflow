@@ -66,3 +66,11 @@ python3 pilots/pca_cpu/run_tui_probe.py \
 `result.json` 已通过当前native专项机械检查，SHA-256：`298f0b3d829d44e949e5066e3e2de30312ac50f1501f217c04d5f9224e63a9a7`。运行前源码清单、授权、observer和原始日志均在该目录保留，不随发行包分发。
 
 同轮另做无模型CPU双镜像组件与Harbor移交验收：构建前发现本地`__pycache__`误入context，新增两份`.dockerignore`并纳入发行允许列表，保留失败记录后重新通过。成功移交原件`runs/harbor-20261003T163343823227Z/report.json` SHA-256：`588e36026e315a3ace744f31b4dccf2cd2917d6933e54e35146a7aeb232e7d19`；实际separate Verifier、候选降权UID 65534、候选哈希与reward=1一致。这是合成链路验收，不是正式Hidden查询，也不验证其他提供方或GPU容器适配。
+
+## 1.0.0 首发验收（2026-10-04）
+
+全新运行 `runs/release-seed-v100-approved-20261004/` 在本次明确600秒许可和限定容器安全例外下，预检加三个正式分段监督墙钟共492.121秒。三个正式分段同thread，分别有3、6、8次固定入口真实公开结果，14条Agent自写八字段记录的raw score与公开值0一致；保守可核活动389.145秒，未发生原生错误，Verifier始终关闭、未消费最终查询，结束后容器清理。
+
+恢复段在连续工作中预算暂停，无最终回答；发布核验已修正为核原会话恢复后的新成功评测与无原生错误，不把暂停伪写为completed。无真实进展的恢复仍拒绝。只读PTY观察与脱离后继续工作实测通过；初次缺少TERM的观察失败保留。暂停时当前候选不等于best，final_snapshot仍返回FINAL_NOT_READY；本次不冒充正式时长达标、最佳最终收口、科研收益、GPT或压缩验收。
+
+无安全例外的首次准备探针在模型调用前被bwrap限制阻止，保留于 `runs/release-seed-v100-20261004/`，没有自动关闭沙箱。原生Harbor双镜像移交另行在 `runs/harbor-20261003T184915314137Z/` 通过，候选哈希、UID65534、separate Verifier与reward=1均一致。全部原件留在本地，正式发行仅含绑定收据，不分发鉴权或真实日志。

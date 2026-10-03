@@ -115,7 +115,8 @@ class FakeNativeTerminal:
                        arguments=json.dumps({'cmd': 'python train.py'}))
             self.write('response_item', type='function_call_output', call_id='worker',
                        output='Process running with session ID 999\nOutput:\nworking\n')
-        self.write('event_msg', type='task_complete', turn_id=turn)
+        if self.backend.mode != 'budget_pause':
+            self.write('event_msg', type='task_complete', turn_id=turn)
 
     def send(self, prompt):
         self.sent.append(prompt)

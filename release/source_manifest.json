@@ -8,7 +8,7 @@
     {
       "mode": 436,
       "path": ".gitignore",
-      "sha256": "5da0a64eca7a688abdfc8888a2c599d3363b33e346bba23e8edb429a4791da49"
+      "sha256": "236fef36c4f0d173d0aa3dd505971e4b53720971a28a5650771f8a145adb90ad"
     },
     {
       "mode": 436,
@@ -18,17 +18,17 @@
     {
       "mode": 436,
       "path": "MAINTAINING.md",
-      "sha256": "bb19ff7a14689cb0d302a3fe3101f140b277e5c97210da39abd9b7f7bd51f2d5"
+      "sha256": "614d37af51a43971b59ec571f0d590d54b7b64ab082f9d175ce7573ec53ba553"
     },
     {
       "mode": 436,
       "path": "README.md",
-      "sha256": "008860030368abc4bb24562d5b18cf840e3ecfced654b56e619e1d4a4e873db3"
+      "sha256": "2aee34a5f1900d96be3d679bf0566d276b2f71e093840e638ea0057c3aacc6ea"
     },
     {
       "mode": 436,
       "path": "RELEASE.md",
-      "sha256": "cb6d368f18836b3139c3f75776d04073f1bc8b4843e9e69f0172f7ecd8bcddd9"
+      "sha256": "d0915afe954614700cc4a5a74362ed77a96d1542a25c5d13dfa159a717942db2"
     },
     {
       "mode": 436,
@@ -38,7 +38,7 @@
     {
       "mode": 436,
       "path": "autoresearch_flow/__init__.py",
-      "sha256": "eda5c292d8c3646cb89afa5ad6b4c1e11bfc86c160d8cb085402017678a6bd70"
+      "sha256": "736431e6904049f31dca155dea21840dcd235771a8c7253b1fdf7795d4c40439"
     },
     {
       "mode": 436,
@@ -248,7 +248,7 @@
     {
       "mode": 436,
       "path": "pilots/pca_cpu/TUI_PROBE.md",
-      "sha256": "d54297d21299a29881c50c50a0d2c2072dc4d233fc27d8310a9b6249a4b3b09a"
+      "sha256": "8ac2ab439aed686dd0c8ca2cfed203ba4472ebba5266b97eadefcdd6ecb0af69"
     },
     {
       "mode": 436,
@@ -378,7 +378,7 @@
     {
       "mode": 436,
       "path": "rules/manifest.json",
-      "sha256": "b0602c7b8935b6533d42a855f28daa8b764b2c6225a9d40df8de7291672f327b"
+      "sha256": "dd6cb09fe45eb61d74da3d669ae7a61070773df3eb761ceee8e0a8a60908f1e3"
     },
     {
       "mode": 436,
@@ -638,7 +638,7 @@
     {
       "mode": 436,
       "path": "templates/release-evidence.example.md",
-      "sha256": "7ee6b5fbe72e3a4cbc2db49a3f08439b7297f47735788630ebf005d1258d70b7"
+      "sha256": "14861dfc2fb38e2b105b0cffd81466cf490ed0bd115419f5eff8a1bc52150853"
     },
     {
       "mode": 436,
@@ -748,7 +748,7 @@
     {
       "mode": 436,
       "path": "tests/test_release_evidence.py",
-      "sha256": "d98c5fa66798c3eb91045314472af7001d8e09a88d8d56b018367e379664dba2"
+      "sha256": "67ab38a525e6b4c240ccd08228b25796b1db08e5b6d06cf4baf0f4554a6d09b1"
     },
     {
       "mode": 436,
@@ -778,7 +778,7 @@
     {
       "mode": 436,
       "path": "tests/test_w3_contract.py",
-      "sha256": "4b115cfd2b8f18c6fc392a4303ae2e9d6a7de30b2cd699e32c1c3279cf4413aa"
+      "sha256": "b648745274c9f9baa0fb227f6c92e815e1cfd552af2bfd2bd12363d471276aa8"
     },
     {
       "mode": 436,
@@ -803,11 +803,11 @@
     {
       "mode": 436,
       "path": "tools/release_evidence.py",
-      "sha256": "e348960775d294c339896b24266c78177439689f713f8f88baed6c90eadf797a"
+      "sha256": "7a794da567ff1f0f75d901ad9003ec4de33c877f3ff991c1f5abc288fb3bbe95"
     }
   ],
-  "package_revision": "2026-10-04.nop-required",
+  "package_revision": "1.0.0",
   "schema_version": 2,
   "scope": "source and locked rule dependencies; excludes design archive, generated release reports and local pilot/build data",
-  "version": "0.3.0"
+  "version": "1.0.0"
 }

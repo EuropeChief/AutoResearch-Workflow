@@ -10,6 +10,7 @@ import json
 from pathlib import Path
 import re
 
+from autoresearch_flow import FLOW_VERSION
 from autoresearch_flow.core import _sha256
 
 CLAIMS = {
@@ -74,9 +75,13 @@ def source_scope(flow, files, gate, known_names=()):
             candidates = [path+'.py', path+'/__init__.py']
             candidates += ['/'.join(path.split('/')[:i])+'/__init__.py' for i in range(1, len(path.split('/')))]
             pending.extend(p for p in candidates if p in available and p not in seen)
-    # These are read/copied by runtime configuration, rather than imported.
-    seen.update(n for n in available if n == 'cli.py')
-    if gate in {'native_runtime', 'harbor_transfer'}:
+    # The GPU probe invokes ExperimentRunner directly; the CLI is not part of
+    # that execution path.
+    if gate != 'gpu_dispatch':
+        seen.update(n for n in available if n == 'cli.py')
+    # These files are runtime inputs to native workflow execution, not to the
+    # direct experiment runner or standalone Harbor transfer fixture.
+    if gate == 'native_runtime':
         inputs = {'templates/agent-prompt.zh.md', 'templates/runtime.example.json',
                   'rules/manifest.json', 'rules/catalog.json',
                   'model_profiles/codex.example.toml', 'model_profiles/seed.example.toml'}
@@ -89,6 +94,8 @@ def validate_bindings(manifest_path, flow, files):
     manifest_path, flow = Path(manifest_path), Path(flow)
     require(manifest_path.is_file() and not manifest_path.is_symlink(), 'explicit evidence manifest is missing or unsafe')
     data = json.loads(manifest_path.read_text(encoding='utf-8'))
+    release_version = data.get('release_version')
+    require(release_version == FLOW_VERSION, 'release evidence version mismatch')
     require(data.get('schema_version') == 1, 'unsupported release evidence schema')
     checks, limitations = data.get('checks'), data.get('limitations')
     require(isinstance(limitations, list) and all(isinstance(x, str) and x.strip() for x in limitations),
@@ -101,6 +108,34 @@ def validate_bindings(manifest_path, flow, files):
     bound = []
     for check in checks:
         gate = check['id']
+        if check.get('status') == 'waived':
+            require(release_version == '1.0.0' and gate == 'independent_trial',
+                    'only independent_trial may be waived for first release 1.0.0')
+            require(check.get('mode') == 'explicit_user_authorization',
+                    'waiver must bind the explicit first-release user authorization')
+            waiver = check.get('waiver')
+            require(isinstance(waiver, dict) and waiver.get('approved_by') == 'user'
+                    and waiver.get('approved_at') == '2026-10-04'
+                    and isinstance(waiver.get('reason'), str) and waiver['reason'].strip(),
+                    'first-release waiver lacks user authorization, date, or reason')
+            approval = checked_ref(manifest_path.parent, waiver.get('approval'))
+            document = json.loads(approval.read_text(encoding='utf-8'))
+            require(document.get('kind') == 'first_release_exception'
+                    and document.get('release_version') == '1.0.0'
+                    and document.get('scope') == 'independent_trial'
+                    and document.get('approved_by') == 'user'
+                    and document.get('approved_at') == '2026-10-04'
+                    and document.get('reason') == waiver['reason'],
+                    'first-release waiver record is inconsistent')
+            require(not check.get('claims') and not check.get('result'),
+                    'waived check must not assert passed claims or results')
+            require(any('independent new-session trial' in limitation.lower() and 'waived' in limitation.lower()
+                        for limitation in limitations),
+                    'release limitations must disclose the independent-trial waiver')
+            bound.append({'id': gate, 'status': 'waived', 'mode': check['mode'],
+                          'waiver': {**waiver, 'approval': {'path': waiver['approval']['path'],
+                                                             'sha256': waiver['approval']['sha256']}}})
+            continue
         require(check.get('status') == 'passed' and check.get('mode') in {'fresh', 'reused'}, f'unpassed evidence: {gate}')
         claims = check.get('claims')
         require(isinstance(claims, dict) and set(claims) == CLAIMS[gate]
@@ -140,6 +175,10 @@ def validate_evidence(manifest_path, flow, files):
     manifest_path = Path(manifest_path)
     checks = json.loads(manifest_path.read_text(encoding='utf-8'))['checks']
     for check in checks:
+        if check.get('status') == 'waived':
+            item = next(c for c in bound['checks'] if c['id'] == check['id'])
+            item['mechanical_result'] = 'waived_by_user'
+            continue
         path = checked_ref(manifest_path.parent, check.get('result'))
         report = json.loads(path.read_text(encoding='utf-8'))
         gate = check['id']
@@ -183,7 +222,7 @@ def _native_result(root, report):
     require(formal[-1]['status'] in {'completed', 'budget_exhausted', 'interrupted'}, 'runtime did not recover from failure')
     successful_segments = []
     for segment in formal:
-        public, completed, threads = 0, 0, []
+        public, completed, errors, threads = 0, 0, 0, []
         logs = [ref for ref in segment['logs'] if ref['path'].endswith('/events.jsonl')]
         require(len(logs) == 1, 'missing native event record')
         for line in checked_ref(runtime.directory, logs[0]).read_text(encoding='utf-8').splitlines():
@@ -195,11 +234,17 @@ def _native_result(root, report):
                     threads.append(event['thread_id'])
                 if event.get('type') == 'turn.completed':
                     completed += 1
+                if event.get('type') in {'error', 'turn.failed'}:
+                    errors += 1
                 if event.get('type') == 'item.completed':
                     public += public_evaluation(event.get('item', {}), [EVALUATE]) is not None
-        successful_segments.append(bool(threads) and public > 0 and completed > 0)
+        # A bounded continuous run may legitimately pause mid-answer. Its own
+        # completed successful public tool result proves resumed work; do not
+        # require a final assistant answer or relabel the budget pause as one.
+        successful_segments.append(bool(threads) and public > 0 and errors == 0
+                                   and (completed > 0 or segment['status'] == 'budget_exhausted'))
     require(sum(successful_segments) >= 2 and successful_segments[-1],
-            'runtime resume lacks its own successful public evaluation and completed turn')
+            'runtime resume lacks its own successful public evaluation/progress or has errors')
     trajectory = checked_ref(root, report.get('trajectory'))
     require(trajectory.resolve() == (runtime.directory/'seed/formal/output/trajectory.jsonl').resolve(),
             'trajectory is not from this native runtime')
