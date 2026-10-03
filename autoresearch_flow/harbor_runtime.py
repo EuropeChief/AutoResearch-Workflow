@@ -100,9 +100,8 @@ def final_snapshot(runtime, track):
             'thread_id': state['thread_id'], 'trajectory_sha256': _sha256(base/'output/trajectory.jsonl')}
 
 
-def launch(runtime, track, action, budget, resume=False):
-    """Host only. Private task context/metadata never goes into Agent mounts."""
-    _require(track in ('codex', 'seed'), 'INVALID_TRACK', '仅接受 codex/seed')
+def validate_launch(runtime):
+    """Recheck the prepared task and pinned Harness before any launch path."""
     spec = runtime.config['harness']
     current = validate_harness(runtime.config, runtime.root)
     manifest = _read_json(runtime.directory/'manifest.json')
@@ -113,7 +112,15 @@ def launch(runtime, track, action, budget, resume=False):
     except (OSError, subprocess.SubprocessError) as exc:
         raise FlowError('HOST_DEPENDENCY_UNAVAILABLE',
                         '无法调用 Harbor；请由用户核对 harness.executable 路径、执行权限及 --version 输出；流程不自动安装或改权限') from exc
-    _require(version.split()[-1] == spec['version'], 'HARBOR_VERSION', 'Harbor 实际版本与锁定版本不同')
+    _require(version.split() and version.split()[-1] == spec['version'], 'HARBOR_VERSION', 'Harbor 实际版本与锁定版本不同')
+    return current
+
+
+def launch(runtime, track, action, budget, resume=False):
+    """Host only. Private task context/metadata never goes into Agent mounts."""
+    _require(track in ('codex', 'seed'), 'INVALID_TRACK', '仅接受 codex/seed')
+    spec = runtime.config['harness']
+    current = validate_launch(runtime)
     phase = 'preflight' if action == 'preflight' else 'formal'
     directory = runtime.directory/track/'harbor'
     directory.mkdir(exist_ok=True)
@@ -194,10 +201,12 @@ class HarborExecBackend:
         _require(bool(re.fullmatch('[0-9a-f]{64}', container)), 'HARBOR_CONTAINER', '须绑定真实容器 ID')
         self.container = container
 
-    def command(self, runtime, track, phase, name, command, use_auth=False):
+    def command(self, runtime, track, phase, name, command, use_auth=False, tty=False):
         _require(os.getuid() != 0, 'NONROOT_REQUIRED', '专家宿主须为非 root 用户')
         args = ['docker', 'exec', '-i', '-u', f'{os.getuid()}:{os.getgid()}',
                 '-w', '/workspace/solution', '-e', 'CODEX_HOME=/codex']
+        if tty:
+            args.insert(3, '-t')
         if use_auth and runtime.config['tracks'][track]['auth_ref']['kind'] == 'api_key_json':
             args += ['-e', 'AUTORESEARCH_MODEL_KEY']
         return args + [self.container, 'python3', '/workspace/_segment_exec.py',

@@ -7,10 +7,29 @@ from unittest.mock import patch
 
 import test_w3_contract as w3
 from autoresearch_flow.core import FlowError
-from autoresearch_flow.harbor_runtime import HarborExecBackend, compose_override, final_snapshot, launch, validate_harness
+from autoresearch_flow.harbor_runtime import HarborExecBackend, compose_override, final_snapshot, launch, validate_harness, validate_launch
 
 
 class HarborRuntimeTests(unittest.TestCase):
+    def test_task_drift_is_rejected_before_any_host_executable_call(self):
+        card = self.task/'task.toml'
+        card.write_text(card.read_text().replace('[environment]\n', '[environment]\ngpus=1\n'))
+        with patch('subprocess.check_output') as check, self.assertRaises(FlowError) as error:
+            validate_launch(self.runtime)
+        self.assertEqual(error.exception.code, 'HARBOR_TASK_DRIFT')
+        check.assert_not_called()
+
+    def test_tui_exec_gets_pty_without_changing_container_ownership(self):
+        backend = HarborExecBackend('a'*64)
+        command = backend.command(self.runtime, 'seed', 'preflight', 'ar-tui',
+                                  ['codex', '--no-alt-screen'], tty=True)
+        self.assertEqual(command[:4], ['docker', 'exec', '-i', '-t'])
+        self.assertIn('a'*64, command)
+        self.assertNotIn('--privileged', command)
+        self.assertNotIn('/var/run/docker.sock', command)
+        plain = backend.command(self.runtime, 'seed', 'preflight', 'ar-check', ['codex', '--version'])
+        self.assertNotIn('-t', plain)
+
     def test_missing_harbor_reports_path_without_launch(self):
         with patch('subprocess.check_output', side_effect=FileNotFoundError('harbor')), \
              patch('subprocess.Popen') as spawn, self.assertRaises(FlowError) as error:

@@ -129,6 +129,25 @@ def validate_config(config, root):
         _require(type(config.get(key, default)) is int and config.get(key, default) > 0, "INVALID_RUNTIME", f"{key} 必须为正整数")
 
 
+def public_evaluation(item, exact):
+    """Accept only an observed successful exact public command, not claimed text."""
+    if item.get('type') != 'command_execution' or item.get('exit_code') != 0:
+        return None
+    try:
+        command = shlex.split(item.get('command', ''))
+        if len(command) == 3 and Path(command[0]).name in {'bash', 'sh'} and command[1] in {'-lc', '-c'}:
+            command = shlex.split(command[2])
+        if command != exact:
+            return None
+        value = json.loads(item.get('aggregated_output', item.get('output', '')).strip().splitlines()[-1])
+        if (value.get('status') == 'succeeded' and type(value.get('score')) in (int, float)
+                and math.isfinite(value['score']) and raw_public_metric(value) is not None):
+            return value
+    except (ValueError, IndexError, TypeError, AttributeError, FlowError):
+        return None
+    return None
+
+
 def model_config(track):
     q = lambda value: json.dumps(value, ensure_ascii=False)
     lines = [f"model = {q(track['model'])}", f"model_reasoning_effort = {q(track['reasoning_effort'])}",
@@ -611,21 +630,9 @@ class Runtime:
                                            self.config["evaluation"]["timeout_seconds"])
             results = []
             for item in items:
-                if item.get("type") != "command_execution" or item.get("exit_code") != 0:
-                    continue
-                try:
-                    command = shlex.split(item.get("command", ""))
-                    if len(command) == 3 and Path(command[0]).name in {"bash", "sh"} and command[1] in {"-lc", "-c"}:
-                        command = shlex.split(command[2])
-                    if command != exact:
-                        continue
-                    value = json.loads(item.get("aggregated_output", item.get("output", "")).strip().splitlines()[-1])
-                    metric = value.get("raw_metric", {})
-                    if value.get("status") == "succeeded" and type(value.get("score")) in (int, float) and math.isfinite(value["score"]) and type(metric.get("value")) in (int, float) and math.isfinite(metric["value"]):
-                        raw_public_metric(value)
-                        results.append(value)
-                except (ValueError, IndexError, TypeError, FlowError):
-                    continue
+                value = public_evaluation(item, exact)
+                if value is not None:
+                    results.append(value)
             ready = summary["status"] == "completed" and len(results) == 1 and before == self._tree_hash(solution)
             state["preflight"] = {"ready": ready, "segment_id": summary["segment_id"], "config_sha256": _canonical_digest(self.config),
                                   "evaluation_results": results, "at": _utc_now()}
