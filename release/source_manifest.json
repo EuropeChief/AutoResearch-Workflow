@@ -1,0 +1,542 @@
+{
+  "files": [
+    {
+      "path": ".codex/skills/autoresearch-baseline-quality/SKILL.md",
+      "sha256": "e1ad68530be94c2cfe59ee146a7dd37c614eae537ff85cbda3e7147c0c150d76"
+    },
+    {
+      "path": ".codex/skills/autoresearch-baseline-quality/agents/openai.yaml",
+      "sha256": "79d7424f5e8da52b31b833d3d62313b7f5b0dc7e4c91fd9dd3a5852770fe286b"
+    },
+    {
+      "path": ".codex/skills/autoresearch-baseline-quality/references/baseline-review-method.md",
+      "sha256": "15f996157d18b17209d0640bec24e2c39711fbac682ee7eaac830c7a7a8a568c"
+    },
+    {
+      "path": ".codex/skills/autoresearch-task-qa/SKILL.md",
+      "sha256": "584db44ea949220ec44582b98590be3984d50e4d3c0272690fc6c21d4b638fd6"
+    },
+    {
+      "path": ".codex/skills/autoresearch-task-qa/agents/openai.yaml",
+      "sha256": "17c41d7c878f9ddb61590d2aec3ad24fdf2ca2dc1447429ca7993a5e6a841a82"
+    },
+    {
+      "path": ".codex/skills/autoresearch-task-qa/references/docker-path-contract.md",
+      "sha256": "10afe94e54542906b7bc4ef911f2f43d1373a5e7459738606bbfb1ddc8631e60"
+    },
+    {
+      "path": ".codex/skills/autoresearch-task-qa/references/exposure-manifest.md",
+      "sha256": "7f4bba67d2acd2e7732409d04bce76422c0935987eb8a9f42c9e992641929a69"
+    },
+    {
+      "path": ".codex/skills/autoresearch-task-qa/references/harbor-harness.md",
+      "sha256": "f701dd2e07e1adfb40d8ae56f14c5440296aab8e6a824d205f13592084a9ba2c"
+    },
+    {
+      "path": ".codex/skills/autoresearch-task-qa/references/implementation-policy.md",
+      "sha256": "863832ac7277bc3cce0f51f3d346b03c0e8600e19b5403dc99e58b156c9d331e"
+    },
+    {
+      "path": ".codex/skills/autoresearch-task-qa/references/implementation-report.md",
+      "sha256": "be02e4ad45ad1596413308cab46d7fde5f64e36f01a26635230757c452b4b5e8"
+    },
+    {
+      "path": ".codex/skills/autoresearch-task-qa/references/precheck-policy.md",
+      "sha256": "4c84074aa9214f5a6070f038ea1b084d30cd947abac3f4510c1b149432d5550c"
+    },
+    {
+      "path": ".codex/skills/autoresearch-task-qa/references/qa-spec.md",
+      "sha256": "7a26bce4dde9283b2f3a289659b93f8a7120096059bebc4306d7514609e5475a"
+    },
+    {
+      "path": ".codex/skills/autoresearch-task-qa/references/report-schema.md",
+      "sha256": "10ff4bbcb2ddf77fd2f5a8b985ff72b7b49b87a11da682f49a6ee687998853fd"
+    },
+    {
+      "path": ".codex/skills/autoresearch-task-qa/references/research-quality.md",
+      "sha256": "3304e93def3129922fe7544bca7fd6a778aa6df1270aa9259ee1ee6ef71d0724"
+    },
+    {
+      "path": ".codex/skills/autoresearch-task-qa/references/source-alignment.md",
+      "sha256": "93e8eb3ba75b2b14d2b9300284330c3c1192965eca7d76002c847bcbc48e2499"
+    },
+    {
+      "path": ".codex/skills/autoresearch-task-qa/references/submission-format.md",
+      "sha256": "535903a11526c125d51511e0752554f9b7df73605458d1b94da5ca3702aa0c3e"
+    },
+    {
+      "path": ".codex/skills/autoresearch-task-qa/scripts/audit_collection.py",
+      "sha256": "465561e2da63401826476820792c4b0eed7f1b7cf5127b43d95da97ca06c4b69"
+    },
+    {
+      "path": ".codex/skills/autoresearch-task-qa/scripts/audit_task.py",
+      "sha256": "c9f59b4f1f8e13f94c16bc1b2b66e7192805ada89b624186ea71fa24c6f43e91"
+    },
+    {
+      "path": ".codex/skills/autoresearch-task-qa/scripts/content_gates.py",
+      "sha256": "baab33a3c4b51b30b93d3136398295673e814b5de67de06a6ce98999c664d29c"
+    },
+    {
+      "path": ".codex/skills/autoresearch-task-qa/scripts/docker_paths.py",
+      "sha256": "6ad984082d6f55386f57279d8798e1aa06bd2440ad129e6ae12e404157eda13f"
+    },
+    {
+      "path": ".codex/skills/autoresearch-task-qa/scripts/harbor_review.py",
+      "sha256": "378a0ef87fff52e2128b526a3c0eb1da5d9ff8fa557625608a2d58bc5783530b"
+    },
+    {
+      "path": ".codex/skills/autoresearch-task-qa/scripts/implementation_review.py",
+      "sha256": "b82881bd612d9d51abafcf4fd1bfb09568393843b82c6e967241ad4ad07dae39"
+    },
+    {
+      "path": ".codex/skills/autoresearch-task-qa/scripts/submission_format.py",
+      "sha256": "039517b860a87ae562ac90190476692bc2991e5e86d1fa0f494c515def4ea8b5"
+    },
+    {
+      "path": ".codex/skills/autoresearch-task-qa/scripts/test_audit_collection.py",
+      "sha256": "6b83edd9f7e8c7c66d4f6588053ac9143cceab84391f760ce196dcd7742b7552"
+    },
+    {
+      "path": ".codex/skills/autoresearch-task-qa/scripts/test_audit_task.py",
+      "sha256": "ff29243a232b450d0991f369dbfec0c787eefc17fb267cc80a68db02d722b43d"
+    },
+    {
+      "path": ".codex/skills/autoresearch-task-qa/scripts/test_content_gates.py",
+      "sha256": "95ca6a2a34fc97a1d64a2a63f534d1ec2ea429edcc9f9b2acd0787279b8ae52b"
+    },
+    {
+      "path": ".codex/skills/autoresearch-task-qa/scripts/test_docker_paths.py",
+      "sha256": "df58fa1a1c718431a5b09e36042098c5d3e7d1c050edb224863ecb371245fa03"
+    },
+    {
+      "path": ".codex/skills/autoresearch-task-qa/scripts/test_harbor_review.py",
+      "sha256": "471dc706b2c340e2c2763c1707ce688f30081b2fa08acbada8fbdfba2c6ea8b9"
+    },
+    {
+      "path": ".codex/skills/autoresearch-task-qa/scripts/test_implementation_review.py",
+      "sha256": "2e03066b733297ec04b892dc7c07179dd0e8f29a14d9e84268b11346e1f31e2b"
+    },
+    {
+      "path": ".codex/skills/autoresearch-task-qa/scripts/test_submission_format.py",
+      "sha256": "5a17ae2b457fd97051b9e67c26f5841e66c6ad297611a70b3f485965ecf9ede0"
+    },
+    {
+      "path": "AutoResearch新流程/DEPLOYMENT.md",
+      "sha256": "df86d51b25d7075723cbdc12be7b0bb59007d73a5bfe784f0d4ef040c400bd78"
+    },
+    {
+      "path": "AutoResearch新流程/PCA_ENVIRONMENT.md",
+      "sha256": "395869c424a48c0732e80c77ff98ac5881ad221d3eca072f770c1f137f74e3d0"
+    },
+    {
+      "path": "AutoResearch新流程/QA_V031_ALIGNMENT.md",
+      "sha256": "911b46ddadc9476924accf5dc4ebe5ef572e3292fa6ec140582726093657ac30"
+    },
+    {
+      "path": "AutoResearch新流程/README.md",
+      "sha256": "cabe04211572a0ca9aa760148dbb9ad3de96fb51b521f990079fe4d3a1713a9b"
+    },
+    {
+      "path": "AutoResearch新流程/RELEASE.md",
+      "sha256": "00431e8dae3648d691596e50fcf9670c776c6d739eeb47c94eb201944ed2ac65"
+    },
+    {
+      "path": "AutoResearch新流程/SIX_STAGES.md",
+      "sha256": "59fe756f8c43762eb6bd6e4b4eb04ed358a53b50bf9acb26eff24c786fe3c668"
+    },
+    {
+      "path": "AutoResearch新流程/STAGE_STATE.md",
+      "sha256": "5b9fcf36c44a3cd7ce42d4282496fdb23951ae65d1a65d1896e695b4076d889f"
+    },
+    {
+      "path": "AutoResearch新流程/START_HERE.md",
+      "sha256": "4b625098c7b07a80c6c66b73ecb3a73a25f56b40e9f7fb86743a1c5d753260f6"
+    },
+    {
+      "path": "AutoResearch新流程/TASK_ADAPTER.md",
+      "sha256": "e34a7990eb2f90fc0f3b76b56ff153c230c7b21c88862a82446ad871991abb60"
+    },
+    {
+      "path": "AutoResearch新流程/TROUBLESHOOTING.md",
+      "sha256": "61fcff10ab70136d585a82a8c9980053858f93bdea699d71766dbf131f600e98"
+    },
+    {
+      "path": "AutoResearch新流程/W2_EXPERIMENTS.md",
+      "sha256": "21214c8e236239c5a5100165e21ce8d9d6e2be9678aa3fb7f05c742866b860a9"
+    },
+    {
+      "path": "AutoResearch新流程/W3_RUNTIME.md",
+      "sha256": "5fa22cebbcf4e04ee9aeb9fe48c06ec8e1deabed73e786c8e5b8f12a1793dbf4"
+    },
+    {
+      "path": "AutoResearch新流程/W4_DELIVERY.md",
+      "sha256": "8e7642120c9693705e81f8186749b83177371836482872c60b2879771396e87d"
+    },
+    {
+      "path": "AutoResearch新流程/autoresearch_flow/__init__.py",
+      "sha256": "7e2e71993d4d6a7d1ebe99a6b3c03b7e656cf538768a2526916a2889502c76c5"
+    },
+    {
+      "path": "AutoResearch新流程/autoresearch_flow/core.py",
+      "sha256": "21e3c40e86ef89847e82f2a4fd47df2ed6aa8581f8670959fe43659f89b532eb"
+    },
+    {
+      "path": "AutoResearch新流程/autoresearch_flow/experiments.py",
+      "sha256": "c17181240c00ec4725e2a6a10ec16554be2da999832e10f51743e82a1c89b6c7"
+    },
+    {
+      "path": "AutoResearch新流程/autoresearch_flow/harbor_agent.py",
+      "sha256": "91209bafbb3cdad5cf5f61356bac7367b86ed1349b00e4da93c63dc333a072d4"
+    },
+    {
+      "path": "AutoResearch新流程/autoresearch_flow/harbor_runtime.py",
+      "sha256": "a6dfa590c3d73cbe9844eb8e73b913aa35df2d483170b77951a982062b74646e"
+    },
+    {
+      "path": "AutoResearch新流程/autoresearch_flow/pca_contract.py",
+      "sha256": "301a128cd235c70c00cb4493fb161a46be0baffe521e5afea6e47e8cf54f555a"
+    },
+    {
+      "path": "AutoResearch新流程/autoresearch_flow/qa_contract.py",
+      "sha256": "aead24e9d2b3eb77091212bd164d9b251eb6a7f1fff39fc0b2299d666b393752"
+    },
+    {
+      "path": "AutoResearch新流程/autoresearch_flow/runtime.py",
+      "sha256": "47ddc2fe1ec9e5999f17c01beabcaf186c85f809905e88ff3536030f87f3c045"
+    },
+    {
+      "path": "AutoResearch新流程/autoresearch_flow/runtime_events.py",
+      "sha256": "98efe15a3c538949c3004369acc5392b53e84163ed71095d43d67ddfd20b274a"
+    },
+    {
+      "path": "AutoResearch新流程/autoresearch_flow/stages.py",
+      "sha256": "fb17e6213521318931cb2fcdfbe42515eb6d49e087dd49e13b1e180def08ef0b"
+    },
+    {
+      "path": "AutoResearch新流程/autoresearch_flow/trajectory.py",
+      "sha256": "dfeb8343c50e8514c7bea15614f38811fd321ddfca62b28de6111b822cdc0849"
+    },
+    {
+      "path": "AutoResearch新流程/autoresearch_flow/w4_evidence.py",
+      "sha256": "5f3c4d8b32b75309105eb85ca4b8b82dbcf0b580570a64b271b80323d1dc319b"
+    },
+    {
+      "path": "AutoResearch新流程/autoresearch_flow/w4_package.py",
+      "sha256": "44e2d19a3bc34ef0bddf74774b035360ac085f55b3c467d59c0bd0dc0497b520"
+    },
+    {
+      "path": "AutoResearch新流程/cli.py",
+      "sha256": "e795dcee0a5efc8eba13bfb225c74db6c264c2d3cb7a90e13cab9d8dd6f68763"
+    },
+    {
+      "path": "AutoResearch新流程/model_profiles/codex.toml",
+      "sha256": "9522a327871a4fbd8ddd126d360d6eb5fd2a616e88acc17b55d74eb0db98b54e"
+    },
+    {
+      "path": "AutoResearch新流程/model_profiles/seed.toml",
+      "sha256": "07ad759c06f0ea8f8c6260d1e1271c6bce56564315fd9b7d81d3851c67ff1587"
+    },
+    {
+      "path": "AutoResearch新流程/pilots/pca_cpu/README.md",
+      "sha256": "c258a286b666cf857868bd9773581b8613226a43b04b7e72c7c1ba3d6fe5d200"
+    },
+    {
+      "path": "AutoResearch新流程/pilots/pca_cpu/environment/Dockerfile",
+      "sha256": "dd45344be68a79379308fcb9cc6674419e4849984efba75209cce577fc9265eb"
+    },
+    {
+      "path": "AutoResearch新流程/pilots/pca_cpu/environment/public_eval.py",
+      "sha256": "f554d031351327cdff84d996cfa4303cf693e553eb25ba60f4ccc96b4c5e970a"
+    },
+    {
+      "path": "AutoResearch新流程/pilots/pca_cpu/environment/starter/method.py",
+      "sha256": "86db8437e457d6e9fcef39b206ee87ad68b4a0674b805b9bcd35516b853edf5a"
+    },
+    {
+      "path": "AutoResearch新流程/pilots/pca_cpu/instruction.md",
+      "sha256": "7c9e05eb1b656059af2908387fc12d9d4beef392c6ec8da53baf86a986308c57"
+    },
+    {
+      "path": "AutoResearch新流程/pilots/pca_cpu/prepare_runtime.py",
+      "sha256": "9545c74b13f2758ac10ae9f6767972213f969bb0ec5accc10a08849a6eeef910"
+    },
+    {
+      "path": "AutoResearch新流程/pilots/pca_cpu/probe_agent.py",
+      "sha256": "853699637c19732e12e5516d4bf7b8f08a8a5632aa65d3e671d058938de6754a"
+    },
+    {
+      "path": "AutoResearch新流程/pilots/pca_cpu/probe_candidate.py",
+      "sha256": "cfc7720eea8c3ba755e0ba765cd11b004cb5de1bc783c6fd39e21b4103125e0b"
+    },
+    {
+      "path": "AutoResearch新流程/pilots/pca_cpu/run_components.py",
+      "sha256": "e1237e67b1eb809a1d92b227953f8c34b5dd4764d58ea120a7740d1400cbde13"
+    },
+    {
+      "path": "AutoResearch新流程/pilots/pca_cpu/run_harbor.py",
+      "sha256": "cc6ef20353f83bd6e6c52cb9139d1c125b35628670f814c28d5b301e9eb903f1"
+    },
+    {
+      "path": "AutoResearch新流程/pilots/pca_cpu/task.toml",
+      "sha256": "f1ded674b800d4d672f9ba2a28f25be60f1eef93e46149b1d4f583c219d2c79c"
+    },
+    {
+      "path": "AutoResearch新流程/pilots/pca_cpu/tests/Dockerfile",
+      "sha256": "3321f19e118572ec94849ddad9eb2b567121405789fdd988eef3ca4298412c1b"
+    },
+    {
+      "path": "AutoResearch新流程/pilots/pca_cpu/tests/candidate_runner.py",
+      "sha256": "dfbe9c13ecfd7b29bcc3fffa7ac47a45ce2cce044288c7f46819569c6c72c5b1"
+    },
+    {
+      "path": "AutoResearch新流程/pilots/pca_cpu/tests/grader.py",
+      "sha256": "c67552d2c37ad453da0ed411e5cb1b62a162c51ec421605109856e9905ce0264"
+    },
+    {
+      "path": "AutoResearch新流程/pilots/pca_cpu/tests/private/labels.json",
+      "sha256": "b3274cea385bd43da4caf41abc7e4c0fdb76f9d1af2918293b8e340374eafe12"
+    },
+    {
+      "path": "AutoResearch新流程/pilots/pca_cpu/tests/test.sh",
+      "sha256": "5ed16180b324a98ff3c99b1dfed7661a74380d46fc02e3678e97ecae69d6661c"
+    },
+    {
+      "path": "AutoResearch新流程/pilots/seed_cpu/.gitignore",
+      "sha256": "f9b796684df4e8620ab05ff097837b2846463bf16a590a17ac330dc9f4778f3c"
+    },
+    {
+      "path": "AutoResearch新流程/pilots/seed_cpu/Dockerfile",
+      "sha256": "e2f0b6a292f749ed4252168de7d19b04945b543c6d8115fe858c6a261a8b84c9"
+    },
+    {
+      "path": "AutoResearch新流程/pilots/seed_cpu/README.md",
+      "sha256": "db7a52c4dedfb3d8ecf9e4718403258f10b2b028a44db18d7291fa1c490b6226"
+    },
+    {
+      "path": "AutoResearch新流程/pilots/seed_cpu/agent_prompt.md",
+      "sha256": "c4ebfccd51574e87ef03369787daa1fd7180b863b29b119ed21cad4335ebf457"
+    },
+    {
+      "path": "AutoResearch新流程/pilots/seed_cpu/approval.md",
+      "sha256": "9c12dc42be5ce2922b1b0dd932fba8ea372185a8f04d90d17b5f75f64387df40"
+    },
+    {
+      "path": "AutoResearch新流程/pilots/seed_cpu/docker-codex-nested.json",
+      "sha256": "e8a7c6358a03cee3852ef45d3a68b849f1515884e660fa0f27205b1c14366f39"
+    },
+    {
+      "path": "AutoResearch新流程/pilots/seed_cpu/docker-default-24.0.7.json",
+      "sha256": "73acc23de274491d5a424ba5b01c706724a0096244598bee87c9d1602015645a"
+    },
+    {
+      "path": "AutoResearch新流程/pilots/seed_cpu/evaluate.py",
+      "sha256": "2b5dbafd79c6ca9827dd2170a31f3434e96238bfc63efa00cc7de7aaee72989f"
+    },
+    {
+      "path": "AutoResearch新流程/pilots/seed_cpu/exercise.py",
+      "sha256": "fe398782b6e76d5ecf114cd706d0c98677230e5f23cc93d3071bdbb4b0dee866"
+    },
+    {
+      "path": "AutoResearch新流程/pilots/seed_cpu/instruction.md",
+      "sha256": "1f77196191d526e354cde5cc05014ff941322d4d7cc1528115959d15a2fea3a0"
+    },
+    {
+      "path": "AutoResearch新流程/pilots/seed_cpu/method.py",
+      "sha256": "66bd043443ef2e7a0c15358ffed9cb33fed43ed8fcdda68a4b08aecd71fb0a84"
+    },
+    {
+      "path": "AutoResearch新流程/pilots/seed_cpu/prepare.py",
+      "sha256": "8ad6b4251e53df9a924afdee0b9e84fbe1bcee7663fa5a249fc70e1e56cc0e42"
+    },
+    {
+      "path": "AutoResearch新流程/pilots/seed_cpu/release_probe.py",
+      "sha256": "1be0527d8589b0aa93818e5e621b94513e119d972e353c33f85ec0100f4a42d9"
+    },
+    {
+      "path": "AutoResearch新流程/pilots/seed_cpu/verify.py",
+      "sha256": "a247c46e2c01ea1e76cc2f207c9816ad744246ec51e32f3b679f9fc4840aec89"
+    },
+    {
+      "path": "AutoResearch新流程/rules/catalog.json",
+      "sha256": "6e04b978ec9fe40b7ff71147930e2752e1afab42a01d43bd4eb8722cab6979a3"
+    },
+    {
+      "path": "AutoResearch新流程/rules/history/0.1.0/catalog.json",
+      "sha256": "e2f85539916b803cb6a96ba81d7099fa6ef4ff6b9c3a4b517441f69121ed55b0"
+    },
+    {
+      "path": "AutoResearch新流程/rules/history/0.1.0/manifest.json",
+      "sha256": "2700fb71753d26ff86fb5075ef1627ff8da27def379eba029686085c6a9337a0"
+    },
+    {
+      "path": "AutoResearch新流程/rules/manifest.json",
+      "sha256": "a13f677e56a597b24f917d35816629b2def7f364ee5b3a089423854851297857"
+    },
+    {
+      "path": "AutoResearch新流程/skills/autoresearch-workflow/SKILL.md",
+      "sha256": "1dfc01fb9da53e6e12a2d392eff4c2a4c3cec3cc930bfc4ededb198e5899c78b"
+    },
+    {
+      "path": "AutoResearch新流程/templates/agent-prompt.zh.md",
+      "sha256": "5fad4c97cb38fad206932b5bcd0255e859958b14d466fcc092def3cdccebc91f"
+    },
+    {
+      "path": "AutoResearch新流程/templates/confirmation.example.json",
+      "sha256": "3e812abea7a05545b9b75da40c1d5f0ec93faa607a0f8b0de1a57d570549fc1d"
+    },
+    {
+      "path": "AutoResearch新流程/templates/harbor-execution.example.json",
+      "sha256": "741ab3ce155a08bd3cfd83366e79b199b69429083f888087c6a1cadaea21a3e6"
+    },
+    {
+      "path": "AutoResearch新流程/templates/qa-exposure.example.json",
+      "sha256": "1a336a914447e29c60043de10e5c4e02fbdbff0510c7c08c991bb80461041c14"
+    },
+    {
+      "path": "AutoResearch新流程/templates/qa-review.example.json",
+      "sha256": "9a200f6b2129361be848286396468fee909b3025df5e8c137c317edce176eb54"
+    },
+    {
+      "path": "AutoResearch新流程/templates/research-notes.example.md",
+      "sha256": "f58c6226aaa0a1fe3f5a42001d80b633653a5555a26abfcfc1432d1d571c38c6"
+    },
+    {
+      "path": "AutoResearch新流程/templates/runtime.example.json",
+      "sha256": "e4b19d1b467815c8ca6f76bd1c84b9b46edca5adde988078a54f66e969dc8030"
+    },
+    {
+      "path": "AutoResearch新流程/templates/stability.example.json",
+      "sha256": "e345e1b7c90e862a8f1e14837a57a6898db9f329c564e4ffec6fae2e084be660"
+    },
+    {
+      "path": "AutoResearch新流程/templates/stage-finish.example.json",
+      "sha256": "e499ae095036d7a15ab4298e57936b25063cb1cdb3c624e3f2ad43002386ae70"
+    },
+    {
+      "path": "AutoResearch新流程/templates/task-config.example.json",
+      "sha256": "3ee2fb37181a08df6a0704ed90112902de5206fa07e1303548656923adc39b36"
+    },
+    {
+      "path": "AutoResearch新流程/tests/test_harbor_pilot.py",
+      "sha256": "ecc232d0422cbcf56c947989c788f8aced1995010c3af5ab01f90ffd5f80182d"
+    },
+    {
+      "path": "AutoResearch新流程/tests/test_harbor_runtime.py",
+      "sha256": "b311fbb39382b71dfebe90641479ca4a28fd472af92bc1b7c0b7109e11cabf2a"
+    },
+    {
+      "path": "AutoResearch新流程/tests/test_pca_contract.py",
+      "sha256": "665ba95930068883ad2a8b8b15fd42928f61ff6f4ade74776ccb313ae1ce772d"
+    },
+    {
+      "path": "AutoResearch新流程/tests/test_qa_contract.py",
+      "sha256": "f848723b6936302f9116ad3897d38d1944f4abe9bcff91299b7e2f3eb8ee3569"
+    },
+    {
+      "path": "AutoResearch新流程/tests/test_release_contract.py",
+      "sha256": "21e11f6bddf9326142f2e24443ae417cad65776fd6eb2bb19280a31aa62eb661"
+    },
+    {
+      "path": "AutoResearch新流程/tests/test_w1_contract.py",
+      "sha256": "b2d0db62650ed48be4c7a2b2ba953613b4012bc911844de9bdcac3d985425589"
+    },
+    {
+      "path": "AutoResearch新流程/tests/test_w2_contract.py",
+      "sha256": "2f6a26585819cb95a8617e06fbd3cd21f89529a06372c34fd62fb13b35bd56a2"
+    },
+    {
+      "path": "AutoResearch新流程/tests/test_w3_contract.py",
+      "sha256": "1b6f8d9aeb3861efe8fd9824a020873ad2eee52aa641c0add14b8f29865e848d"
+    },
+    {
+      "path": "AutoResearch新流程/tests/test_w4_contract.py",
+      "sha256": "8c6e87b484f525d7776585452e2a9b9f8d397bd67559c06732d089bad6e7d5ec"
+    },
+    {
+      "path": "AutoResearch新流程/tests/test_w5_stages.py",
+      "sha256": "6064fb18c2d75527785820d6eae4266294f4e894e99d0e1b82ad9c6cf332f388"
+    },
+    {
+      "path": "AutoResearch新流程/tools/build_migration.py",
+      "sha256": "e738d0fac4ede1f34486144ee9446a1e84f121a5f0b5865a5d88d3f2cb90ddf8"
+    },
+    {
+      "path": "AutoResearch新流程/tools/release_check.py",
+      "sha256": "d8f72e5c071e6fc2f0605d9336b4e19948769e93b73c6bc579295324d90e3306"
+    },
+    {
+      "path": "AutoResearch新流程设计/DECISIONS.md",
+      "sha256": "3fe543dab818dfe96bd345d97299aced48f755ed5b9326f19ffca17d4d2c81c7"
+    },
+    {
+      "path": "AutoResearch新流程设计/IMPLEMENTATION_PLAN.md",
+      "sha256": "cb3eacfa8a626775a2ff0d724b64765f97d42313605f49da3ff6dbdd6ac1d6e7"
+    },
+    {
+      "path": "AutoResearch新流程设计/NOTES.md",
+      "sha256": "09e5cfa6b8cca582977b0da33545fd0a1c8f9c17da9e996f2f04c811d50e1cbb"
+    },
+    {
+      "path": "AutoResearch新流程设计/PCA_IMPLEMENTATION_STATUS.md",
+      "sha256": "1171b19bf840400cf3906f01660b00c54fed4976c5fe56fba78d05498c2d63cb"
+    },
+    {
+      "path": "AutoResearch新流程设计/PCA_MODEL_CONFIGURATION.md",
+      "sha256": "774cb4fbcae417a658e6b1c94390dd06ed88ad5896bccd9c00b322c07a75d4ab"
+    },
+    {
+      "path": "AutoResearch新流程设计/PCA_RULE_ALIGNMENT.md",
+      "sha256": "0d912ce79951afe0bcda85688ea1aad69b1be8da935b9cd8d9dc78a383455609"
+    },
+    {
+      "path": "AutoResearch新流程设计/PCA_UPGRADE_PLAN.md",
+      "sha256": "373d66dee527f16d85b8cd23174fa22bf34a7f20774ac1df92794cc1324b3901"
+    },
+    {
+      "path": "AutoResearch新流程设计/TUTORIAL_PCA_20260929_DIFF.md",
+      "sha256": "5458a027beca5fe460950efef5c9f37af611b29f81f05196a3c94b5aff27d26e"
+    },
+    {
+      "path": "AutoResearch新流程设计/W0_QA_COVERAGE.md",
+      "sha256": "f41fed161edb5375d3b9192dbb923830346f60c49faef7264951aeced70935e3"
+    },
+    {
+      "path": "AutoResearch新流程设计/W0_RULE_CATALOG.md",
+      "sha256": "b2d5d007c76d39dbd12fa67104ffc7da353c956cb57f31e4ef0e07040654c2a1"
+    },
+    {
+      "path": "AutoResearch新流程设计/W0_SOURCE_LOCK.md",
+      "sha256": "f7876657f8fcf9ab0188271a860543bfe29134e6c12c1c1d91011e8772ee5aa2"
+    },
+    {
+      "path": "AutoResearch新流程设计/W1_IMPLEMENTATION_DECISIONS.md",
+      "sha256": "f3955cc19313c6e241b2113317b445aa32c5d062e06f03e6fba07c21c6f215f3"
+    },
+    {
+      "path": "AutoResearch新流程设计/W2_IMPLEMENTATION_DECISIONS.md",
+      "sha256": "ee82caf91d425a0a7f6a9bab93d15eaff361c7fa676258665842965bdcd24768"
+    },
+    {
+      "path": "AutoResearch新流程设计/W3_IMPLEMENTATION_DECISIONS.md",
+      "sha256": "83462e3e3cdeca22facae8a35738861836846846541b0d380ec67a8a10369832"
+    },
+    {
+      "path": "AutoResearch新流程设计/W4_IMPLEMENTATION_DECISIONS.md",
+      "sha256": "e124399b01c378708a2619b4725e08c1cd5c4e419d1714ff568876897b8c5996"
+    },
+    {
+      "path": "AutoResearch新流程设计/W5_IMPLEMENTATION_DECISIONS.md",
+      "sha256": "5961411a5eb0b0136ec6a055cde03fd0f232d0e0f9b59d06aa435624554d085f"
+    },
+    {
+      "path": "AutoResearch新流程设计/W5_SEED_PILOT.md",
+      "sha256": "323aaffdc6d06074304a0b27f2d7da1bfb02609292e11ea646a437b690ceed19"
+    },
+    {
+      "path": "通用规则/AutoResearch 专家线下标注教程｜PCA 双镜像对齐版/AutoResearch 专家线下标注教程｜PCA 双镜像对齐版.md",
+      "sha256": "ddf9e9286dea1ea551c47574716cb2a93c39b7dfe93c0d77284f731782947fab"
+    }
+  ],
+  "scope": "source and locked rule dependencies; excludes generated release reports and local pilot/build data",
+  "version": "0.2.0"
+}

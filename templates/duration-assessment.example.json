@@ -1,0 +1,17 @@
+{
+  "mode": "non_training_7h",
+  "protocol_id": "填写冻结的正式协议ID",
+  "public_dev_protocol": "填写本题统一Public/Dev口径标识",
+  "reviewer": "实际审阅专家",
+  "approved_by": "实际确认人",
+  "rationale": "根据现有运行证据解释为什么适用7h，而非仅因预算不足",
+  "non_training": true,
+  "no_finetuning": true,
+  "short_iterations": true,
+  "non_training_basis": "解释完整任务为何不涉及训练或微调，包括baseline/reference/候选/评分",
+  "short_iteration_basis": "说明实际单轮耗时及短迭代判断，不设统一分钟数阈值",
+  "evidence": [{"path": "evidence/eligibility.md", "sha256": "REPLACE"}],
+  "iteration_samples": [
+    {"seconds": null, "evidence": {"path": "evidence/pilot.log", "sha256": "REPLACE"}}
+  ]
+}

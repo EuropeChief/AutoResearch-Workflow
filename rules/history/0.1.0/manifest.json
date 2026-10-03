@@ -1,0 +1,112 @@
+{
+  "catalog": {
+    "path": "AutoResearch新流程/rules/catalog.json",
+    "sha256": "e2f85539916b803cb6a96ba81d7099fa6ef4ff6b9c3a4b517441f69121ed55b0"
+  },
+  "flow_version": "0.1.0",
+  "schema_version": 1,
+  "sources": [
+    {
+      "id": "tutorial",
+      "path": "通用规则/专家线下标注教程 v4.md",
+      "priority": 1,
+      "scope": "global",
+      "sha256": "09e88bcaa26c2e56c65d455bc310e70e42ea29396595a88f64b7cb1a16f4d85d",
+      "version": "v4"
+    },
+    {
+      "id": "qa_skill",
+      "path": ".codex/skills/autoresearch-task-qa/SKILL.md",
+      "priority": 2,
+      "scope": "global",
+      "sha256": "ec63dd69aaca9bfc591448d9df400e010f7acfe4cd95b87d3e39e30a29ee2aec",
+      "version": "implementation@2026-09-18"
+    },
+    {
+      "id": "source_alignment",
+      "path": ".codex/skills/autoresearch-task-qa/references/source-alignment.md",
+      "priority": 2,
+      "scope": "global",
+      "sha256": "29ad8762a65b1e4b2286a9b88f2fe1696698af1d94a2c9234f8707329ea05eee",
+      "version": "implementation@2026-09-18"
+    },
+    {
+      "id": "research_quality",
+      "path": ".codex/skills/autoresearch-task-qa/references/research-quality.md",
+      "priority": 2,
+      "scope": "global",
+      "sha256": "3304e93def3129922fe7544bca7fd6a778aa6df1270aa9259ee1ee6ef71d0724",
+      "version": "implementation@2026-09-18"
+    },
+    {
+      "id": "implementation_policy",
+      "path": ".codex/skills/autoresearch-task-qa/references/implementation-policy.md",
+      "priority": 2,
+      "scope": "global",
+      "sha256": "543caf482eb9fdf6c010e68c6a248df874564a0479c8bb352d2943e566730e73",
+      "version": "implementation@2026-09-18"
+    },
+    {
+      "id": "submission_format",
+      "path": ".codex/skills/autoresearch-task-qa/references/submission-format.md",
+      "priority": 2,
+      "scope": "global",
+      "sha256": "f18eec464f5e4ab4c380b01f72b8a8f9272666623ac3070c5fb4da76658f4b8f",
+      "version": "implementation@2026-09-18"
+    },
+    {
+      "id": "docker_path_contract",
+      "path": ".codex/skills/autoresearch-task-qa/references/docker-path-contract.md",
+      "priority": 2,
+      "scope": "global",
+      "sha256": "e0ed173b923778d6f0ea2eb825a1d339ed59845289b15588e77d3192241a3e00",
+      "version": "implementation@2026-09-18"
+    },
+    {
+      "id": "harbor_harness",
+      "path": ".codex/skills/autoresearch-task-qa/references/harbor-harness.md",
+      "priority": 2,
+      "scope": "global",
+      "sha256": "20de0afb44536f34c4b055807dbeef6cae5419c76ce22a729e7e0c7b597388eb",
+      "version": "implementation@2026-09-18"
+    },
+    {
+      "id": "implementation_report",
+      "path": ".codex/skills/autoresearch-task-qa/references/implementation-report.md",
+      "priority": 2,
+      "scope": "global",
+      "sha256": "6cef7c1fe3d5d02d2e294bc3f2926b13c84de146af5768a0236e10ffe2313e7d",
+      "version": "implementation@2026-09-18"
+    },
+    {
+      "id": "baseline_skill",
+      "path": ".codex/skills/autoresearch-baseline-quality/SKILL.md",
+      "priority": 2,
+      "scope": "global",
+      "sha256": "e1ad68530be94c2cfe59ee146a7dd37c614eae537ff85cbda3e7147c0c150d76",
+      "version": "qa-g02-route@2026-09-18"
+    },
+    {
+      "id": "baseline_review_method",
+      "path": ".codex/skills/autoresearch-baseline-quality/references/baseline-review-method.md",
+      "priority": 2,
+      "scope": "global",
+      "sha256": "15f996157d18b17209d0640bec24e2c39711fbac682ee7eaac830c7a7a8a568c",
+      "version": "implementation@2026-09-18"
+    }
+  ],
+  "w0_inputs": [
+    {
+      "path": "AutoResearch新流程设计/W0_SOURCE_LOCK.md",
+      "sha256": "f7876657f8fcf9ab0188271a860543bfe29134e6c12c1c1d91011e8772ee5aa2"
+    },
+    {
+      "path": "AutoResearch新流程设计/W0_RULE_CATALOG.md",
+      "sha256": "b2d5d007c76d39dbd12fa67104ffc7da353c956cb57f31e4ef0e07040654c2a1"
+    },
+    {
+      "path": "AutoResearch新流程设计/W0_QA_COVERAGE.md",
+      "sha256": "f41fed161edb5375d3b9192dbb923830346f60c49faef7264951aeced70935e3"
+    }
+  ]
+}

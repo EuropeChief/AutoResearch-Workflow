@@ -1,0 +1,10 @@
+{
+  "package_sha256": "<当前最终包目录哈希>",
+  "report_sha256": "<独立QA原报告SHA-256>",
+  "reviewer": "<返修审阅专家>",
+  "conclusion": "<基于独立报告的真实逐项审阅结论，不代写平台审核通过>",
+  "unresolved_local_items": ["<存在问题时填实际编号；全部关闭后才改为空数组>"],
+  "dispositions": [
+    {"id": "<报告检查项编号>", "status": "pass", "rationale": "<引用报告定位与结论>"}
+  ]
+}

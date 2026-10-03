@@ -1,0 +1,29 @@
+{
+  "at": "2026-09-26T18:57:30+00:00",
+  "boundary": {
+    "at": "2026-09-26T18:57:29+00:00",
+    "probes": [
+      {
+        "exit_code": 0,
+        "layer": "container",
+        "stderr": "",
+        "stdout": "{\"status\": \"ok\", \"issues\": []}\n"
+      },
+      {
+        "exit_code": 0,
+        "layer": "codex_sandbox",
+        "stderr": "",
+        "stdout": "{\"status\": \"ok\", \"issues\": []}\n"
+      }
+    ]
+  },
+  "gpu": null,
+  "image": "sha256:c3ddfd6bb91d8f73b028a6fcaf2aee743ed92f9523a0422cb06c2dc57cf42655",
+  "login_auth_parent_readable_tools_denied": true,
+  "model_calls": 0,
+  "network": "none",
+  "probe_sha256": "1be0527d8589b0aa93818e5e621b94513e119d972e353c33f85ec0100f4a42d9",
+  "runtime_sha256": "4d24013f9f57731b353e6f07d1bb1526158df33b066a45bbdfbd30533fd99bee",
+  "scope": "authorized CPU pilot only; not a reusable AppArmor exemption",
+  "status": "passed"
+}

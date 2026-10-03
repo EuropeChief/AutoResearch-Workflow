@@ -1,0 +1,18 @@
+{
+  "reviewer": "实际审阅专家",
+  "continuous_evolution": "说明从哪一方法方向、根据哪些结果演进到下一方向",
+  "next_direction": "结束时至少一个仍可验证的具体方向",
+  "typical_round_minutes": null,
+  "rounds": [
+    {
+      "round": 1,
+      "consistent": true,
+      "method_iteration": true,
+      "method_change": "本轮实际提出并实施的非重复方法改动",
+      "score_conclusion": "同一Public/Dev口径下真实评分结论；方法失败写实际失败",
+      "next_decision": "由本轮结论形成的下一轮决策",
+      "public_dev_protocol": "与启动前冻结标识一致",
+      "evidence": [{"ref": {"path": "运行日志相对路径", "sha256": "REPLACE"}, "locator": "实际行号或事件/评分ID"}]
+    }
+  ]
+}

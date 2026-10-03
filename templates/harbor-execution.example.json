@@ -1,0 +1,28 @@
+{
+  "kind": "harbor_end_to_end",
+  "task_sha256": "REPLACE_WITH_ENVIRONMENT_CHECK_DIGEST",
+  "harbor_version": "REPLACE_WITH_PROJECT_VERSION",
+  "provider": "REPLACE_WITH_ACTUAL_PROVIDER",
+  "trial_id": "REPLACE_WITH_ACTUAL_TRIAL",
+  "command": ["REPLACE_WITH_PROJECT_HARNESS_COMMAND"],
+  "reviewer": "填写实际审阅人",
+  "agent_image": "sha256:REPLACE_WITH_IMAGE_ID",
+  "verifier_image": "sha256:REPLACE_WITH_IMAGE_ID",
+  "data_scope": "authorized_selftest",
+  "data_authorization": {"path": "evidence/authorization.md", "sha256": "REPLACE"},
+  "reward": {"path": "evidence/reward.txt", "sha256": "REPLACE"},
+  "score_contract_sha256": "REPLACE_FOR_FROZEN_SCORING",
+  "best_method_sha256": "REPLACE_FOR_FINAL_CHECK",
+  "candidate_manifest": {"path": "evidence/transferred-files.json", "sha256": "REPLACE_FOR_FINAL_CHECK"},
+  "observations": {
+    "dual_build": {"passed": false, "locator": "填写两套镜像的实际构建记录", "evidence": {"path": "evidence/build.log", "sha256": "REPLACE"}},
+    "agent_finished": {"passed": false, "locator": "填写实际事件", "evidence": {"path": "evidence/trial.log", "sha256": "REPLACE"}},
+    "candidate_transferred": {"passed": false, "locator": "填写实际移交及清单位置", "evidence": {"path": "evidence/trial.log", "sha256": "REPLACE"}},
+    "separate_effective": {"passed": false, "locator": "独立 Verifier 环境证据", "evidence": {"path": "evidence/trial.log", "sha256": "REPLACE"}},
+    "verifier_self_contained": {"passed": false, "locator": "干净依赖执行证据", "evidence": {"path": "evidence/trial.log", "sha256": "REPLACE"}},
+    "candidate_permissions": {"passed": false, "locator": "候选受限执行和禁止读写探针", "evidence": {"path": "evidence/permissions.log", "sha256": "REPLACE"}},
+    "trusted_reward": {"passed": false, "locator": "真实 grader 产生结果", "evidence": {"path": "evidence/trial.log", "sha256": "REPLACE"}},
+    "frozen_scoring": {"passed": false, "locator": "阶段 3 起核实际冻结协议", "evidence": {"path": "evidence/trial.log", "sha256": "REPLACE"}},
+    "best_restored": {"passed": false, "locator": "最终最佳候选回填/移交一致性", "evidence": {"path": "evidence/trial.log", "sha256": "REPLACE"}}
+  }
+}

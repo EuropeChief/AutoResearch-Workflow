@@ -1,0 +1,52 @@
+# Python and local tooling caches
+__pycache__/
+*.py[cod]
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local workflow state and generated execution data
+.autoresearch-flow/
+**/.autoresearch-flow/
+pilots/*/build/
+pilots/*/runs/
+runtime/
+runs/
+build/
+tmp/
+*.log
+*.sock
+*.sqlite
+*.sqlite3
+
+# Credentials and local secrets
+.env
+.env.*
+**/auth.json
+**/.token_*
+**/*credential*.json
+**/*secret*.json
+**/*token*.json
+
+# Large model/data artifacts and archives
+*.ckpt
+*.onnx
+*.pt
+*.pth
+*.safetensors
+*.tar
+*.tar.gz
+*.tgz
+*.zip
+
+# Editor/OS files
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+.venv/
+venv/
+.codebase-memory/

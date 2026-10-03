@@ -1,0 +1,11 @@
+{
+  "image": "sha256:REPLACE_WITH_SAME_AGENT_IMAGE_ID",
+  "container_id": "REPLACE_WITH_ACTUAL_CONTAINER_ID",
+  "started_at": "REPLACE_WITH_ACTUAL_ISO_TIMESTAMP_WITH_TIMEZONE",
+  "observed_at": "REPLACE_WITH_ACTUAL_ISO_TIMESTAMP_WITH_TIMEZONE",
+  "stable_seconds": null,
+  "oom_killed": null,
+  "unexpected_exit": null,
+  "reviewer": "填写实际审阅人",
+  "evidence": {"path": "expert_evidence/runtime/stability.log", "sha256": "REPLACE"}
+}

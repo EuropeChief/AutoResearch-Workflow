@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-03",
+  "scope": "OP-3 only",
+  "workflow_policy_revision": "2026-10-03.op03",
+  "status": "local_contract_tests_passed",
+  "evidence_kind": "synthetic_contract_tests_not_live_seven_hour_run",
+  "targeted_tests": {"passed": 15, "failed": 0, "elapsed_seconds": 2.586},
+  "full_suite": {"passed": 162, "failed": 0, "elapsed_seconds": 30.968},
+  "commands": [
+    "python3 -m unittest discover -s tests -p test_op03_duration.py -q",
+    "python3 -m unittest discover -s tests -q",
+    "python3 cli.py --format json rules check",
+    "ruff check autoresearch_flow/duration.py autoresearch_flow/duration_delivery.py autoresearch_flow/policies.py tests/test_op03_duration.py",
+    "ruff check --isolated --select E9,F63,F7,F82 autoresearch_flow cli.py tests",
+    "mypy --follow-imports=skip --check-untyped-defs autoresearch_flow/duration.py autoresearch_flow/duration_delivery.py autoresearch_flow/policies.py",
+    "python3 /home/czm/.codex/skills/.system/skill-creator/scripts/quick_validate.py skills/autoresearch-workflow"
+  ],
+  "command_exit_codes": [0, 0, 0, 0, 0, 0, 0],
+  "rule_check": {"rule_count": 50, "coverage_count": 38, "issues": []},
+  "policy_template_matches": true,
+  "missing_local_doc_links": [],
+  "source_sha256": {
+    "autoresearch_flow/duration.py": "526307d9373ae1071b5debbbcc388407610a0b34ae9e72dfdc9fdf5e128324b7",
+    "autoresearch_flow/duration_delivery.py": "9db485a7d4717748e92d80744149d9b6fbd0912d670c0154081cd00722a38f77",
+    "autoresearch_flow/policies.py": "8bffad7ab85f77e7fcccf5c128ce6227c00d8c1360e17d329fa2d7d26fce4c5a",
+    "autoresearch_flow/core.py": "31237cb67bc31feba0d96a343a079c61ff1ac3d08474ce906c615532293f2698",
+    "autoresearch_flow/runtime.py": "2ece2c288edc45b67f7abd688a7515b2317a35d33c5eef1817f9a9c01aaf0fe0",
+    "autoresearch_flow/harbor_runtime.py": "fc1be791e92ef869eab3859c97619a574c71f5376ec40e697d5bbf6e20719853",
+    "autoresearch_flow/w4_evidence.py": "3c22c86f147c1e7d4154d35405109577a29a520c7398eb487ff8a271e7611868",
+    "autoresearch_flow/w4_package.py": "dfe88efb34e4bc4a5489d7a43c4738d61ddb380ad9e79a0e49e8cbbf93f2b308",
+    "autoresearch_flow/stages.py": "e8375cec6191e99144e5ca09a8a42f2671214e21bb4fadbc922c53c4bacf38c0",
+    "cli.py": "cc675640ff2e449622afb03399b58dcb4ae1c6a87121e1851795964a15fb34a7",
+    "tests/test_op03_duration.py": "44b1b8040660a69ab26f099efbba6dc936ff4111b8f225c0710f89d617d5b80d",
+    "tests/test_op01_policy_git.py": "088d8c7794dc732770233ac04009af6fe9e26dcad687a669420b82efc64dd48c",
+    "templates/agent-prompt.zh.md": "ad9a441b2dff6ff16815f66603c5a98b8ac97a8df20711b95d9c09a5b75624de",
+    "templates/workflow-policy.example.json": "40e9c78b2405176d76f269feb869d7f7cf39ea9e7ae0b3351a02c64fbc04b871",
+    "skills/autoresearch-workflow/SKILL.md": "6326c798ea42c93e7a4851e5938e826975fd797a4c29239ad441ed067dab59d0"
+  },
+  "limits": [
+    "No existing task state, scientific evidence, trajectory or submission modified",
+    "No live model, GPU, Docker or independent QA execution",
+    "Semantic qualification and method legitimacy still require expert review of original evidence",
+    "Only exception packages receive the necessary duration evidence bundle; official trajectory and run_summary schemas unchanged",
+    "OP-4 through OP-8 and migration archive publication remain pending"
+  ]
+}

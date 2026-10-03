@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "agent_visible_paths": [
+    "harbor_task/instruction.md",
+    "harbor_task/environment/starter",
+    "harbor_task/environment/public_eval",
+    "harbor_task/environment/public_assets"
+  ],
+  "agent_writable_paths": [
+    "/workspace/solution"
+  ],
+  "trusted_only_paths": [
+    "harbor_task/tests",
+    "reference"
+  ],
+  "final_image_digest": "<真实 Agent sha256:摘要>",
+  "verifier_image_digest": "<真实 Verifier sha256:摘要>",
+  "generated_agent_view_manifest": "evidence/agent-view-files.sha256",
+  "verified_as_uid": 1000
+}

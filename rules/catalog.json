@@ -1,0 +1,1045 @@
+{
+  "coverage": {
+    "B01": [
+      "AR-003",
+      "AR-016"
+    ],
+    "B02": [
+      "AR-017",
+      "AR-025"
+    ],
+    "B03": [
+      "AR-015",
+      "AR-018",
+      "AR-023"
+    ],
+    "B04": [
+      "AR-019"
+    ],
+    "B05": [
+      "AR-020",
+      "AR-024",
+      "AR-027"
+    ],
+    "B06": [
+      "AR-021"
+    ],
+    "B07": [
+      "AR-022",
+      "AR-023"
+    ],
+    "B08": [
+      "AR-016",
+      "AR-019",
+      "AR-023"
+    ],
+    "G01": [
+      "AR-002",
+      "AR-003",
+      "AR-006"
+    ],
+    "G02": [
+      "AR-003",
+      "AR-016",
+      "AR-017",
+      "AR-018",
+      "AR-019",
+      "AR-020",
+      "AR-021",
+      "AR-022",
+      "AR-023",
+      "AR-024",
+      "AR-025"
+    ],
+    "G03": [
+      "AR-020",
+      "AR-024",
+      "AR-025",
+      "AR-026",
+      "AR-027",
+      "AR-028",
+      "AR-029",
+      "AR-030",
+      "AR-031"
+    ],
+    "H01": [
+      "AR-004",
+      "AR-033"
+    ],
+    "H02": [
+      "AR-005",
+      "AR-033"
+    ],
+    "H03": [
+      "AR-009",
+      "AR-048",
+      "AR-050"
+    ],
+    "H04": [
+      "AR-012",
+      "AR-032",
+      "AR-034"
+    ],
+    "H05": [
+      "AR-035"
+    ],
+    "H06": [
+      "AR-036"
+    ],
+    "QA01": [
+      "AR-006",
+      "AR-007"
+    ],
+    "QA02": [
+      "AR-030"
+    ],
+    "QA03": [
+      "AR-024",
+      "AR-025",
+      "AR-026",
+      "AR-031"
+    ],
+    "QA04": [
+      "AR-027",
+      "AR-028",
+      "AR-029"
+    ],
+    "QA05": [
+      "AR-008",
+      "AR-011",
+      "AR-032"
+    ],
+    "QA06": [
+      "AR-012",
+      "AR-032",
+      "AR-034"
+    ],
+    "QA07": [
+      "AR-007"
+    ],
+    "QA08": [
+      "AR-007"
+    ],
+    "QA09": [
+      "AR-012"
+    ],
+    "QA10": [
+      "AR-011"
+    ],
+    "QA11": [
+      "AR-006"
+    ],
+    "QA12": [
+      "AR-013"
+    ],
+    "QA13": [
+      "AR-020",
+      "AR-024",
+      "AR-025",
+      "AR-026",
+      "AR-027",
+      "AR-028"
+    ],
+    "QA14": [
+      "AR-002",
+      "AR-007",
+      "AR-031"
+    ],
+    "QA15": [
+      "AR-005",
+      "AR-008",
+      "AR-010",
+      "AR-018",
+      "AR-047"
+    ],
+    "QA16": [
+      "AR-038",
+      "AR-039",
+      "AR-044"
+    ],
+    "QA17": [
+      "AR-009",
+      "AR-033",
+      "AR-034",
+      "AR-035",
+      "AR-036",
+      "AR-050"
+    ],
+    "QA18": [
+      "AR-037",
+      "AR-038",
+      "AR-039",
+      "AR-040",
+      "AR-044"
+    ],
+    "QA19": [
+      "AR-006",
+      "AR-027",
+      "AR-028",
+      "AR-029"
+    ],
+    "QA20": [
+      "AR-006",
+      "AR-008"
+    ],
+    "QA21": [
+      "AR-039",
+      "AR-040",
+      "AR-042",
+      "AR-043",
+      "AR-044"
+    ]
+  },
+  "generated_from": {
+    "rule_catalog": "AutoResearch新流程设计/PCA_RULE_ALIGNMENT.md",
+    "qa_coverage": "AutoResearch新流程设计/W0_QA_COVERAGE.md"
+  },
+  "rule_count": 50,
+  "rules": [
+    {
+      "evidence": "任务卡、论文/代码、资源清单、GO/NO-GO",
+      "id": "AR-001",
+      "reviewer": "专家",
+      "source_refs": [
+        "T:PCA-20260929:L80–116"
+      ],
+      "stages": [
+        1
+      ],
+      "statement": "领取后核任务材料、出题模式、数据许可、指标方向、资源与可见性；变体必须独立且有实质方法差异。"
+    },
+    {
+      "evidence": "`instruction.md`、候选接口、guard、Starter/Reference diff",
+      "id": "AR-002",
+      "reviewer": "专家",
+      "source_refs": [
+        "T:PCA-20260929:L18–22,251–282",
+        "Q:research-quality.md#G01"
+      ],
+      "stages": [
+        1,
+        2,
+        3
+      ],
+      "statement": "优化面须能程序评分、支持非纯参数的方法改动，接口及 guard 真正允许执行；不能只让 Agent 在固定方法中找数字。"
+    },
+    {
+      "evidence": "候选理由、Starter 源码、协议与正式结果",
+      "id": "AR-003",
+      "reviewer": "专家",
+      "source_refs": [
+        "T:PCA-20260929:L20,160,350–449",
+        "Q:research-quality.md#G02"
+      ],
+      "stages": [
+        1,
+        2,
+        3
+      ],
+      "statement": "第一阶段只定 B/R 候选；验证后才冻结。可运行 Starter 默认作 Baseline；Starter 为 Scaffold 时须另有合理可执行朴素 Baseline，并将 B 绑定其正式聚合结果，不能另设更弱零点。"
+    },
+    {
+      "evidence": "包目录、运行挂载/COPY、权限或恢复链",
+      "id": "AR-004",
+      "reviewer": "程序＋专家",
+      "source_refs": [
+        "T:PCA-20260929:L38–64,144–165,618",
+        "Q:submission-format.md#1"
+      ],
+      "stages": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "statement": "完整 harbor_task 不整体暴露给 Agent。Agent 只见公开题面、依赖、Starter、Public/Dev 及入口；/workspace/starter 只读，/workspace/solution 为候选写入面。私有 tests、Reference、已汇总专家证据不可见；仅本轨新产物输出目录可写。"
+    },
+    {
+      "evidence": "TOML、适配入口、平台版本依据",
+      "id": "AR-005",
+      "reviewer": "程序＋专家",
+      "source_refs": [
+        "T:PCA-20260929:L171–217",
+        "Q:harbor-harness.md#H02"
+      ],
+      "stages": [
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "statement": "task.toml 按目标 Harbor 版本验证：顶层 artifacts 仅 /workspace/solution，verifier.environment_mode=separate，Agent/Verifier 分别声明实际资源与依赖。示例 schema_version=1.3 不是跨版本常量。"
+    },
+    {
+      "evidence": "题面与调用链",
+      "id": "AR-006",
+      "reviewer": "专家",
+      "source_refs": [
+        "T:PCA-20260929:L219–282,948",
+        "Q:implementation-policy.md#QA01/QA11/QA19/QA20"
+      ],
+      "stages": [
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "statement": "英文题面八章节或语义等价结构完整，写明问题、指标、合法方法空间、边界、真实提交物、迭代和完成条件；随机任务声明 seed/replicate 规则与有效提升要求，不照抄不存在的接口。"
+    },
+    {
+      "evidence": "题面、实际可见材料",
+      "id": "AR-007",
+      "reviewer": "专家",
+      "source_refs": [
+        "T:PCA-20260929:L280,515–525",
+        "Q:implementation-policy.md#QA01/QA07/QA08"
+      ],
+      "stages": [
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "statement": "Agent 题面不得直接泄露论文/官方解法来源、Hidden 答案或 Reference 细节；公开背景与必要接口不是泄露。"
+    },
+    {
+      "evidence": "环境配置、guard、评分调用链",
+      "id": "AR-008",
+      "reviewer": "专家",
+      "source_refs": [
+        "T:PCA-20260929:L251–282,509–525",
+        "Q:implementation-policy.md#QA05/QA20"
+      ],
+      "stages": [
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "statement": "题面核心硬约束须有可识别的环境或 verifier 执行逻辑；正常读写、网络、资源、并发政策要与执行边界一致，不能只写禁令。"
+    },
+    {
+      "evidence": "Dockerfile、构建命令、路径解析、运行记录",
+      "id": "AR-009",
+      "reviewer": "程序＋专家",
+      "source_refs": [
+        "T:PCA-20260929:L38–64,288–324,529–541",
+        "Q:docker-path-contract.md#两种受支持 profile",
+        "Q:harbor-harness.md#H03"
+      ],
+      "stages": [
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "statement": "Agent context=environment/，Verifier context=tests/，分别 Dockerfile，禁止 COPY ../ 和旧 task-root 混用。正式入口 bash /tests/test.sh 不依赖 cwd。必须实际构建并验证目标 Harbor 双镜像移交出分；静态解析不等于实跑。"
+    },
+    {
+      "evidence": "构建/运行日志、资源记录、专家说明",
+      "id": "AR-010",
+      "reviewer": "专家＋平台",
+      "source_refs": [
+        "T:PCA-20260929:L70–72,324"
+      ],
+      "stages": [
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "statement": "环境可在声明资源运行 B/R/评分，容器稳定存活至少 12h；与双轨各 10h 净有效时长分别核算。实际证据可复用，不以时长相加、静态检查冒充稳定性验证。"
+    },
+    {
+      "evidence": "Agent 实际可见集、镜像/COPY、挂载、恢复与评分链",
+      "id": "AR-011",
+      "reviewer": "专家＋平台",
+      "source_refs": [
+        "T:PCA-20260929:L144–165,464,515–525",
+        "Q:implementation-policy.md#QA10"
+      ],
+      "stages": [
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "statement": "Agent 不可见私有 tests/Hidden/Reference/已汇总专家证据/凭据；公开固定面不可篡改。Verifier 内候选仍不可信，须限制文件、用户和进程权限，不在全私有权限 grader 内直接 import 候选；隔离失败返修而非仅扣分。"
+    },
+    {
+      "evidence": "verifier 调用链与结果写入逻辑",
+      "id": "AR-012",
+      "reviewer": "专家",
+      "source_refs": [
+        "T:PCA-20260929:L455–464,515–525",
+        "Q:implementation-policy.md#QA06/QA09"
+      ],
+      "stages": [
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "statement": "评分前清理 Agent 可能预写的结果，最终结果由可信评分侧计算并原子写入；不采信候选自报分数。"
+    },
+    {
+      "evidence": "仓库状态或清理脚本与执行证据",
+      "id": "AR-013",
+      "reviewer": "程序＋专家",
+      "source_refs": [
+        "T:PCA-20260929:L523",
+        "Q:implementation-policy.md#QA12"
+      ],
+      "stages": [
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "statement": "提交的 Git 历史不得留答案线索；有 `.git` 时检查 remotes、tags、reflog 和相关修复提交清理。"
+    },
+    {
+      "evidence": "Public/Dev 调用、路径与评分结果",
+      "id": "AR-014",
+      "reviewer": "专家＋平台",
+      "source_refs": [
+        "T:PCA-20260929:L9–13,455–464,529–541"
+      ],
+      "stages": [
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "statement": "Agent 每轮合法调用公开评分，结束后 Harbor 移交候选并启动独立 Verifier。Hidden 可按授权私有预置、私有规则生成或安全注入；无正式 Hidden 权限用授权同接口数据实跑并标平台待验，不能冒称正式 Hidden 通过。"
+    },
+    {
+      "evidence": "`训练证据说明.md`、逐轮 `result.json`、协议标识",
+      "id": "AR-015",
+      "reviewer": "程序＋专家",
+      "source_refs": [
+        "T:PCA-20260929:L350–449,491–503"
+      ],
+      "stages": [
+        2,
+        3,
+        4,
+        5
+      ],
+      "statement": "首次正式 Baseline 前固定数据/切分/指标/预算/正式 seed/重复/聚合/选择规则；B/R 和最终待评方法用同一协议。实质变更须重验受影响锚点。"
+    },
+    {
+      "evidence": "Starter/B 源码、选取理由、可比锚点",
+      "id": "AR-016",
+      "reviewer": "专家",
+      "source_refs": [
+        "T:PCA-20260929:L18–34",
+        "Q:baseline-quality/SKILL.md#B01/B08"
+      ],
+      "stages": [
+        2,
+        3
+      ],
+      "statement": "Baseline 来源、任务适用性、角色和选择理由可辩护；年代、简单或大分差本身不是失败理由，代表性不足须有任务/资源/协议可比证据。"
+    },
+    {
+      "evidence": "源码、原始日志、模型索引、实际步数",
+      "id": "AR-017",
+      "reviewer": "专家",
+      "source_refs": [
+        "T:PCA-20260929:L24–34,350–449",
+        "Q:baseline-quality/SKILL.md#B02"
+      ],
+      "stages": [
+        2,
+        3
+      ],
+      "statement": "核 Baseline 输入、标签、损失、更新、推理和模型正常，以实际 steps/tokens/样本量、曲线与停止原因查训练充分性；统一预算未完全收敛不自动失败。已批准 debug 题按声明核健康对照。"
+    },
+    {
+      "evidence": "固定协议、双方日志/资源/配置",
+      "id": "AR-018",
+      "reviewer": "专家",
+      "source_refs": [
+        "T:PCA-20260929:L28,350–449",
+        "Q:baseline-quality/SKILL.md#B03"
+      ],
+      "stages": [
+        2,
+        3
+      ],
+      "statement": "B/R 使用共同数据、评价、预算上限和可比较资源口径；研究变量允许的结构或训练差异不机械判违规，实际成本与提升主张要匹配。"
+    },
+    {
+      "evidence": "粗筛摘要、正式选择规则、全部候选/失败记录",
+      "id": "AR-019",
+      "reviewer": "专家",
+      "source_refs": [
+        "T:PCA-20260929:L18–34",
+        "Q:baseline-quality/SKILL.md#B04/B08"
+      ],
+      "stages": [
+        2,
+        3
+      ],
+      "statement": "双方参数与搜索机会须披露且符合共同约束；不能只给 B 异常配置或挑最差 B、最好 R。"
+    },
+    {
+      "evidence": "两侧逐 seed 结果、日志与模型哈希",
+      "id": "AR-020",
+      "reviewer": "程序＋专家",
+      "source_refs": [
+        "T:PCA-20260929:L34,350–449",
+        "Q:baseline-quality/SKILL.md#B05"
+      ],
+      "stages": [
+        2,
+        3
+      ],
+      "statement": "正式 seed 集真实、完整且 B/R 逐一成对；随机训练各 seed 独立执行。可使用事前声明的合法共享预训练起点，不能复制本题完成训练 checkpoint 冒充独立重复。"
+    },
+    {
+      "evidence": "同协议 sanity 结果与技术解释",
+      "id": "AR-021",
+      "reviewer": "专家",
+      "source_refs": [
+        "T:PCA-20260929:L18–34",
+        "Q:baseline-quality/SKILL.md#B06"
+      ],
+      "stages": [
+        2,
+        3
+      ],
+      "statement": "适用 sanity 对照低于/优于 B 时查实现与代表性；没有 sanity 不能自动判失败，不造锚点。"
+    },
+    {
+      "evidence": "B/R diff、协议和实际运行",
+      "id": "AR-022",
+      "reviewer": "专家",
+      "source_refs": [
+        "T:PCA-20260929:L350–449",
+        "Q:baseline-quality/SKILL.md#B07"
+      ],
+      "stages": [
+        2,
+        3
+      ],
+      "statement": "Reference 实际变化只在允许优化面；固定因素一致，额外数据/资源/评测变化要披露；多项方法变化可作联合比较，声称单项贡献才需对应归因证据。"
+    },
+    {
+      "evidence": "逐项审查表、冻结决定、待后续证据项",
+      "id": "AR-023",
+      "reviewer": "专家",
+      "source_refs": [
+        "T:PCA-20260929:L18–34",
+        "Q:baseline-quality/SKILL.md#八项检查"
+      ],
+      "stages": [
+        2,
+        3
+      ],
+      "statement": "B01–B08 中阶段 2 已可判的适用子条件通过后才冻结 B；B03/B07 跨方法部分标注所需证据与阶段 3 截止，不得预判通过或无限挂起。"
+    },
+    {
+      "evidence": "正式目录与文件、路径/字段交叉核对",
+      "id": "AR-024",
+      "reviewer": "程序＋专家",
+      "source_refs": [
+        "T:PCA-20260929:L350–449",
+        "Q:submission-format.md#2"
+      ],
+      "stages": [
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "statement": "`optimization_evidence/` 包含 `训练证据说明.md`、双方全部正式逐 seed `result.json`/原始 `run.log`、汇总；失败/较差运行保留，缺真实运行信息写 null 并说明，不造日志。"
+    },
+    {
+      "evidence": "checkpoint、artifact、reload.log、result 引用",
+      "id": "AR-025",
+      "reviewer": "程序＋专家",
+      "source_refs": [
+        "T:PCA-20260929:L350–449",
+        "Q:submission-format.md#模型产物"
+      ],
+      "stages": [
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "statement": "训练型正式每轮留真实模型、哈希与干净进程重载复评分；非训练型不建空模型目录，合法预训练起点须披露。"
+    },
+    {
+      "evidence": "`reference/`、双方全部运行与摘要",
+      "id": "AR-026",
+      "reviewer": "程序＋专家",
+      "source_refs": [
+        "T:PCA-20260929:L338–449",
+        "Q:implementation-policy.md#QA03/QA13"
+      ],
+      "stages": [
+        3,
+        4,
+        5,
+        6
+      ],
+      "statement": "Reference 有合法可执行入口，使用同一正式 seed/协议独立重复并实际改善 B；证明可解但不是唯一答案或分数上限。"
+    },
+    {
+      "evidence": "协议、逐次原始值、seed 清单",
+      "id": "AR-027",
+      "reviewer": "程序＋专家",
+      "source_refs": [
+        "T:PCA-20260929:L405–449,491–503",
+        "Q:research-quality.md#G03"
+      ],
+      "stages": [
+        3,
+        4,
+        5,
+        6
+      ],
+      "statement": "随机评估若协议未规定，B/R/待评各至少 3 次，波动大至少 5 次；声明了 5 个就全交；三方同次数、seed、聚合，不挑最好一次。"
+    },
+    {
+      "evidence": "逐 seed B/R 原值、可复算统计",
+      "id": "AR-028",
+      "reviewer": "程序＋专家",
+      "source_refs": [
+        "T:PCA-20260929:L405–449,491–503",
+        "Q:research-quality.md#G03"
+      ],
+      "stages": [
+        3,
+        4,
+        5,
+        6
+      ],
+      "statement": "随机改善用 B 原始指标样本标准差（n−1）比较：正向 Δ≥3σ_B；达到 3σ_B 但低于 5σ_B 时按教程增加重复次数并标记平台复核，≥5σ_B 为强证据；σ_B=0 仍需真实正改善。"
+    },
+    {
+      "evidence": "协议、指标、确定性论证、阈值来源",
+      "id": "AR-029",
+      "reviewer": "专家",
+      "source_refs": [
+        "T:PCA-20260929:L18–34,491–503",
+        "Q:research-quality.md#G03",
+        "Q:implementation-policy.md#QA04/QA19"
+      ],
+      "stages": [
+        3,
+        4,
+        5,
+        6
+      ],
+      "statement": "确定性改善须真实正向且满足适用归一化门槛；不恢复已删除的统一 5% 规则；题目事前另定阈值则同时核。确定性须有依据，不因固定训练 seed 自动推定。"
+    },
+    {
+      "evidence": "评分源码/锚点依据/公式测试",
+      "id": "AR-030",
+      "reviewer": "程序＋专家",
+      "source_refs": [
+        "T:PCA-20260929:L466–503",
+        "Q:implementation-policy.md#QA02"
+      ],
+      "stages": [
+        3,
+        4,
+        5,
+        6
+      ],
+      "statement": "B=0、预计可达 U=1；无法可靠估 U 才以 Metric Ceiling 代替；评分连续、单调、方向明确、不裁剪，超 U 可大于 1。U 来源独立于事后分数反推。"
+    },
+    {
+      "evidence": "B/R/U、方法方向与差异说明",
+      "id": "AR-031",
+      "reviewer": "程序＋专家",
+      "source_refs": [
+        "T:PCA-20260929:L466–503",
+        "Q:research-quality.md#G03",
+        "Q:implementation-policy.md#QA14"
+      ],
+      "stages": [
+        3,
+        4,
+        5,
+        6
+      ],
+      "statement": "Reference 在声明 Public/Dev 自验口径归一化分数为 [0.15,0.8]，且仍有合法改进空间；headroom 原则上 ≥3σ_B，低于时说明风险并审查，不升级为绝对失败阈值。"
+    },
+    {
+      "evidence": "grader、错误路径、合同测试",
+      "id": "AR-032",
+      "reviewer": "程序＋专家",
+      "source_refs": [
+        "T:PCA-20260929:L505–513",
+        "Q:implementation-policy.md#QA06"
+      ],
+      "stages": [
+        3,
+        4,
+        5,
+        6
+      ],
+      "statement": "成功输出可信标量分数和原始指标；非作弊 Hard Gate 违反为 -1 且不参与排序，格式/超时/资源/基础设施错误分类、给可执行修复信息；隔离失败不按普通扣分处理。"
+    },
+    {
+      "evidence": "包清单、task 根",
+      "id": "AR-033",
+      "reviewer": "程序＋专家",
+      "source_refs": [
+        "T:PCA-20260929:L118–165,455–464",
+        "Q:harbor-harness.md#H01"
+      ],
+      "stages": [
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "statement": "完整任务包含 instruction.md、task.toml、environment/Dockerfile、environment/starter/、tests/Dockerfile 和 tests/test.sh；公开/私有 grader 内部组织允许等价实现。源码 solution/ 是可选 Oracle，不是 Agent 运行时 /workspace/solution，也不作 Agent 构建输入。"
+    },
+    {
+      "evidence": "`tests/test.sh`、评分链、reward 位置",
+      "id": "AR-034",
+      "reviewer": "专家",
+      "source_refs": [
+        "T:PCA-20260929:L455–464,515–541",
+        "Q:harbor-harness.md#H04",
+        "Q:implementation-policy.md#QA06/QA17"
+      ],
+      "stages": [
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "statement": "Verifier 的 /tests/test.sh 实际执行可信评分并写 /logs/verifier/reward.txt 有限标量或 reward.json 有限数值对象；两者并存优先 JSON。仅 pytest 成功不算出分，清理旧结果并原子替换，不采信候选自报。"
+    },
+    {
+      "evidence": "job/trial 配置或真实 config",
+      "id": "AR-035",
+      "reviewer": "专家",
+      "source_refs": [
+        "T:PCA-20260929:L171–207,529–541",
+        "Q:harbor-harness.md#H05"
+      ],
+      "stages": [
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "statement": "已有 Job/Trial 配置须核任务/provider/agent/入口及有效覆盖；最终评分 verifier 未禁用，迭代期仅公开 Dev。H05 无配置可静态不适用，但教程真实 separate/artifacts 自验仍须完成。"
+    },
+    {
+      "evidence": "Trial 记录",
+      "id": "AR-036",
+      "reviewer": "程序＋专家＋平台",
+      "source_refs": [
+        "T:PCA-20260929:L529–541",
+        "Q:harbor-harness.md#H06"
+      ],
+      "stages": [
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "statement": "教程要求目标 Harbor 真实端到端自验及同一 Trial 的配置、结果、reward、日志和版本绑定；无正式 Hidden 权限用授权自验数据。Skill H06 无 Trial 可静态不适用并记 not_run，不代表教程自验通过。NOP 推荐、Oracle 非必交，已有其他有效 Trial 同样核验。"
+    },
+    {
+      "evidence": "启动配置、实际可见集、会话与目录",
+      "id": "AR-037",
+      "reviewer": "专家",
+      "source_refs": [
+        "T:PCA-20260929:L569–618",
+        "Q:implementation-policy.md#QA18"
+      ],
+      "stages": [
+        4,
+        5,
+        6
+      ],
+      "statement": "固定 Codex+GPT-5.6 Sol 与 Codex+Seed 2.1 Turbo，同任务/Prompt/公开协议，独立输出。推理档位默认各 provider 实际支持的最高有效档位，不能只把字符串写为 max 或静默降档。"
+    },
+    {
+      "evidence": "原会话事件、净时长台账、异常与恢复证据",
+      "id": "AR-038",
+      "reviewer": "程序＋专家",
+      "source_refs": [
+        "T:PCA-20260929:L70–72,569–618,809–825",
+        "Q:implementation-policy.md#QA16"
+      ],
+      "stages": [
+        4,
+        5,
+        6
+      ],
+      "statement": "两轨默认各至少 10 小时净有效执行；仅不训练/不微调、单轮很短且满足教程全部例外证据时，才可各至少 7h。分别核算，排队/安装/构建故障/阻塞不计；外部异常仅可恢复原会话，不拼接新会话。流程当前是否已支持例外另见冻结政策与实施状态。"
+    },
+    {
+      "evidence": "方法演进、Public/Dev 评分与决策、异常记录",
+      "id": "AR-039",
+      "reviewer": "专家",
+      "source_refs": [
+        "T:PCA-20260929:L549–563,598–646",
+        "Q:implementation-policy.md#QA18"
+      ],
+      "stages": [
+        4,
+        5,
+        6
+      ],
+      "statement": "每轮是真实方法闭环而非环境排障/重复空转；最终是否超过 B 与轨迹是否有效分别判定，无提升不自动失败且须如实解释。"
+    },
+    {
+      "evidence": "两份轨迹 JSON、摘要与实际记录",
+      "id": "AR-040",
+      "reviewer": "程序＋专家",
+      "source_refs": [
+        "T:PCA-20260929:L620–646,829–874",
+        "Q:implementation-policy.md#QA21"
+      ],
+      "stages": [
+        4,
+        5,
+        6
+      ],
+      "statement": "Agent 逐轮自写八字段 round/policy_name/method_summary/status/score/failure_reason/retained_best/time，最终两份 JSON 顶层 rounds。score 是 Public/Dev 原始指标，失败未出分为 null；成功 ok 且原因 null；完成时间 YYYY-MM-DD HH:mm:ss，不替代有效时长。不另加日志字段。"
+    },
+    {
+      "evidence": "最终源码、复验结果、选择说明",
+      "id": "AR-041",
+      "reviewer": "程序＋专家",
+      "source_refs": [
+        "T:PCA-20260929:L557–559,660–668,878–884"
+      ],
+      "stages": [
+        5,
+        6
+      ],
+      "statement": "只交唯一 best_method 完整代码/配置，不含模型或历史版本；依协议复验。每轨结束前复测当前最佳并将代码及必需模型/配置恢复至 /workspace/solution，artifacts 只传此候选。必要模型不得遗留未移交缓存。"
+    },
+    {
+      "evidence": "确定版本包清单与引用",
+      "id": "AR-042",
+      "reviewer": "程序＋专家",
+      "source_refs": [
+        "T:PCA-20260929:L670–730",
+        "Q:submission-format.md#1/#3"
+      ],
+      "stages": [
+        6
+      ],
+      "statement": "三类最终目录职责不变，专家证据含说明、唯一方法、标注 JSON、摘要和两条轨迹。最小充分交付；有用额外材料不因多交自动失败，须按 extra_allowed、merge_candidate、misplaced 或 obsolete_layout 分类。"
+    },
+    {
+      "evidence": "JSON 字段与正式摘要",
+      "id": "AR-043",
+      "reviewer": "程序＋专家",
+      "source_refs": [
+        "T:PCA-20260929:L722–807"
+      ],
+      "stages": [
+        6
+      ],
+      "statement": "expert_annotation 载题目、指标与同协议锚点及隔离声明；中文专家说明补双镜像 context/命令/不可变标识、目标 Harbor 版本/实跑、候选权限和 Hidden 授权方式，不自称平台通过。"
+    },
+    {
+      "evidence": "JSON、计时台账、训练/复验证据",
+      "id": "AR-044",
+      "reviewer": "程序＋专家",
+      "source_refs": [
+        "T:PCA-20260929:L572–586,809–827",
+        "Q:implementation-policy.md#QA16/QA21"
+      ],
+      "stages": [
+        6
+      ],
+      "statement": "run_summary 如实写两轨净有效时长与实际轮数；image 仍仅 Agent 镜像。例外资格键 non_training/short_iterations 不使用时为 null；采用 7h 例外时须同时在摘要与专家说明提交全部资格、闭环与干净重跑证据。Verifier 信息放专家说明。"
+    },
+    {
+      "evidence": "独立会话 QA 报告与包摘要",
+      "id": "AR-045",
+      "reviewer": "用户＋专家＋平台",
+      "source_refs": [
+        "T:PCA-20260929:L74–78,886–952",
+        "Q:SKILL.md#工作流程/#覆盖边界",
+        "Q:implementation-report.md"
+      ],
+      "stages": [
+        6
+      ],
+      "statement": "最终 QA 只对确定版本提交包取证并使用当前 schema 4 / research-quality-v3：先 G01–G03，再 QA01–QA21 和 H01–H06；QA15 固定跳过。旧口头豁免不能把适用项的 fail/manual 改写为通过，只有 Skill 明示允许的 not_applicable 可采用。"
+    },
+    {
+      "evidence": "report.json/md/txt、包哈希、逐项映射",
+      "id": "AR-046",
+      "reviewer": "用户＋专家",
+      "source_refs": [
+        "T:PCA-20260929:L74–78",
+        "Q:implementation-report.md"
+      ],
+      "stages": [
+        6
+      ],
+      "statement": "QA 报告须覆盖所有适用项与决定性子条件、证据路径及修复/验收条件；返修后新包必须重新独立质检，旧报告不能移植。"
+    },
+    {
+      "evidence": "任务卡、`task.toml`、训练/评测计时与资源记录",
+      "id": "AR-047",
+      "reviewer": "专家＋平台",
+      "source_refs": [
+        "T:PCA-20260929:L171–207,529–543"
+      ],
+      "stages": [
+        1,
+        2,
+        3
+      ],
+      "statement": "资源协议核对任务卡；教程给出的通用边界为 CPU ≤64C、单 Job 默认 GPU ≤8，单次改动到 Public/Dev 出分尽量 ≤2 小时。无法通过压缩达到目标时记录原因并交平台复核，不默默提高预算。"
+    },
+    {
+      "evidence": "Dockerfile、依赖、构建/启动记录与适配说明",
+      "id": "AR-048",
+      "reviewer": "专家＋平台",
+      "source_refs": [
+        "T:PCA-20260929:L288–324,455–464",
+        "Q:harbor-harness.md#H03",
+        "Q:source-alignment.md#本次明确裁定"
+      ],
+      "stages": [
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "statement": "两套镜像各自依赖自足；最终评分不依赖 Agent 临时安装、缓存或未移交文件。依赖可追溯、体积受控，真实目标 Harbor/profile 可用，不照搬题目样例资源。"
+    },
+    {
+      "evidence": "数据指纹、资产清单、实际可见集与平台交接记录",
+      "id": "AR-049",
+      "reviewer": "专家＋平台",
+      "source_refs": [
+        "T:PCA-20260929:L144–165,294,455–464,515–525"
+      ],
+      "stages": [
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "statement": "Train/Public/Dev 指纹与切分固定；公开及正式指标/约束对齐但分别绑定 split 与 B/U 标定，不把 Dev 值称 Hidden。私有资产按授权交付给 Verifier/平台，不能错误复制给 Agent。"
+    },
+    {
+      "evidence": "workspace/qa_exposure_manifest.json、镜像摘要、实际 Agent 视图清单",
+      "id": "AR-050",
+      "reviewer": "程序＋专家",
+      "source_refs": [
+        "Q:exposure-manifest.md",
+        "Q:harbor-harness.md#独立 Verifier 与公开/私有评测"
+      ],
+      "stages": [
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "statement": "当 Agent 实际可见面窄于作者完整包时，workspace 根须用 qa_exposure_manifest.json 记录可见路径、运行时可写路径、可信专属路径、双镜像摘要、从最终镜像与挂载生成的实际视图清单及核验 UID；私有材料必须不在 Agent 镜像层和挂载中。"
+    }
+  ],
+  "workflow_notices": [
+    {
+      "id": "U-20261003-01",
+      "source_kind": "user_notice",
+      "notice_text": "流程没有进行新项目git仓库的建立，不利于后续流程的审查与回退，建议在第一阶段进行合理git仓库的建立。",
+      "stages": [1],
+      "affected_rule_ids": [],
+      "implementation_op": "OP-1",
+      "decision": "新初始化任务阶段1.1要求范围确认与首个真实Git检查点；旧任务不静默追加门禁。工程策略，不宣称教程强制Git。"
+    },
+    {
+      "id": "U-20261003-02",
+      "source_kind": "user_notice",
+      "notice_text": "将流程制定的agent底座设定为codex可视化界面，而不是只输出json格式的日志，这样专家可以实时观察。",
+      "stages": [4],
+      "affected_rule_ids": ["AR-037", "AR-038", "AR-040"],
+      "implementation_op": "OP-4",
+      "decision": "采用原生终端TUI，仍须保留原始日志、净计时与同会话恢复；OP-4验收前继续exec_json，不能提前启用。"
+    },
+    {
+      "id": "U-20261003-03",
+      "source_kind": "user_notice",
+      "notice_text": "取消最后阶段的12小时容器检查，该部分质检不检查，流程中先不将该部分作为门禁。",
+      "stages": [2, 6],
+      "affected_rule_ids": ["AR-010"],
+      "implementation_op": "OP-2",
+      "decision": "用户要求取消专门浸泡与收据门禁；教程12h稳定性目标仍保留且不得声称未做测试已通过。OP-0仅记录，门禁移除待OP-2。"
+    },
+    {
+      "id": "U-20261003-04",
+      "source_kind": "user_notice",
+      "notice_text": "有些题目不需要训练，迭代很快，在进行迭代前，评估是否符合教程中的七小时时长例外，并设定正式迭代的有效市场下限。",
+      "stages": [4, 5, 6],
+      "affected_rule_ids": ["AR-038", "AR-039", "AR-041", "AR-044"],
+      "implementation_op": "OP-3",
+      "decision": "原通知的‘有效市场’按上下文理解为‘有效时长’。默认10h；符合完整教程条件的7h例外在启动前评估冻结，后续按证据到期关闭；OP-3验收前不允许实际启用。"
+    },
+    {
+      "id": "U-20261003-05",
+      "source_kind": "user_notice",
+      "notice_text": "最终复验允许在不影响结果的前提下，根据可用GPU数量进行并行，不强制要求串行。",
+      "stages": [5],
+      "affected_rule_ids": ["AR-041", "AR-047", "AR-049"],
+      "implementation_op": "OP-5",
+      "decision": "只改变独立运行的调度，不改变单次科学协议或资源合同；指标受资源竞争影响时串行或独占。"
+    },
+    {
+      "id": "U-20261003-06",
+      "source_kind": "user_notice",
+      "notice_text": "在独立质检skill通过后再进行压缩，不要在没通过前就压缩，同时压缩要打包最终提交包、其中的harbor_task仓和optimization_evidence仓。",
+      "stages": [6],
+      "affected_rule_ids": ["AR-042", "AR-045", "AR-046"],
+      "implementation_op": "OP-6",
+      "decision": "先目录组装与独立QA，再三包压缩；OP-6实施命令级门禁。6.5检查点按qa_verified、archives_verified、form_ready顺序，不要求先finish 6才能压缩。"
+    },
+    {
+      "id": "U-20261003-07",
+      "source_kind": "user_notice",
+      "notice_text": "完成最终打包后，总结研究子方向、优化面介绍、baseline描述及分数、reference描述及分数，以文件形式写入最终打包文件所在文件夹。",
+      "stages": [6],
+      "affected_rule_ids": ["AR-043"],
+      "implementation_op": "OP-7",
+      "decision": "生成中文填表信息.md并绑定当前接受包的事实；文件位于压缩输出目录之外层，不改动已经通过QA的提交包。"
+    }
+  ],
+  "schema_version": 1,
+  "skipped_checks": [
+    "QA15"
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "schema_version": 2,
+  "image": "sha256:REPLACE_WITH_IMAGE_DIGEST",
+  "codex_version": "0.147.0",
+  "harness": {
+    "version": "0.23.0",
+    "executable": "/REPLACE_WITH_LOCAL_HARBOR_VENV/bin/harbor",
+    "task": "harbor_task"
+  },
+  "public_files": [
+    {
+      "source": {
+        "path": "public/instruction.md",
+        "sha256": "REPLACE_WITH_SHA256"
+      },
+      "destination": "instruction.md"
+    }
+  ],
+  "starter_files": [
+    {
+      "source": {
+        "path": "starter/method.py",
+        "sha256": "REPLACE_WITH_SHA256"
+      },
+      "destination": "method.py"
+    }
+  ],
+  "prompt": {
+    "path": "agent_prompt.md",
+    "sha256": "REPLACE_WITH_SHA256"
+  },
+  "evaluation": {
+    "command": [
+      "/opt/task/evaluate"
+    ],
+    "smoke_args": [
+      "--smoke"
+    ],
+    "timeout_seconds": 600
+  },
+  "boundaries": {
+    "readable": [
+      "/workspace/instruction.md"
+    ],
+    "readonly": [
+      "/workspace/instruction.md",
+      "/workspace/starter",
+      "/opt/task/evaluate"
+    ],
+    "unreadable": [
+      "/tests",
+      "/opt/task/hidden"
+    ]
+  },
+  "resources": {
+    "cpus": 8,
+    "memory": "32g",
+    "gpus": {
+      "codex": "0",
+      "seed": "1"
+    }
+  }
+}

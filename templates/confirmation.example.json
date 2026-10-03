@@ -1,0 +1,7 @@
+{
+  "approved": false,
+  "approved_by": "<给出确认的用户/负责人>",
+  "scope": "stage-2",
+  "decision": "<实际明确确认的内容与适用范围>",
+  "evidence": [{"path": "records/user-confirmation.md", "sha256": "<原始确认记录的真实SHA-256>"}]
+}

@@ -1,0 +1,11 @@
+{
+  "reviewer": "<实际审阅专家>",
+  "conclusion": "<本阶段实际结论、冻结范围或剩余局限>",
+  "tutorial_review": {
+    "sha256": "<任务规则锁中 tutorial 的实际SHA-256>",
+    "sections": ["<实际阅读章节，可按 stage status 返回的范围定位>"],
+    "findings": "<原文差异、未提炼要求或确认无遗漏的具体结论>",
+    "resolution": "<如何处理；无差异则如实填写>"
+  },
+  "approval": {"path": "records/confirmation.json", "sha256": "<真实SHA-256>"}
+}

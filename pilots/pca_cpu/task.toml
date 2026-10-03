@@ -1,0 +1,29 @@
+schema_version = "1.4"
+artifacts = ["/workspace/solution"]
+
+[metadata]
+description = "Synthetic PCA separate-verifier probe; not annotation evidence"
+
+[environment]
+docker_image = "sha256:42c389a5008711df3f9f23794435bbf99ea2f217db685937cc0165ef2b0fa19a"
+cpus = 1
+memory_mb = 512
+gpus = 0
+build_timeout_sec = 120
+network_mode = "no-network"
+
+[agent]
+timeout_sec = 30
+
+[verifier]
+timeout_sec = 30
+environment_mode = "separate"
+user = "root"
+
+[verifier.environment]
+docker_image = "sha256:092fd7595d04409d5bf07b8e622805c00a9dab869fb6191817b08689d10ba4fb"
+cpus = 1
+memory_mb = 512
+gpus = 0
+build_timeout_sec = 120
+network_mode = "no-network"

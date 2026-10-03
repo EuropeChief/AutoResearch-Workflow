@@ -1,0 +1,4 @@
+{
+  "task_type": "S2",
+  "adapter": {"path": "workspace/harbor_task/environment/public_evaluate.py", "sha256": "<实际实现入口的SHA-256>"}
+}
