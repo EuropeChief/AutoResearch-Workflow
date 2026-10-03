@@ -19,7 +19,14 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('label')
     parser.add_argument('--allow-authorized-apparmor-exception', action='store_true')
+    parser.add_argument('--security-approval', type=Path,
+                        help='本次明确授权原文文件；不得自动复用历史许可')
     args = parser.parse_args()
+    if args.allow_authorized_apparmor_exception != (args.security_approval is not None):
+        parser.error('安全例外须同时提供 --allow-authorized-apparmor-exception 和 --security-approval')
+    if args.security_approval is not None and (not args.security_approval.is_file()
+            or args.security_approval.is_symlink() or not args.security_approval.read_text().strip()):
+        parser.error('本次安全授权须为非空普通文件')
     assert re.fullmatch('[a-zA-Z0-9_-]+', args.label)
     root = ROOT/'runs'/args.label
     root.mkdir(parents=True, exist_ok=False)
@@ -58,8 +65,7 @@ def main():
                           'docker_config': str(ROOT/'build/docker-config'), 'task': 'harbor_task'}}
     if args.allow_authorized_apparmor_exception:
         approval = root/'approval.md'
-        approval.write_text('2026-09-30，用户针对本次新版 Seed CPU 短联调确认：允许，仅限本次 CPU 短联调。\n'
-                            '仅 apparmor=unconfined + 既有受限 seccomp；保留非 root Codex、只读面、Codex 沙箱；不修改宿主、不用于正式题目。\n')
+        shutil.copy2(args.security_approval, approval)
         shutil.copy2(FLOW/'pilots/seed_cpu/docker-codex-nested.json', root/'seccomp.json')
         config['docker_security'] = {'apparmor': 'unconfined', 'seccomp': ref(root/'seccomp.json'),
                                      'approval': ref(approval)}

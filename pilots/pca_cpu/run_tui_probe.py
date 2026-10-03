@@ -165,11 +165,20 @@ def probe(runtime, directory, budget):
     return report
 
 
+def validate_scope(config, allow_security_exception):
+    _require(all(gpu is None for gpu in config['resources']['gpus'].values()),
+             'LIVE_SCOPE', '本次仍仅授权 CPU，不允许 GPU')
+    _require(bool(config.get('docker_security')) == allow_security_exception,
+             'LIVE_SCOPE', '安全例外必须显式启用并绑定 Runtime 已核验的本次授权/限定 seccomp')
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--task-root', type=Path, required=True)
     parser.add_argument('--budget-seconds', type=int, default=1200)
     parser.add_argument('--allow-live', action='store_true', required=True)
+    parser.add_argument('--allow-security-exception', action='store_true',
+                        help='仅在已明确授权并冻结 docker_security 时使用')
     args = parser.parse_args()
     root = args.task_root.resolve()
     _require(root.is_relative_to(Path(__file__).resolve().parent/'runs'),
@@ -177,9 +186,7 @@ def main():
     _require(0 < args.budget_seconds <= 1200, 'LIVE_BUDGET', '短测累计预算须为 1–1200 秒')
     runtime = Runtime(root)
     runtime._load()
-    _require(not runtime.config.get('docker_security') and
-             all(gpu is None for gpu in runtime.config['resources']['gpus'].values()),
-             'LIVE_SCOPE', '本次不授权安全例外或 GPU')
+    validate_scope(runtime.config, args.allow_security_exception)
     spec = runtime.config['harness']
     validate_launch(runtime)
     card = tomllib.loads((root/spec['task']/'task.toml').read_text())
@@ -206,7 +213,8 @@ def main():
                  'source': [{'path': str(p.relative_to(FLOW)), 'sha256': _sha256(p)} for p in
                             [Path(__file__), Path(__file__).with_name('tui_probe_agent.py'),
                              *sorted((FLOW/'autoresearch_flow').glob('*.py'))]],
-                 'scope': 'Seed CPU only; no security exception, GPU, or Hidden scoring'})
+                 'scope': 'Seed CPU only; no GPU or Hidden scoring',
+                 'security_exception': runtime.config.get('docker_security')})
     env = {**os.environ, 'PYTHONPATH': str(FLOW)}
     if spec.get('docker_config'):
         env['DOCKER_CONFIG'] = spec['docker_config']

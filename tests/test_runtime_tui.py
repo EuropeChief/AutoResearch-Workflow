@@ -1,16 +1,18 @@
 """Native rollout and terminal contracts; synthetic, no model or Docker calls."""
 import datetime as dt
+import io
 import json
 from pathlib import Path
 import tempfile
 import time
+import tomllib
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
 from autoresearch_flow.runtime_events import EventClock
 from autoresearch_flow.core import FlowError
-from autoresearch_flow.runtime import public_evaluation
+from autoresearch_flow.runtime import model_config, public_evaluation
 from autoresearch_flow.runtime_tui import NativeEvents, RolloutTail, TmuxTerminal, codex_command
 
 THREAD = '11111111-1111-1111-1111-111111111111'
@@ -146,6 +148,17 @@ class RolloutTailTests(unittest.TestCase):
 
 
 class TerminalTests(unittest.TestCase):
+    def test_prepared_config_trusts_only_container_solution_without_weakening_permissions(self):
+        config = tomllib.loads(model_config({'model': 'synthetic', 'reasoning_effort': 'high',
+                                            'auth_ref': {'kind': 'codex_auth_json'}}))
+        self.assertEqual(config.get('projects'), {'/workspace/solution': {'trust_level': 'trusted'}})
+        self.assertEqual(config['default_permissions'], 'autoresearch')
+        self.assertEqual(config['approval_policy'], 'never')
+        permissions = config['permissions']['autoresearch']
+        self.assertEqual(permissions['filesystem']['/codex/auth.json'], 'deny')
+        self.assertEqual(permissions['filesystem']['/workspace/solution'], 'write')
+        self.assertFalse(permissions['network']['enabled'])
+
     def test_native_resume_detached_terminal_and_readonly_observer(self):
         calls = []
         def run(args, **kwargs):
@@ -184,6 +197,68 @@ class TerminalTests(unittest.TestCase):
 
 
 class PilotEvidenceTests(unittest.TestCase):
+    def test_security_exception_needs_explicit_opt_in_and_still_rejects_gpu(self):
+        from pilots.pca_cpu.run_tui_probe import validate_scope
+        config = {'resources': {'gpus': {'codex': None, 'seed': None}}}
+        validate_scope(config, False)
+        with self.assertRaises(FlowError):
+            validate_scope(config, True)
+        config['docker_security'] = {'apparmor': 'unconfined', 'seccomp': {}, 'approval': {}}
+        with self.assertRaises(FlowError):
+            validate_scope(config, False)
+        validate_scope(config, True)  # Frozen approval/profile hashes are checked by Runtime._load.
+        config['resources']['gpus']['seed'] = '0'
+        with self.assertRaises(FlowError):
+            validate_scope(config, True)
+
+    def test_prepare_does_not_fabricate_historical_security_approval(self):
+        from pilots.pca_cpu import prepare_runtime
+        with tempfile.TemporaryDirectory() as directory, \
+             patch.object(prepare_runtime, 'ROOT', Path(directory)), \
+             patch('sys.argv', ['prepare_runtime.py', 'synthetic', '--allow-authorized-apparmor-exception']), \
+             patch('sys.stderr', new_callable=io.StringIO):
+            with self.assertRaises(SystemExit) as caught:
+                prepare_runtime.main()
+            self.assertEqual(caught.exception.code, 2)
+            self.assertFalse((Path(directory)/'runs').exists())
+
+    def test_prepare_uses_current_approval_verbatim_and_rejects_invalid_files(self):
+        from pilots.pca_cpu import prepare_runtime
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            approval = root/'approval.md'
+            approval.write_text('本次合成授权，仅用于此测试。\n')
+            blank = root/'blank.md'
+            blank.write_text(' \n')
+            link = root/'link.md'
+            link.symlink_to(approval)
+            arguments = ['prepare_runtime.py', 'synthetic', '--allow-authorized-apparmor-exception',
+                         '--security-approval']
+            for invalid in (blank, link, root/'absent.md'):
+                with self.subTest(invalid=invalid.name), patch.object(prepare_runtime, 'ROOT', root), \
+                     patch('sys.argv', arguments+[str(invalid)]), patch('sys.stderr', new_callable=io.StringIO):
+                    with self.assertRaises(SystemExit) as caught:
+                        prepare_runtime.main()
+                    self.assertEqual(caught.exception.code, 2)
+                    self.assertFalse((root/'runs').exists())
+            (root/'environment/starter').mkdir(parents=True)
+            (root/'environment/starter/method.py').write_text('pass\n')
+            (root/'tests').mkdir()
+            (root/'instruction.md').write_text('Synthetic CPU task\n')
+            (root/'task.toml').write_text('[environment]\ndocker_image="agent"\n'
+                                         '[verifier.environment]\ndocker_image="verifier"\n')
+            with patch.object(prepare_runtime, 'ROOT', root), \
+                 patch('sys.argv', arguments+[str(approval)]), \
+                 patch('subprocess.check_output', return_value='sha256:'+'a'*64), \
+                 patch.object(prepare_runtime, 'TaskStore'), patch.object(prepare_runtime, 'Runtime'), \
+                 patch('sys.stdout', new_callable=io.StringIO):
+                prepare_runtime.main()
+            result = root/'runs/synthetic'
+            self.assertEqual((result/'approval.md').read_bytes(), approval.read_bytes())
+            config = json.loads((result/'runtime.json').read_text())
+            self.assertEqual(config['docker_security']['approval'],
+                             {'path': 'approval.md', 'sha256': prepare_runtime._sha256(approval)})
+
     def test_error_and_later_success_in_one_poll_cannot_reuse_failed_turn_result(self):
         import test_w3_contract as w3
         from autoresearch_flow.harbor_runtime import HarborExecBackend

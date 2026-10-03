@@ -160,7 +160,10 @@ def model_config(track):
         lines.extend(['model_provider = "autoresearch"', '[model_providers.autoresearch]',
                       'name = "AutoResearch configured provider"', f"base_url = {q(track['base_url'])}",
                       'wire_api = "responses"', 'env_key = "AUTORESEARCH_MODEL_KEY"'])
-    lines.extend(['[shell_environment_policy]', 'inherit = "all"',
+    # The runtime owns this exact container workspace. Native TUI must not
+    # prompt again on resume; project trust does not replace sandbox permissions.
+    lines.extend(['[projects."/workspace/solution"]', 'trust_level = "trusted"',
+                  '[shell_environment_policy]', 'inherit = "all"',
                   'include_only = ["PATH", "LANG", "LC_ALL", "TERM", "CUDA_VISIBLE_DEVICES", "NVIDIA_VISIBLE_DEVICES", "NVIDIA_DRIVER_CAPABILITIES"]',
                   '[permissions.autoresearch.filesystem]', '"/" = "read"', '"/codex/auth.json" = "deny"',
                   '"/workspace/solution" = "write"', '"/expert_evidence" = "write"', '"/tmp" = "write"',
