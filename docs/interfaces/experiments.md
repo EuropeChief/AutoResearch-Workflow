@@ -1,10 +1,10 @@
-# W2：实验与评分工具
+# 实验与评分工具
 
 当前实现是正式实验记录与数值/证据检查工具。训练、推理及原始指标计算由题目适配层执行；工具根据原始结果复算，不替专家确认方法代表性、训练真实性或 U 的科学依据。科研审查结论与用户冻结确认仍是必要环节。
 
 ## 可复用操作
 
-统一入口为 `python3 AutoResearch新流程/cli.py --format json experiment …`，每个命令都显式指定 `--task-root`。题目须已通过 W1 初始化，来源无漂移。
+统一入口为 `python3 "$FLOW_ROOT/cli.py" --format json experiment …`，每个命令都显式指定 `--task-root`。题目须已通过 状态工具 初始化，来源无漂移。
 
 | 操作 | 参数 | 行为 |
 |---|---|---|
@@ -20,7 +20,7 @@
 
 账本存入题目 `.autoresearch-flow/experiments.json`，用文件锁串行化写入，支持不同 GPU 作业并行登记。只读 report 不改状态。协议修订或增加 seed 保留历史，并把已通过的阶段 2 及后续结论标记待重验。
 
-这些工作文件是制作过程的内部格式，最终提交的 `result.json` / `comparison_summary.json` 仍遵从教程；由 W4 进行格式整理和包内路径映射，不要求把账本和额外实验计划全部提交。
+这些工作文件是制作过程的内部格式，最终提交的 `result.json` / `comparison_summary.json` 仍遵从教程；由交付工具进行格式整理和包内路径映射，不要求把账本和额外实验计划全部提交。
 
 ## 输入合同
 
@@ -63,7 +63,7 @@
 
 角色为 `baseline / reference / best_method`。方法索引应覆盖影响方法结果的源码与配置。同协议同角色必须使用相同方法版本。只有已登记的 `infra_error` 可用 `retry_of` 明确重试；旧失败日志仍参与完整性检查。质量门失败、数值失败等不能被重试字段悄悄隐藏，修正方法后应新建正式组。
 
-题目可信执行入口应产生原始结果文件。W2 的 `result-envelope.json` 携带同样的规范化字段并附证据索引；`evidence.result` 指向独立原始记录，避免自引用哈希。当前适配合同要求原始记录包含 envelope 中除 `evidence` 外的同名字段，程序逐项交叉核对：
+题目可信执行入口应产生原始结果文件。实验工具 的 `result-envelope.json` 携带同样的规范化字段并附证据索引；`evidence.result` 指向独立原始记录，避免自引用哈希。当前适配合同要求原始记录包含 envelope 中除 `evidence` 外的同名字段，程序逐项交叉核对：
 
 - `status`：succeeded / hard_gate_failure / format_error / timeout / resource_exceeded / infra_error / failed。已知失败按类型登记；failed 用于其他未细分失败，不代替已知分类。除 succeeded 外均不进入正常聚合，CLI 返回非零退出码；只有 infra_error 允许显式登记基础设施重试。
 - start 返回的 `seed / role / method_sha256 / protocol_sha256 / seed_plan_sha256`。
@@ -104,8 +104,8 @@
 
 - `seeds` 必须等于协议全集，不因示例固定为 5；`timeout_seconds` 是本次计划的**单 seed** 上限，示例不是通用预算规定。CPU 使用 `gpu_ids=[] / gpus_per_run=0`。授权文件保留真实允许的卡、并发和适用范围，程序核引用，不替用户授予资源权限。
 - `adapter_files` 包含影响执行的全部适配器源码与配置。队列复制适配器和当前最终方法到各 seed 的独立目录；新进程、独立工作目录、原始 seed 和 `PYTHONHASHSEED`（取 32 位）分开记录，不共享本题已训练终态。适配器仍须显式设置 Python/NumPy/框架 RNG，并遵守 `training_origin=initialization`；环境变量本身不能证明训练独立。
-- 命令是 argv，只有 `{adapter_root}`、`{request}` 两个替换变量，不使用 shell。request 包含 W2 `run` 绑定、完整 `protocol`、方法/输出目录、分配设备、源码副本哈希和计划指纹。适配器必须同步等待全部子作业完成，不得启动脱离监督的后台作业；Docker/Harbor 适配器也必须在超时或信号中断时清理**自己的**容器。
-- 适配器写 `adapter-result.json`：沿用上述 W2 结果字段（execution 由监督器实际观测补入），额外写 `devices`，CPU 为 `["cpu"]`、GPU 为实际使用的 UUID 列表。GPU 适配器应实际检查可见设备与 CUDA 运算，并将分配 UUID 显式传给 Docker/Harbor，不能认为宿主 `CUDA_VISIBLE_DEVICES` 会自动配置容器。训练型增加 `artifacts={"model":"model.bin","artifact":"artifact.json","reload_log":"reload.log"}`，均为本次目录内相对路径。适配器声明不替代专家沿运行日志的真实性检查。
+- 命令是 argv，只有 `{adapter_root}`、`{request}` 两个替换变量，不使用 shell。request 包含实验工具`run` 绑定、完整 `protocol`、方法/输出目录、分配设备、源码副本哈希和计划指纹。适配器必须同步等待全部子作业完成，不得启动脱离监督的后台作业；Docker/Harbor 适配器也必须在超时或信号中断时清理**自己的**容器。
+- 适配器写 `adapter-result.json`：沿用上述实验工具结果字段（execution 由监督器实际观测补入），额外写 `devices`，CPU 为 `["cpu"]`、GPU 为实际使用的 UUID 列表。GPU 适配器应实际检查可见设备与 CUDA 运算，并将分配 UUID 显式传给 Docker/Harbor，不能认为宿主 `CUDA_VISIBLE_DEVICES` 会自动配置容器。训练型增加 `artifacts={"model":"model.bin","artifact":"artifact.json","reload_log":"reload.log"}`，均为本次目录内相对路径。适配器声明不替代专家沿运行日志的真实性检查。
 - GPU 只从授权列表中选择无观测计算作业的设备；同用户队列用设备锁避免同卡重叠，忙卡不抢占。硬件敏感时限制同型号/驱动并冻结实际 UUID；时延/吞吐敏感时要求串行，并由专家落实外部争用控制。本地观察与互斥不等同于独占共享服务器。CPU 线程数、每次 GPU 数、协议 batch/步数/数据/精度/评分不得为了并行而更改。
 
 在流程根执行：
@@ -117,7 +117,7 @@ python3 cli.py --format json experiment report --task-root <题目目录> --prot
 
 长任务可在专家的 tmux 中前台运行。卡忙且没有本队列活跃进程时返回 `waiting_for_resources` 和待执行 seed，稍后用**同一命令、同一计划**继续；`running` 表示发现上次监督进程遗留的活跃作业，绝不重复启动。完成由账本全 seed 检查决定，不看某时刻 GPU 空闲。
 
-每个正常启动的 seed 保留 `launch-intent.json`、`request.json`、`run.log`、实际 `execution.json`、未经改写的 `adapter-result.json`、规范化 `result.receipt.json`、用于断点入账的 `ledger-result.json` 及训练附件；启动前中断时不补造尚未产生的请求或结果。恢复先对齐启动意图和 W2 账本，避免两者写入之间中断后遗漏运行。退出码不可得时如实记 null，不从结果文件推断成功；日志和原结果不覆盖。启动失败或监督进程丢失状态记 `infra_error`；非零方法退出记 failed、超时记 timeout、输出错误记 format_error，均不进入均值。只有已入账的基础设施失败可显式 `--retry-infra <run_id>`，旧尝试保留；适配器不能自行把方法失败标为可重试 infra_error。其他真实外部异常需专家给出证据按既有 W2 手动登记流程处理，不由错误字符串猜测。
+每个正常启动的 seed 保留 `launch-intent.json`、`request.json`、`run.log`、实际 `execution.json`、未经改写的 `adapter-result.json`、规范化 `result.receipt.json`、用于断点入账的 `ledger-result.json` 及训练附件；启动前中断时不补造尚未产生的请求或结果。恢复先对齐启动意图和实验工具账本，避免两者写入之间中断后遗漏运行。退出码不可得时如实记 null，不从结果文件推断成功；日志和原结果不覆盖。启动失败或监督进程丢失状态记 `infra_error`；非零方法退出记 failed、超时记 timeout、输出错误记 format_error，均不进入均值。只有已入账的基础设施失败可显式 `--retry-infra <run_id>`，旧尝试保留；适配器不能自行把方法失败标为可重试 infra_error。其他真实外部异常需专家给出证据按既有实验工具手动登记流程处理，不由错误字符串猜测。
 
 这些内部工作文件按证明需要整理，不要求整套队列目录进入提交包。CPU 实进程和模拟设备合同测试已覆盖队列行为；真实 GPU 小探针尚待独立授权与动态验收，不以离线测试宣称已通过。
 
@@ -125,7 +125,7 @@ python3 cli.py --format json experiment report --task-root <题目目录> --prot
 
 PCA 教程“统一术语”明确：默认 Baseline 是未经修改、可运行 Starter 的正式协议结果。若 Starter 只是 Scaffold、不提供 method，则另交可执行的合理朴素 Baseline，并记录源码、入口及与初始方案的映射；评分零点必须来自该正式 Baseline 的真实聚合结果，不得另选更弱锚点。此例外不豁免 B01–B08 的合理性审查。
 
-Public/Dev 与最终 Verifier 必须对齐指标定义、方向与硬约束，但可使用不同数据。各自的协议、聚合结果及锚点来源需明确；不能直接把 Public/Dev 结果称作 Hidden 结果。阶段 3 冻结评分后，还须经目标 Harbor 的独立 Verifier 实际出分；没有官方 Hidden 权限时使用授权同接口数据自验并保留平台待验说明。接口与证据格式见 [PCA 环境合同](PCA_ENVIRONMENT.md)。
+Public/Dev 与最终 Verifier 必须对齐指标定义、方向与硬约束，但可使用不同数据。各自的协议、聚合结果及锚点来源需明确；不能直接把 Public/Dev 结果称作 Hidden 结果。阶段 3 冻结评分后，还须经目标 Harbor 的独立 Verifier 实际出分；没有官方 Hidden 权限时使用授权同接口数据自验并保留平台待验说明。接口与证据格式见 [PCA 环境合同](environment.md)。
 
 report 使用所有正式 seed，不抽样，σ 使用 Baseline 原始指标的样本标准差（n−1）。不足 3σ 或 Δ≤0 阻止通过；3σ–5σ 返回 needs_review，按教程增加重复并标记平台复核；≥5σ 为强数值证据。确定性单次任务的标准差为 null；样本标准差为 0 仍要求 Δ>0。
 
@@ -133,6 +133,4 @@ score-contract 包含 protocol_sha256、upper_bound、metric_ceiling、rationale
 
 review.json 绑定 protocol_sha256、experiment_sha256、baseline_method_sha256；阶段 3 再绑定 reference_method_sha256。checks 必须恰含 B01–B08，每项均含 status、reviewer、rationale、非空 evidence。status 为 pass/fail/manual/deferred。只有 B03/B07 的跨方法部分可在阶段 2 deferred，须 current_part_passed=true、due_stage=3、pending_requirement 说明；阶段 3 不再允许 deferred。程序只返回 ready_for_expert_confirmation，不代签合理性或推进阶段。
 
-## 当前实现范围
-
-W2 完成实验与评分的可调用合同。阶段子步骤的推进、用户冻结确认已由 [W5 状态编排](STAGE_STATE.md) 接入；W2 不自行把科学阶段标记为通过。运行环境/凭据由 W3 实现，最终证据格式与独立 QA 交接由 W4 实现，W5 完成操作规范与真实联调。
+阶段推进和用户冻结确认通过 [状态登记](state.md) 完成；实验账本与数值检查不会自行批准科学结论。

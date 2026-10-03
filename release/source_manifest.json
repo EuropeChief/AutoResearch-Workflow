@@ -12,98 +12,28 @@
     },
     {
       "mode": 436,
-      "path": "DECOUPLING.md",
-      "sha256": "cdc8b334fd0ea6cf8965453cdd8110ae678d9bb54ddd3d89eed1970cdec14332"
-    },
-    {
-      "mode": 436,
-      "path": "DEPLOYMENT.md",
-      "sha256": "d44503ac6782f8e51d3e30998f564630fa198ee790a7c854ce56cb64f3e8e6c6"
-    },
-    {
-      "mode": 436,
-      "path": "GIT_MANAGEMENT.md",
-      "sha256": "12489fb763335909e8f54f38758aa5fc485d2f445d6a5fe4c49d9ad4ebb8749b"
+      "path": "AGENTS.md",
+      "sha256": "e181a23adaee912e9d9245f905b05c17e6af4e3ef07b6c7640938f97149a4e99"
     },
     {
       "mode": 436,
       "path": "MAINTAINING.md",
-      "sha256": "a0a8d5b2204ec55d9d9b8bb2902c3455cfeba0daa85f93d73f177f0e1c23d1c4"
-    },
-    {
-      "mode": 436,
-      "path": "OP01_POLICY_GIT.md",
-      "sha256": "ccd53a9cda812ffafce438ee7181eb7534a14d19ac1bb18219fab1c155224945"
-    },
-    {
-      "mode": 436,
-      "path": "OP02_STABILITY.md",
-      "sha256": "94b6b7e7b90ef52b59d038d5a371e0b5c4b2f4e5a8c90f5dd22fd67f7599c1ed"
-    },
-    {
-      "mode": 436,
-      "path": "OP03_DURATION.md",
-      "sha256": "fe1ecaf0ee86b1d476ab8975ed418b465820d6dcad32d51e6845b994d48d1cd1"
-    },
-    {
-      "mode": 436,
-      "path": "PCA_ENVIRONMENT.md",
-      "sha256": "6fec68cbe8a955c9d8a3acaed28a68b168b4d67114d9e9c7af7f51b4f9017cfb"
-    },
-    {
-      "mode": 436,
-      "path": "QA_V031_ALIGNMENT.md",
-      "sha256": "c3b7e9af84075d28de74bf93cd17a938cbb26b14754cfdd65d354e7ae85655b0"
+      "sha256": "bb19ff7a14689cb0d302a3fe3101f140b277e5c97210da39abd9b7f7bd51f2d5"
     },
     {
       "mode": 436,
       "path": "README.md",
-      "sha256": "35b6e9b13f5fdc7e97e70982725a1b626e33f0273ccb4debfea58f78daa94d5d"
+      "sha256": "008860030368abc4bb24562d5b18cf840e3ecfced654b56e619e1d4a4e873db3"
     },
     {
       "mode": 436,
       "path": "RELEASE.md",
-      "sha256": "11aedffe7fd85fe79b792b591fe31f4444220c65e1c0ce35169e7028be4077b5"
-    },
-    {
-      "mode": 436,
-      "path": "SIX_STAGES.md",
-      "sha256": "8e796c4151be41b23b3191a2c847e4d7a6f5453a8b5ce425f68a169666ce15e3"
-    },
-    {
-      "mode": 436,
-      "path": "STAGE_STATE.md",
-      "sha256": "8b144d6aedae8402b03cd240923d1735c63524d4265ecbe9fed752bcca65d218"
+      "sha256": "eaf4cd631d1447a2b570edd2505944982fcb720029f82d72140b6986fbcd2d98"
     },
     {
       "mode": 436,
       "path": "START_HERE.md",
-      "sha256": "2f092d1739167d084d666ee41fd229b5f29535b51ca1958fd0fb0921bf09d3b6"
-    },
-    {
-      "mode": 436,
-      "path": "TASK_ADAPTER.md",
-      "sha256": "d9c1d5c64955655ea97f35fff39e0ed496a7a82654d1f16a7754566195010def"
-    },
-    {
-      "mode": 436,
-      "path": "TROUBLESHOOTING.md",
-      "sha256": "2a5ec5623a390df3eaf0c42420d102cfaedce32fbae01b2fd0fb33b0f157bca4"
-    },
-    {
-      "mode": 436,
-      "path": "W2_EXPERIMENTS.md",
-      "sha256": "4e541ed046cfebd1549ea3a025a743148d73572decea36d0c7b30e4857b5fe6b"
-    },
-    {
-      "mode": 436,
-      "path": "W3_RUNTIME.md",
-      "sha256": "72e7078963ae21ab3a0a5bec3cfd6f8e4f71d287fdf21c80448b38826a691db0"
-    },
-    {
-      "mode": 436,
-      "path": "W4_DELIVERY.md",
-      "sha256": "e5c4ea077248d29b2f8462f267856055b3db3662b9f164d63438fd7a4472c7fe"
+      "sha256": "6395f2f408e275b11439551459549215ed416e5dc7f2b3ef9e10fe02e933f34d"
     },
     {
       "mode": 436,
@@ -158,7 +88,7 @@
     {
       "mode": 436,
       "path": "autoresearch_flow/policies.py",
-      "sha256": "9b48dcc2c91392944e8cd419139734b61906d768fa10399173efbdecb3fe5678"
+      "sha256": "492ff354e4664df3712eea0d8d983e4cb1176a505d293bd4585bd5481f6e265e"
     },
     {
       "mode": 436,
@@ -217,6 +147,56 @@
     },
     {
       "mode": 436,
+      "path": "docs/interfaces/delivery.md",
+      "sha256": "222d1349cf077acac440e3d582c445ffedaf3f63b807776f71f0ab403bb6184f"
+    },
+    {
+      "mode": 436,
+      "path": "docs/interfaces/duration.md",
+      "sha256": "25440c770db79e334ed19e8b953eeb959602b75ba1ba106e6ed53507602d3f45"
+    },
+    {
+      "mode": 436,
+      "path": "docs/interfaces/environment.md",
+      "sha256": "aee88e797b304fefd22c78a0b5e9df307ae884cb14092d2b9d29145320be7982"
+    },
+    {
+      "mode": 436,
+      "path": "docs/interfaces/experiments.md",
+      "sha256": "871a6b8ee4d088c844904be738fc3e0a1d5542370e61946743122f418bbb09e3"
+    },
+    {
+      "mode": 436,
+      "path": "docs/interfaces/runtime.md",
+      "sha256": "e0487980f8b376b9f5ffbe25351a48113a8d2c6cef6c74e8f6b1689a85f6c83a"
+    },
+    {
+      "mode": 436,
+      "path": "docs/interfaces/state.md",
+      "sha256": "c6154204c40326625308fe8b22f4154d99e10a8c7b55f66c9b1b7db684d1a8a0"
+    },
+    {
+      "mode": 436,
+      "path": "docs/interfaces/task-adapter.md",
+      "sha256": "5dffb9d03d7da371e2842e35f4601408073435e30347580e1f19354502159cf9"
+    },
+    {
+      "mode": 436,
+      "path": "docs/interfaces/task-git.md",
+      "sha256": "037fe434e2b277323a540e6f915c4f4b22c268993463e11b726afcdf07fe00e2"
+    },
+    {
+      "mode": 436,
+      "path": "docs/stages.md",
+      "sha256": "2c6c8364cd5820403b1c032515a34c0de953558199d77ab82d365c017f4537a4"
+    },
+    {
+      "mode": 436,
+      "path": "docs/troubleshooting.md",
+      "sha256": "6d6ae10a134a0a82d28963c4bf120463477e07ec36e5bc6824db932302182ab5"
+    },
+    {
+      "mode": 436,
       "path": "model_profiles/codex.example.toml",
       "sha256": "7fbf236263a4dece33f2672f13e69b9d4c5dff287eccc657d0c11ad0959fd059"
     },
@@ -228,12 +208,12 @@
     {
       "mode": 436,
       "path": "pilots/pca_cpu/README.md",
-      "sha256": "29e1eaab841e2a97838f75b84d9de15cba15647317d391c812b7b6f5129d28e9"
+      "sha256": "f11d8a849b91dc5fe62ac1872b1b3a4ad11b51e1462fe8e232b1508157094caf"
     },
     {
       "mode": 436,
       "path": "pilots/pca_cpu/TUI_PROBE.md",
-      "sha256": "55fd261d13f78f1c59c47d0f8614e963ead607e58b3b1420864755960ae1152e"
+      "sha256": "9dbfabf0cc3a56e4b01a0eec69d466d3e077f56f7efa22ce3b72a2dfb3e23298"
     },
     {
       "mode": 436,
@@ -258,7 +238,7 @@
     {
       "mode": 436,
       "path": "pilots/pca_cpu/prepare_runtime.py",
-      "sha256": "596281aacd5d7b55d7dd4bd9dcaf459f0a41c6bed114c955fd27d527d25cdef0"
+      "sha256": "ce04764c63ce6759bc6cf1cfae9e3ace5bcfdfb6a9e7326261126046763ed48a"
     },
     {
       "mode": 436,
@@ -284,6 +264,16 @@
       "mode": 436,
       "path": "pilots/pca_cpu/run_tui_probe.py",
       "sha256": "f8ea524302d0440c12fab3fae7395d9e34194b55f91eb479864b507400081d2f"
+    },
+    {
+      "mode": 436,
+      "path": "pilots/pca_cpu/security/docker-codex-nested.json",
+      "sha256": "e8a7c6358a03cee3852ef45d3a68b849f1515884e660fa0f27205b1c14366f39"
+    },
+    {
+      "mode": 436,
+      "path": "pilots/pca_cpu/security/docker-default-24.0.7.json",
+      "sha256": "73acc23de274491d5a424ba5b01c706724a0096244598bee87c9d1602015645a"
     },
     {
       "mode": 436,
@@ -322,76 +312,6 @@
     },
     {
       "mode": 436,
-      "path": "pilots/seed_cpu/.gitignore",
-      "sha256": "f9b796684df4e8620ab05ff097837b2846463bf16a590a17ac330dc9f4778f3c"
-    },
-    {
-      "mode": 436,
-      "path": "pilots/seed_cpu/Dockerfile",
-      "sha256": "e2f0b6a292f749ed4252168de7d19b04945b543c6d8115fe858c6a261a8b84c9"
-    },
-    {
-      "mode": 436,
-      "path": "pilots/seed_cpu/README.md",
-      "sha256": "790dd0bc8779859032f00b57eca7fa7333b2f7f49eca2c04fee2632991c54e05"
-    },
-    {
-      "mode": 436,
-      "path": "pilots/seed_cpu/agent_prompt.md",
-      "sha256": "c4ebfccd51574e87ef03369787daa1fd7180b863b29b119ed21cad4335ebf457"
-    },
-    {
-      "mode": 436,
-      "path": "pilots/seed_cpu/approval.md",
-      "sha256": "9c12dc42be5ce2922b1b0dd932fba8ea372185a8f04d90d17b5f75f64387df40"
-    },
-    {
-      "mode": 436,
-      "path": "pilots/seed_cpu/docker-codex-nested.json",
-      "sha256": "e8a7c6358a03cee3852ef45d3a68b849f1515884e660fa0f27205b1c14366f39"
-    },
-    {
-      "mode": 436,
-      "path": "pilots/seed_cpu/docker-default-24.0.7.json",
-      "sha256": "73acc23de274491d5a424ba5b01c706724a0096244598bee87c9d1602015645a"
-    },
-    {
-      "mode": 436,
-      "path": "pilots/seed_cpu/evaluate.py",
-      "sha256": "2b5dbafd79c6ca9827dd2170a31f3434e96238bfc63efa00cc7de7aaee72989f"
-    },
-    {
-      "mode": 436,
-      "path": "pilots/seed_cpu/exercise.py",
-      "sha256": "fe398782b6e76d5ecf114cd706d0c98677230e5f23cc93d3071bdbb4b0dee866"
-    },
-    {
-      "mode": 436,
-      "path": "pilots/seed_cpu/instruction.md",
-      "sha256": "1f77196191d526e354cde5cc05014ff941322d4d7cc1528115959d15a2fea3a0"
-    },
-    {
-      "mode": 436,
-      "path": "pilots/seed_cpu/method.py",
-      "sha256": "66bd043443ef2e7a0c15358ffed9cb33fed43ed8fcdda68a4b08aecd71fb0a84"
-    },
-    {
-      "mode": 436,
-      "path": "pilots/seed_cpu/prepare.py",
-      "sha256": "8ad6b4251e53df9a924afdee0b9e84fbe1bcee7663fa5a249fc70e1e56cc0e42"
-    },
-    {
-      "mode": 436,
-      "path": "pilots/seed_cpu/release_probe.py",
-      "sha256": "1be0527d8589b0aa93818e5e621b94513e119d972e353c33f85ec0100f4a42d9"
-    },
-    {
-      "mode": 436,
-      "path": "pilots/seed_cpu/verify.py",
-      "sha256": "a247c46e2c01ea1e76cc2f207c9816ad744246ec51e32f3b679f9fc4840aec89"
-    },
-    {
-      "mode": 436,
       "path": "rules/catalog.json",
       "sha256": "88758e2e78340495ebfb70711265cd16a4833ce3ada3b4951fd5fa9c10d9ae62"
     },
@@ -423,7 +343,7 @@
     {
       "mode": 436,
       "path": "rules/provenance/README.md",
-      "sha256": "97961197a3a4bd0245e2ef49b79cc2fcb56a587323101776194582ad60d202fa"
+      "sha256": "d2a73b63a76f527670f18b2df3f4a998b33035da2ee73a444edd81b906430694"
     },
     {
       "mode": 420,
@@ -578,7 +498,7 @@
     {
       "mode": 436,
       "path": "skills/autoresearch-workflow/SKILL.md",
-      "sha256": "af5a08098ecc012a59bc9d7a16dbe3a843877a4421c3f354c8c4410e75ad1b2f"
+      "sha256": "c073739cced1f65b9dc5ad043576681349bfbe41f86b1b848bfd675454d8d06e"
     },
     {
       "mode": 436,
@@ -673,7 +593,7 @@
     {
       "mode": 436,
       "path": "templates/workflow-policy.example.json",
-      "sha256": "0041663d1e0f09b5230606599d3af6622915416605f017771fb159243db3d35c"
+      "sha256": "e6d7146f7d96d8761bdd07fc68db885e62dd1a8e836f9faa6fc43ad1abc58fdc"
     },
     {
       "mode": 436,
@@ -688,7 +608,7 @@
     {
       "mode": 436,
       "path": "tests/test_design_decoupling.py",
-      "sha256": "22b6068a0a30c5d78ac4aa2cbeafa9cba13b7edb8c506ed92bab04239ccab5ce"
+      "sha256": "927b647543e8bdb28ccd60eeaed8dda8ca1f90c3aa676f8d40a78a9ef8b32119"
     },
     {
       "mode": 436,
@@ -708,12 +628,12 @@
     {
       "mode": 436,
       "path": "tests/test_op01_policy_git.py",
-      "sha256": "c228f42c7c42cd61344d937a49c41873408bd21011e5be5543946098c5288353"
+      "sha256": "9d426c9fe284d6c0686dad497a41dab9ccc4be55a6b78e822e7865533f0b31ee"
     },
     {
       "mode": 436,
       "path": "tests/test_op02_stability.py",
-      "sha256": "568e337982ca3a369f5fb2c43f0884eaeff20ad67f3fb87af7288481391b386d"
+      "sha256": "c48cd877b00d5e42e8cc61bf73e8b69f9074186c201c6822648c859ddb724809"
     },
     {
       "mode": 436,
@@ -753,7 +673,7 @@
     {
       "mode": 436,
       "path": "tests/test_runtime_tui.py",
-      "sha256": "59ea23bc8bea34f099c7b4d35320ec4c9ac30a44b5063b564b8b47e97403d3c3"
+      "sha256": "ff45174acfee454ed2773e9d556f4bfd7a3d80f358feb3e06680cda93fcb8f1b"
     },
     {
       "mode": 436,

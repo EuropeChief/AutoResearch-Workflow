@@ -2,6 +2,7 @@
 import datetime as dt
 import io
 import json
+import shutil
 from pathlib import Path
 import tempfile
 import time
@@ -322,6 +323,7 @@ class PilotEvidenceTests(unittest.TestCase):
                     self.assertEqual(caught.exception.code, 2)
                     self.assertFalse((root/'runs').exists())
             (root/'environment/starter').mkdir(parents=True)
+            shutil.copytree(prepare_runtime.ROOT/'security', root/'security')
             (root/'environment/starter/method.py').write_text('pass\n')
             (root/'tests').mkdir()
             (root/'instruction.md').write_text('Synthetic CPU task\n')
@@ -335,6 +337,8 @@ class PilotEvidenceTests(unittest.TestCase):
                 prepare_runtime.main()
             result = root/'runs/synthetic'
             self.assertEqual((result/'approval.md').read_bytes(), approval.read_bytes())
+            self.assertEqual((result/'seccomp.json').read_bytes(),
+                             (root/'security/docker-codex-nested.json').read_bytes())
             config = json.loads((result/'runtime.json').read_text())
             self.assertEqual(config['docker_security']['approval'],
                              {'path': 'approval.md', 'sha256': prepare_runtime._sha256(approval)})

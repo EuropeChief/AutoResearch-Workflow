@@ -1,6 +1,6 @@
 # 冻结时长与非训练 7h 例外
 
-当前政策修订 `2026-10-03.public`；默认各轨 10h。时长快照随任务冻结，最终提交 JSON Schema 不因此改变。
+默认各轨 10h；政策修订以 `task policy` 返回为准。时长快照随任务冻结，最终提交 JSON Schema 不因此改变。
 
 ## 规则依据与分阶段验收
 
@@ -19,7 +19,7 @@
 
 默认10h无需手工改配置。阶段4.1由专家评估；没有充分依据就继续默认10h。旧状态使用其原版本处理；本版只接受新任务和同版本恢复。
 
-合格例外复制并填写 [资格决策模板](templates/duration-assessment.example.json)。模板空值、REPLACE和示例文字不是证据。`evidence`支撑资格与选择理由；`iteration_samples`提供真实单轮秒数与原始记录；`protocol_id`须指已锁定、`training=false` 的正式协议。专家须核“非训练”覆盖整个任务，不只看某个评分脚本是否训练。
+合格例外复制并填写 [资格决策模板](../../templates/duration-assessment.example.json)。模板空值、REPLACE和示例文字不是证据。`evidence`支撑资格与选择理由；`iteration_samples`提供真实单轮秒数与原始记录；`protocol_id`须指已锁定、`training=false` 的正式协议。专家须核“非训练”覆盖整个任务，不只看某个评分脚本是否训练。
 
 ```bash
 python3 "$FLOW_ROOT/cli.py" --format json task policy --task-root "$TASK_ROOT"
@@ -33,15 +33,15 @@ python3 "$FLOW_ROOT/cli.py" task duration-set --task-root "$TASK_ROOT" \
 
 ## 2. 准备、运行与恢复
 
-以 [中文Prompt模板](templates/agent-prompt.zh.md) 为基础保留 `{{DURATION_REQUIREMENT}}`。`runtime prepare`会将其渲染成当前冻结要求，两组共用；7h模板若残留10h指令会拒绝。不要直接把未渲染模板交给迭代Agent，使用runtime保存的prompt.md。
+以 [中文Prompt模板](../../templates/agent-prompt.zh.md) 为基础保留 `{{DURATION_REQUIREMENT}}`。`runtime prepare`会将其渲染成当前冻结要求，两组共用；7h模板若残留10h指令会拒绝。不要直接把未渲染模板交给迭代Agent，使用runtime保存的prompt.md。
 
-两轨state与runtime manifest记录同一时长快照指纹；每次加载都检查资格原证据及快照一致性。不能用旧 runtime 代替本版正式准备与冻结。初始Prompt、同会话继续指令、监督循环、status、Harbor收口、W4时长核验均读取同一政策。不会把7h或10h当作本次墙钟预算，也不改变正常成本确认/暂停/故障扣除机制。
+两轨state与runtime manifest记录同一时长快照指纹；每次加载都检查资格原证据及快照一致性。不能用旧 runtime 代替本版正式准备与冻结。初始Prompt、同会话继续指令、监督循环、status、Harbor收口、交付工具时长核验均读取同一政策。不会把7h或10h当作本次墙钟预算，也不改变正常成本确认/暂停/故障扣除机制。
 
 恢复只用原会话。若资格/原证据漂移，停止并查明原因；不是创建新会话拼时长的理由。预检用独立会话和时间，不算正式轨迹。
 
 ## 3. 结束后的闭环审阅
 
-先按W4整理Agent自写轨迹，根rounds及每轮八字段保持不变。7h任务的现有 `delivery trajectory-review` 输入额外填写 [闭环审阅模板](templates/roll-review.example.json) 中的内容（专家内部审阅，不是往轨迹加字段）：
+先按交付工具整理Agent自写轨迹，根rounds及每轮八字段保持不变。7h任务的现有 `delivery trajectory-review` 输入额外填写 [闭环审阅模板](../../templates/roll-review.example.json) 中的内容（专家内部审阅，不是往轨迹加字段）：
 
 - 每轮 `method_iteration` 指明是否真实方法迭代；纯排障/机械重复填false，不删除其真实轨迹。
 - 有效轮次说明实际 `method_change`、`score_conclusion`、`next_decision`，给出原始操作/评分日志位置，`public_dev_protocol`与启动前一致。
@@ -64,4 +64,4 @@ python3 "$FLOW_ROOT/cli.py" task duration-set --task-root "$TASK_ROOT" \
 
 这些是证明例外的本流程支撑文件，不声称教程要求使用这两个固定文件名；默认10h包不额外生成。完整包检查只读包内文件，校验每轨净时长、轮次/典型耗时、当前轨迹与最佳方法、干净重跑、非训练协议和两份说明一致性。不能用几项true、外部工作目录文件或两条时长相加替代证据。
 
-本轮离线合成测试证明程序合同，不表示已做真实7h长程轨迹、GPU或平台验收。当前发布进度见 [RELEASE.md](RELEASE.md)。
+验收能力与未覆盖范围见 [发布状态](../../RELEASE.md)。

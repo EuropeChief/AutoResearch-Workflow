@@ -12,6 +12,8 @@ python3 run_harbor.py --harbor-bin /本机虚拟环境/bin/harbor --docker-confi
 
 此命令使用 TransferProbe 在实际 Agent 环境替换候选，核验 artifacts 哈希及独立评分；不调用模型。每次建立新记录，不覆盖失败记录。Harbor 会运行时改变日志目录，可信入口必须恢复候选不能写 reward 的权限，并保留宿主日志读写能力。
 
-`prepare_runtime.py` 是维护环境专用 fixture，包含本机镜像标识，不能当通用新题模板。它创建独立 runtime 题目，复用中央模型配置，然后通过 CLI preflight/run/resume 做有界 Seed 测试。`--allow-authorized-apparmor-exception` 只能在已有适用授权时使用。本次许可仅针对 CPU pilot，不能向其他题目传播。
+`prepare_runtime.py` 是维护环境专用 fixture，包含本机镜像标识，不能当通用新题模板。它创建独立 runtime 题目，复用中央模型配置，然后通过 CLI preflight/run/resume 做有界 Seed 测试。模型调用须另获本次预算授权；安全例外须同时显式提供 `--allow-authorized-apparmor-exception --security-approval /本次授权原文.md`，不能自动继承历史许可。步骤见 [原生界面短测](TUI_PROBE.md)。
 
-runtime02 已通过公开预检、原会话恢复和一条八字段记录，预算耗尽时进入下一轮；应作为暂停状态保留，不能算最终最佳恢复完成。完整运行目录可能含鉴权/会话数据，不可整体上传或迁移。
+`security/docker-default-24.0.7.json` 为保留的 Docker 默认 seccomp 对照；`docker-codex-nested.json` 是保留默认拒绝的限定试验配置，仅在上述明确授权分支使用，不构成通用安全沙箱或自动许可。
+
+真实验收范围和当前源码适用性以 [发布说明](../../RELEASE.md) 为准。预算耗尽只代表暂停，不能算最终最佳恢复完成。完整运行目录可能含鉴权/会话数据，不可整体上传或迁移；旧运行保留在本地，不随源码包分发。

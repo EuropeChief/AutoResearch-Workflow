@@ -70,11 +70,15 @@ class PolicyGitTests(unittest.TestCase):
         self.assertIn("README.md", self.git("ls-tree", "-r", "--name-only", "HEAD").splitlines())
 
     def test_new_policy_is_visible_and_legacy_read_is_nonmutating(self):
-        policy = self.cli("policy")["workflow_policy"]
+        response = self.cli("policy")
+        policy = response["workflow_policy"]
         self.assertEqual(policy["git_required"], True)
         self.assertEqual(policy["duration_policy"],
                          {"mode": "default_10h", "minimum_effective_seconds": 36000})
-        self.assertEqual(policy["ui_mode"], "exec_json")
+        self.assertEqual(policy["ui_mode"], "native_tui")
+        self.assertNotIn("pending_implementation", response)
+        self.assertEqual(response["delivery_checkpoints"],
+                         ["qa_verified", "archives_verified", "form_ready"])
         data = json.loads(self.store.state_path.read_text())
         del data["workflow_policy"]
         self.store.state_path.write_text(json.dumps(data))
@@ -98,6 +102,16 @@ class PolicyGitTests(unittest.TestCase):
         self.store.state_path.write_text(json.dumps(data))
         result = self.cli("check", expected=2)
         self.assertEqual(result["issues"][0]["code"], "POLICY_NOT_IMPLEMENTED")
+
+    def test_previous_exec_policy_is_rejected_without_rewriting_evidence(self):
+        data = json.loads(self.store.state_path.read_text())
+        data["workflow_policy"]["revision"] = "2026-10-03.public"
+        data["workflow_policy"]["ui_mode"] = "exec_json"
+        self.store.state_path.write_text(json.dumps(data))
+        before = self.store.state_path.read_bytes()
+        result = self.cli("check", expected=2)
+        self.assertEqual(result["issues"][0]["code"], "INVALID_POLICY")
+        self.assertEqual(self.store.state_path.read_bytes(), before)
 
     def test_stage_one_requires_git_but_legacy_does_not_acquire_a_new_gate(self):
         proof = self.task / "design.md"

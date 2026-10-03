@@ -36,8 +36,8 @@ class StabilityPolicyTests(unittest.TestCase):
         status = self.store.check()
         self.assertFalse(status["workflow_policy"]["require_stability_receipt"])
         self.assertEqual(status["workflow_policy"]["duration_policy"]["minimum_effective_seconds"], 36000)
-        self.assertEqual(status["workflow_policy"]["ui_mode"], "exec_json")
-        self.assertNotIn("optional_stability", status["pending_implementation"])
+        self.assertEqual(status["workflow_policy"]["ui_mode"], "native_tui")
+        self.assertNotIn("pending_implementation", status)
         self.assertNotIn("stability", StageFlow(self.root).template("6.5")["spec"]["checks"])
         self.assertEqual(before, self.store.state_path.read_bytes())
 

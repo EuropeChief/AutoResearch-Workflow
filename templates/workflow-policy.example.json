@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "revision": "2026-10-03.public",
+  "revision": "2026-10-03.public-tui",
   "git_required": true,
   "duration_policy": {
     "mode": "default_10h",
     "minimum_effective_seconds": 36000
   },
-  "ui_mode": "exec_json",
+  "ui_mode": "native_tui",
   "require_stability_receipt": false
 }

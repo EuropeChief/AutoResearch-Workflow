@@ -66,7 +66,7 @@ def main():
     if args.allow_authorized_apparmor_exception:
         approval = root/'approval.md'
         shutil.copy2(args.security_approval, approval)
-        shutil.copy2(FLOW/'pilots/seed_cpu/docker-codex-nested.json', root/'seccomp.json')
+        shutil.copy2(ROOT/'security/docker-codex-nested.json', root/'seccomp.json')
         config['docker_security'] = {'apparmor': 'unconfined', 'seccomp': ref(root/'seccomp.json'),
                                      'approval': ref(approval)}
     _atomic_json(root/'runtime.json', config)

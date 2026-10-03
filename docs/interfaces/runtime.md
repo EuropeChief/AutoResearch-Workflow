@@ -1,16 +1,16 @@
-# W3：Agent 运行底座
+# Agent 运行底座
 
-当前实现使用 Codex 0.147.0 原生 TUI，统一监督启动、原会话恢复、日志与计时。正式监督入口已通过有界 Seed CPU 联调，包含预算暂停、两次原会话恢复和只读观察；不等于正式发布或十小时轨迹验收。双镜像接口见 [PCA_ENVIRONMENT.md](PCA_ENVIRONMENT.md)，证据范围见 [发布说明](RELEASE.md)。
+提供 Codex 原生界面的准备、预检、监督、只读观察、原会话恢复和可核日志。双镜像合同见 [环境接口](environment.md)，真实验收范围见 [发布状态](../../RELEASE.md)。
 
 ## 范围与分工
 
-专家可以在 Codex 或 Pi 中执行流程；正式双轨迹都由 **Codex CLI** 生成。两组键名为 codex、seed，只读取流程根的 `local/model_profiles/codex.toml` 与 `local/model_profiles/seed.toml`。公开仓库仅提供 [Codex 模板](model_profiles/codex.example.toml) 和 [Seed 模板](model_profiles/seed.example.toml)，不携带作者账号配置，不从当前专家会话猜测或继承。
+专家可以在 Codex 或 Pi 中执行流程；正式双轨迹都由 **Codex CLI** 生成。两组键名为 codex、seed，只读取流程根的 `local/model_profiles/codex.toml` 与 `local/model_profiles/seed.toml`。公开仓库仅提供 [Codex 模板](../../model_profiles/codex.example.toml) 和 [Seed 模板](../../model_profiles/seed.example.toml)，不携带作者账号配置，不从当前专家会话猜测或继承。
 
 底座统一负责准备、预检、启动、原会话恢复、日志、计时与错误记录。题目只提供可见文件、Starter、中文迭代 Prompt、固定镜像中的真实 Public/Dev 入口。不要求每题实现 Broker；若评测必须跨权限调用，则在题目镜像适配并预检，不通过关闭保护来绕过。
 
 ## 配置与准备
 
-使用 [题目运行模板](templates/runtime.example.json)。所有 path/sha256 引用均指题目根内文件及其完整 SHA-256。模型、推理档位、provider/base_url、上下文与 `auth_ref` 放在上述两份固定 TOML；题目 JSON 不再重复填写 `tracks`。`auth_ref.path` 是当前机器的绝对凭据路径，仅在授权真实运行时读取。不要将密钥值写进 TOML、JSON、Prompt 或命令行。
+使用 [题目运行模板](../../templates/runtime.example.json)。所有 path/sha256 引用均指题目根内文件及其完整 SHA-256。模型、推理档位、provider/base_url、上下文与 `auth_ref` 放在上述两份固定 TOML；题目 JSON 不再重复填写 `tracks`。`auth_ref.path` 是当前机器的绝对凭据路径，仅在授权真实运行时读取。不要将密钥值写进 TOML、JSON、Prompt 或命令行。
 
 前期探索不需要账号。到正式迭代准备阶段，创建 `local/model_profiles/`，仅在目标不存在时复制对应示例并填写真实 provider、模型和鉴权引用；已有文件先审阅，不覆盖。`local/` 被 Git 和发行收集器排除，题目提交包也拒绝其中的模型配置。模板里的地址/模型是可修改的样例，不表示服务已接受；用户只需提供其真实配置，不需要改通用程序。
 
@@ -27,16 +27,16 @@ image 必须使用完整 sha256 镜像 ID 或 repo@sha256:digest。镜像需包�
 
 API 凭据支持 JSON 顶层字段（kind=api_key_json、key=字段名）；登录凭据使用 kind=codex_login，省略 base_url/key。登录副本允许刷新，不修改原文件；新生成权限配置显式拒绝 Agent 工具读取 `/codex/auth.json`，可信 Codex 父进程仍可使用它认证。运行目录含鉴权副本与 Codex 持久会话，**不能整体当成最终提交材料上传**。
 
-Seed TOML 保留固定模型/Ark 地址、262144 上下文、160000 压缩阈值和 65536 输出预留；根 config.toml 不动态读取。2026-09-30 配置核对时，GPT 使用 max，Seed 使用最高有效档 high（xhigh/max 对 Seed 映射为 high）；历史依据分别为 OpenAI 的 gpt-5.6-sol 模型文档、火山方舟的 deep-thinking / model-parameter-support 文档，设计仓库记录标识为 `ca978de:PCA_MODEL_CONFIGURATION.md`（仅追溯，不是部署依赖）。`max_output_tokens` 在本工具只检查压缩余量，不声称已设置服务端输出上限。历史 Seed 短测已核对实际 turn_context 的模型和 high；GPT 未在该轮调用。用户自管 provider 的实际接受情况须在新题预检验证，不把配置或原厂能力等同于实际服务已验证。认证路径保持用户原配置，不打印密钥。
+模型 ID、provider、推理档位和上下文参数均以用户填写的 TOML 为准，不能从配置存在就推断服务接受。Seed 示例采用 262144 上下文、160000 压缩阈值、65536 输出预留和 high 档；实际请求能力须在该账号预检和正式原始记录中核对。
 
-`context_window`、`auto_compact_token_limit`、`max_output_tokens` 如填写须同时提供；第三项仅用于预留输出空间的校验，不是发送给 Codex 的请求参数。当前官方 Schema 没有 `model_max_output_tokens`，本工具不生成该字段。`model_context_window` 与压缩阈值按生成的 Codex 配置应用；自定义模型 metadata 仍可能使用回退值，服务端输出限制与长程压缩不在 W5 短联调已证明的范围内，需在实际长程记录中核查。短冒烟不能证明十小时不会遇到上下文问题。
+`context_window`、`auto_compact_token_limit`、`max_output_tokens` 如填写须同时提供；第三项仅用于预留输出空间的校验，不是发送给 Codex 的请求参数。锁定 Codex 版本的 Schema 没有 `model_max_output_tokens`，本工具不生成该字段。`model_context_window` 与压缩阈值按生成的 Codex 配置应用；自定义模型 metadata 仍可能使用回退值，服务端输出限制与长程压缩须在实际长程记录中核查。短冒烟不能证明十小时不会遇到上下文问题。
 
 
 ### 仅在确有需要时：显式容器安全适配
 
 Docker 默认策略可能禁止 Codex 内层创建命名空间或挂载。先跑无模型探针定位；
 不使用 `--privileged`、`seccomp=unconfined` 或关闭 Codex 沙箱作为自动兜底。
-优先使用管理员提供的限定 AppArmor profile；本机 W5 pilot 中，用户明确允许了仅该试验的 AppArmor 例外。
+优先使用管理员提供的限定 AppArmor profile；必要的例外须取得本次适用授权。
 
 题目配置可选字段如下（只有取得适用授权且审阅过 profile 后才填写；默认没有该字段）：
 
@@ -55,7 +55,7 @@ seccomp 要保留 `SCMP_ACT_ERRNO` 默认拒绝；这项语法检查不代替人
 
 ## 统一命令
 
-以下在流程仓库根执行，替换题目目录；题目必须已显式初始化 W1 状态。
+以下在流程仓库根执行，替换题目目录；题目必须已显式初始化流程状态。
 
 ```bash
 python3 cli.py runtime prepare --task-root /题目目录 --file /题目目录/runtime.json
@@ -77,7 +77,7 @@ runtime 配置 schema 为 2；evaluation.command 是镜像内固定程序 argv�
 
 ### Harbor 绑定与迭代
 
-新版 `harness` 指定实际 Harness。0.23.0 是用户暂定兼容目标，不是项目方正式版本要求：
+`harness` 指定实际 Harness。0.23.0 是当前兼容目标，不是项目方正式版本要求：
 
 ```json
 "harness": {
@@ -96,7 +96,7 @@ python3 cli.py runtime run --task-root /题目目录 --track codex --budget-seco
 python3 cli.py runtime run --task-root /题目目录 --track seed --budget-seconds 43200 --confirm-cost
 ```
 
-43200 是示例单次墙钟预算，不是新的有效时长要求，也不是金额/token 上限。run 会在预算内自动继续**同一会话**，到各自累计可核活动达到冻结门槛（默认36000秒；启动前获准的非训练例外25200秒）或预算耗尽停止；不要求最终提升。须留出预检/排队/故障开销，不能把最低有效时长直接当作总墙钟预算。7h选择、Prompt生成及防热改规则见 [OP03_DURATION.md](OP03_DURATION.md)。费用仍需用户在服务端设置预算。GPU 索引分别配置，启动前由专家确认空闲。
+43200 是示例单次墙钟预算，不是新的有效时长要求，也不是金额/token 上限。run 会在预算内自动继续**同一会话**，到各自累计可核活动达到冻结门槛（默认36000秒；启动前获准的非训练例外25200秒）或预算耗尽停止；不要求最终提升。须留出预检/排队/故障开销，不能把最低有效时长直接当作总墙钟预算。7h选择、Prompt生成及防热改规则见 [时长政策](duration.md)。费用仍需用户在服务端设置预算。GPU 索引分别配置，启动前由专家确认空闲。
 
 监督命令需保持运行，建议放在宿主的持久终端中。达到净时长门槛后，底座在原会话发送收口指令，要求 Agent 恢复最佳代码、执行真实 Public/Dev 评测、保存八字段轨迹与 best_method。后台工具须确认终态，评测前后与最终候选哈希须一致，之后才正常退出 TUI；仅达到时长或退出码为 0 不代表收口完成。预算耗尽或外部异常则暂停，保留原会话，不伪造完成。
 
@@ -136,7 +136,7 @@ python3 cli.py runtime finalize --task-root /题目目录 --track seed --confirm
 | 各组 formal/solution、output | 方法工作区；Agent 自行写入 `output/trajectory.jsonl` 与当前最佳 `output/best_method/` |
 | 各组 formal/codex_home | 恢复所需持久会话及可能存在的鉴权副本，不整体提交 |
 
-可用 tail -f 查看对应日志，不依赖 Agent 自报状态。正式初始 Prompt 必须要求 Agent 每轮写入该组 `output/trajectory.jsonl`，并更新当前最佳 `output/best_method/`；续跑 Prompt 会提醒这两个动作。日志记录 CLI 实际暴露的内容，不承诺内部完整推理、上游已截断输出或独立后台进程全部日志。对已支持的 exec_command/write_stdin 后台协议，底座关联原命令、进程 ID 与最终结果；未知协议不猜测分数。W4 从 Agent 写出的 `trajectory.jsonl` 整理最终轨迹；监督日志只用于核验操作和结论，不能替代缺失的 Agent 轨迹。
+可用 tail -f 查看对应日志，不依赖 Agent 自报状态。正式初始 Prompt 必须要求 Agent 每轮写入该组 `output/trajectory.jsonl`，并更新当前最佳 `output/best_method/`；续跑 Prompt 会提醒这两个动作。日志记录 CLI 实际暴露的内容，不承诺内部完整推理、上游已截断输出或独立后台进程全部日志。对已支持的 exec_command/write_stdin 后台协议，底座关联原命令、进程 ID 与最终结果；未知协议不猜测分数。交付工具 从 Agent 写出的 `trajectory.jsonl` 整理最终轨迹；监督日志只用于核验操作和结论，不能替代缺失的 Agent 轨迹。
 
 只读 `/workspace/evaluate` 在同一次实际评测结果中附加候选前后哈希，不额外运行一次评测。最终收口检查其与 Agent 最后记录及最终代码一致；评测日志、缓存和临时训练产物应放在候选提交面之外，不能在计分后换代码或把过程中变动的目录当作冻结方法。
 
@@ -152,12 +152,8 @@ status 的 effective_seconds_before_content_review 是已收口分段的**待内
 {"start":1790000000,"end":1790000100,"reason":"示例：已证实的外部中断","evidence":[{"path":"证据文件","sha256":"完整SHA256"}]}
 ```
 
-start/end 为 Unix 秒；重叠扣时只扣一次，原始日志不改写。最终有效性、两组完成门禁和提交格式由后续 W4 消费这些证据。
+start/end 为 Unix 秒；重叠扣时只扣一次，原始日志不改写。最终有效性、两组完成门禁和提交格式由后续交付工具消费这些证据。
 
-## 验收
+## 验收边界
 
-最新离线及异路径迁移测试数以 [验收记录](release/acceptance.json) 为准。覆盖独立目录、API 秘密脱敏、实际工具结果检查、预检不计时、原会话恢复、新会话拒绝、异常扣时、宕机收口、证据漂移、Harbor 资源绑定与最终评分门禁；不调用 Docker/GPU/模型。
-
-正式入口已完成独立预检和三个同会话运行分段，验证预算暂停、两次恢复、只读观察及脱离，产生真实公开结果与 Agent 自写八字段记录，详见 [短测证据与局限](pilots/pca_cpu/TUI_PROBE.md)。原始记录可核活动为 363.582 秒，最终评分门禁正确拒绝；预算暂停不保证当前候选已恢复到最佳。Agent 自报 time 仍须据原生日志审查，格式正确不代表内容正确。GPT、GPU、真实长上下文压缩与十小时轨迹未由该 CPU 短测证明；具体题目预检不能省略。AppArmor 例外仅限获准试验，不迁移到正式题目。
-
-Codex 接口依据：[交互命令（含退出）](https://learn.chatgpt.com/docs/developer-commands?surface=cli)、[官方配置 Schema](https://developers.openai.com/codex/config-schema.json)；本实现只接受已核验的 0.147.0 原生事件格式，其他版本须先适配与验证。
+具体题目必须通过自己的镜像、资源和两组真实预检；工具的短测不替代长程轨迹、真实压缩或最终评分。当前支持版本和发布验收见 [RELEASE.md](../../RELEASE.md)。

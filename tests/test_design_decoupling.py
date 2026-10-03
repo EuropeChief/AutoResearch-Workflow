@@ -58,7 +58,9 @@ class DesignDecouplingTests(unittest.TestCase):
     def test_source_collection_keeps_pilot_code_but_excludes_generated_and_secrets(self):
         module = tool("release_check")
         fixture = self.root / "source-fixture"
-        include = {"cli.py", "README.md", ".gitignore", ".gitattributes",
+        include = {"cli.py", "README.md", "AGENTS.md", ".gitignore", ".gitattributes",
+                   "docs/stages.md", "docs/interfaces/runtime.md",
+                   "skills/autoresearch-workflow/SKILL.md",
                    "tests/test_example.py", "pilots/cpu/probe.py",
                    "model_profiles/codex.example.toml", "model_profiles/seed.example.toml"}
         exclude = {".git/config.json", ".ruff_cache/report.json", "runtime/state.json",
