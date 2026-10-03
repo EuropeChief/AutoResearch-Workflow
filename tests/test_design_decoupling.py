@@ -131,12 +131,11 @@ class DesignDecouplingTests(unittest.TestCase):
             paths = checker.payload_files()
         release = self.flow / "release"
         release.mkdir(exist_ok=True)
-        manifest = {"version": checker.FLOW_VERSION, "package_revision": "test",
-                    "files": [{"path": str(p.relative_to(self.flow)), "sha256": _sha256(p)}
-                              for p in paths]}
+        manifest = {"schema_version": 2, "version": checker.FLOW_VERSION, "package_revision": "test",
+                    "files": checker.source_snapshot(paths, self.flow)}
         manifest_path = release / "source_manifest.json"
         _atomic_json(manifest_path, manifest)
-        report = {"version": checker.FLOW_VERSION, "package_revision": "test",
+        report = {"schema_version": 2, "version": checker.FLOW_VERSION, "package_revision": "test",
                   "status": "contracts_passed", "release_ready": False,
                   "source_manifest_sha256": _sha256(manifest_path)}
         _atomic_json(release / "acceptance.json", report)
@@ -146,6 +145,12 @@ class DesignDecouplingTests(unittest.TestCase):
             payload = packager._payload(preview=True)
             self.assertFalse(any("AutoResearch新流程设计/" in p for p in payload))
             self.assertIn(".gitattributes", payload)
+            entry = self.flow/'cli.py'
+            old_mode = entry.stat().st_mode & 0o777
+            entry.chmod(old_mode ^ 0o100)
+            with self.assertRaisesRegex(RuntimeError, "manifest.*(stale|drift)"):
+                packager._payload(preview=True)
+            entry.chmod(old_mode)
             # Current inputs must match the checked manifest, even in preview.
             (self.flow / "autoresearch_flow/added_after_check.py").write_text("# changed\n")
             with self.assertRaisesRegex(RuntimeError, "manifest.*(stale|drift)"):

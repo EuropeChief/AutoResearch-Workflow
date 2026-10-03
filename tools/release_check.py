@@ -20,6 +20,7 @@ ROOT = FLOW
 sys.path.insert(0, str(FLOW))
 from autoresearch_flow import FLOW_VERSION
 from autoresearch_flow.core import Registry, _atomic_json, _sha256, _utc_now
+from tools.release_evidence import validate_evidence
 
 # This is a deployment allowlist, not a recursive copy of the maintainer's workspace.
 SOURCE_DIRECTORIES = {"autoresearch_flow", "rules", "templates", "model_profiles",
@@ -43,78 +44,10 @@ def source_name(name):
                                         or name in SPECIAL_FILES)
 
 
-def live_release_evidence():
-    """Validate the bounded real evidence used to release the reusable tool."""
-    from autoresearch_flow.core import FlowError
-    from autoresearch_flow.harbor_runtime import final_snapshot
-    from autoresearch_flow.runtime import Runtime
-    from autoresearch_flow.trajectory import validate_round
-
-    transfer_path = FLOW / "pilots/pca_cpu/runs/harbor-20260930T091303597138Z/report.json"
-    transfer = json.loads(transfer_path.read_text())
-    assert transfer["status"] == "harbor_transfer_probe_passed"
-    assert transfer["trial"]["reward"] == 1 and transfer["trial"]["mode"] == "separate"
-    candidate_hash = transfer["trial"]["candidate_sha256"]
-    artifact = next(entry for entry in transfer["evidence"]
-                    if entry["path"].endswith("artifacts/workspace/solution/method.py"))
-    assert candidate_hash == artifact["sha256"]
-
-    pilot_root = FLOW / "pilots/pca_cpu/runs/runtime02"
-    runtime = Runtime(pilot_root)
-    runtime._load()
-    state_path = runtime.directory / "seed/state.json"
-    state = json.loads(state_path.read_text())
-    formal = [segment for segment in state["segments"] if segment["phase"] == "formal"]
-    assert state["active"] is None and state["thread_id"]
-    assert any(segment["status"] == "completed" for segment in formal)
-    assert all(segment.get("thread_id") in (None, state["thread_id"]) for segment in formal)
-    trajectory = runtime.directory / "seed/formal/output/trajectory.jsonl"
-    rows = [json.loads(line) for line in trajectory.read_text().splitlines()]
-    assert rows
-    for number, row in enumerate(rows, 1):
-        validate_round(row, number)
-    jobs = list((runtime.directory / "seed/harbor").glob("*/job.json"))
-    assert jobs and all(json.loads(path.read_text())["verifier"]["disable"] for path in jobs)
-    assert not (runtime.directory / "seed/harbor/final_attempt.json").exists()
-    try:
-        final_snapshot(runtime, "seed")
-    except FlowError as error:
-        assert error.code == "FINAL_NOT_READY"
-    else:
-        raise AssertionError("bounded pilot must not pass the 10-hour final gate")
-    return {
-        "harbor_transfer_report": {"path": str(transfer_path.relative_to(ROOT)),
-                                   "sha256": _sha256(transfer_path)},
-        "seed_state": {"path": str(state_path.relative_to(ROOT)), "sha256": _sha256(state_path)},
-        "seed_trajectory": {"path": str(trajectory.relative_to(ROOT)),
-                            "sha256": _sha256(trajectory), "rounds": len(rows)},
-        "same_thread": True, "completed_formal_segment": True,
-        "final_gate_rejected_short_pilot": True, "hidden_queries": 0,
-    }
-
-
-def prior_live_evidence():
-    """Reuse unchanged runtime evidence for a QA-only update, never relabel it new."""
-    previous = json.loads((FLOW / "release/acceptance.json").read_text())
-    manifest = json.loads((FLOW / "release/source_manifest.json").read_text())
-    assert previous.get("release_ready") is True and previous.get("version") == FLOW_VERSION
-    live = previous.get("bounded_live_evidence")
-    assert isinstance(live, dict) and live, "No released live evidence to reuse"
-    expected = {entry["path"]: entry["sha256"] for entry in manifest["files"]}
-    excluded = {"qa_contract.py", "w4_package.py", "stages.py"}
-    runtime_files = [p for p in (FLOW / "autoresearch_flow").glob("*.py") if p.name not in excluded]
-    runtime_files += list((FLOW / "model_profiles").glob("*.toml"))
-    runtime_files += [FLOW / "templates/agent-prompt.zh.md"]
-    for path in runtime_files:
-        relative = str(path.relative_to(ROOT))
-        assert expected.get(relative) == _sha256(path), f"Runtime changed; cannot reuse live evidence: {relative}"
-    for key in ("harbor_transfer_report", "seed_state", "seed_trajectory"):
-        ref = live[key]
-        path = (ROOT / ref["path"]).resolve()
-        assert path.is_relative_to(ROOT) and _sha256(path) == ref["sha256"], f"Historical evidence changed: {key}"
-    return {**live, "reuse": {"basis": "QA-only change; runtime sources and raw evidence unchanged",
-                             "original_acceptance_at": live.get("reuse", {}).get("original_acceptance_at", previous["at"]),
-                             "new_live_run": False}}
+def source_snapshot(files, flow=None):
+    flow = FLOW if flow is None else flow
+    return [{"path": p.relative_to(flow).as_posix(), "sha256": _sha256(p),
+             "mode": p.stat().st_mode & 0o777} for p in files]
 
 
 def source_files(flow=None):
@@ -179,19 +112,16 @@ def check_documents(files):
 
 
 def release_files(flow=None):
-    """Small release receipts/history, never caches, symlinks or live runs."""
+    """Only the current receipt pair ships; local history stays in Git/on disk."""
     flow = FLOW if flow is None else flow
     files = []
-    for directory, children, names in os.walk(flow / "release"):
-        children[:] = sorted(c for c in children if not c.startswith(".")
-                             and c not in GENERATED_DIRECTORIES)
-        for child in children:
-            assert not (Path(directory) / child).is_symlink(), child
-        for name in names:
-            p = Path(directory) / name
-            if p.suffix in {".json", ".md"} and source_name(name):
-                assert p.is_file() and not p.is_symlink(), p
-                files.append(p)
+    release = flow / 'release'
+    assert not release.is_symlink(), 'Unsafe release receipt directory'
+    for name in ('acceptance.json', 'source_manifest.json'):
+        p = release / name
+        if p.exists() or p.is_symlink():
+            assert p.is_file() and not p.is_symlink(), p
+            files.append(p)
     return sorted(files)
 
 
@@ -230,24 +160,25 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--release", action="store_true",
                         help="after all checks, mark this version ready and bind bounded live evidence")
-    parser.add_argument("--reuse-prior-live", action="store_true",
-                        help="for a QA-only release, verify and reuse unchanged prior runtime evidence")
+    parser.add_argument("--evidence-manifest", type=Path,
+                        help="explicit reviewed live/independent evidence with original source bindings")
     args = parser.parse_args()
-    if args.reuse_prior_live and not args.release:
-        parser.error("--reuse-prior-live requires --release")
+    if args.release != bool(args.evidence_manifest):
+        parser.error("--release requires --evidence-manifest; evidence is only used with --release")
     registry = Registry(FLOW)
     assert registry.check_sources() == [], "Rule sources drifted"
     files = source_files()
     links = check_documents(files)
     all_files = payload_files()
-    checked_files = [{"path": str(p.relative_to(ROOT)), "sha256": _sha256(p)} for p in all_files]
+    checked_files = source_snapshot(all_files)
+    live = validate_evidence(args.evidence_manifest, FLOW, all_files) if args.release else None
     native = run([sys.executable, "-m", "unittest", "discover", "-s", str(FLOW / "tests"), "-v"], ROOT)
     with tempfile.TemporaryDirectory(prefix="ar-release-relocation-") as temporary:
         root = Path(temporary)
         for source in all_files + release_files():
             target = root / source.relative_to(ROOT)
             target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(source, target)
+            shutil.copy2(source, target)
         relocated_flow = root
         assert not (root / "config.toml").exists()
         assert not (root / "auth.json").exists()
@@ -266,10 +197,9 @@ def main():
         run(cli + ["task", "check", "--task-root", str(task)], task)
         state = json.loads(run(cli + ["stage", "status", "--task-root", str(task)], task))
         assert state["current_stage"] == "1"
-    live = (prior_live_evidence() if args.reuse_prior_live else live_release_evidence()) if args.release else None
-    report = {"status": "released" if args.release else "contracts_passed",
+    report = {"schema_version": 2, "status": "released" if args.release else "contracts_passed",
               "release_ready": args.release,
-              "pending": [] if args.release else ["维护者最终发布及新版迁移包"],
+              "pending": [] if args.release else ["显式真实联调/独立试用证据审阅与绑定", "当前发行包验收"],
               "at": _utc_now(), "version": FLOW_VERSION, "qa_revision": registry.manifest.get("qa_revision"),
               "package_revision": registry.manifest.get("package_revision"),
               "python": sys.version.split()[0], "rule_count": len(registry.catalog["rules"]),
@@ -281,14 +211,14 @@ def main():
               "fresh_cli_init_and_resume_status": True,
               "model_calls": 0, "scope": "tool contracts, not scientific or platform acceptance"}
     if live:
-        report["bounded_live_evidence"] = live
+        assert live == validate_evidence(args.evidence_manifest, FLOW, all_files), "Evidence changed during validation"
+        report["release_evidence"] = live
     release = FLOW / "release"
     release.mkdir(exist_ok=True)
-    assert checked_files == [{"path": str(p.relative_to(ROOT)), "sha256": _sha256(p)}
-                             for p in payload_files()], "Sources changed during validation"
+    assert checked_files == source_snapshot(payload_files()), "Sources changed during validation"
     preserve_receipts(release)
     _atomic_json(release / "source_manifest.json", {
-        "version": FLOW_VERSION, "package_revision": registry.manifest.get("package_revision"),
+        "schema_version": 2, "version": FLOW_VERSION, "package_revision": registry.manifest.get("package_revision"),
         "scope": "source and locked rule dependencies; excludes design archive, generated release reports and local pilot/build data",
         "files": checked_files})
     report["source_manifest_sha256"] = _sha256(release / "source_manifest.json")

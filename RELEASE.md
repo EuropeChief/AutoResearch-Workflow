@@ -26,18 +26,22 @@ python3 tools/release_check.py
 python3 tools/build_migration.py --preview --output-dir /显式预览输出目录
 ```
 
-预览要求当前源码匹配离线清单，并重跑解包校验；产物明确标为 preview。正式发布工具中的真实证据入口尚待本轮维护改造，当前不要用历史固定 pilot 路径或旧 `--release` 结果为新版本背书。
+预览要求当前源码内容与权限匹配离线清单，并重跑解包校验；产物明确标为 preview。只打包当前单仓、锁定的教程/Skill 原件和本次两份验收收据；不包含历史收据、真实运行原件、个人配置或设计仓。文件执行权限、中文路径、解包文件集合与哈希必须一致。
 
-## 历史证据
+## 显式发布证据
 
-2026-09-30 的 0.2.0 PCA 发布曾验证 Harbor 0.23.0 候选移交、独立 Verifier/reward，以及 Seed 有界 CPU 预检与同会话恢复；未验证 GPT、GPU、完整双轨时长、长上下文或平台 Hidden。该 Harbor 版本是本地有限兼容目标，不是项目方指定通用版本。
+由维护 Agent 在实际验收后整理一份证据索引，不要求使用者逐项抄写结果。格式和各类原件见 [证据模板说明](templates/release-evidence.example.md)。索引放在本地验收材料目录（例如被排除的 `local/release-evidence/`），不放进源码发行物；路径相对索引所在目录，必须能定位真实原件和原运行源码清单。
 
-- [旧发布说明](release/history/20261003-pre-decoupling/RELEASE.md)
-- [旧验收索引](release/history/20261003-pre-decoupling/acceptance.json)
-- [旧源码清单](release/history/20261003-pre-decoupling/source_manifest.json)
-- [更早的发布记录](release/history/0.1.0/RELEASE.md)
+```bash
+python3 tools/release_check.py --release --evidence-manifest /本次验收目录/manifest.json
+python3 tools/build_migration.py --evidence-manifest /本次验收目录/manifest.json --output-dir /新发行输出目录
+```
 
-这些记录保留当时路径和事实，不是当前操作指令或部署依赖。
+没有显式证据，`--release` 在运行测试前即拒绝。必须覆盖原生 TUI/正式监督与恢复、Harbor 独立评分、实际 GPU 分配及新会话独立试用；任意一项缺失、失败或原件漂移均不能正式发布。机械检查读取真实输出中的会话、评测、Verifier 开关、短跑门禁、reward、设备与计算结果；独立试用的语义结论仍由具名审阅人负责，不把格式正确等同于实际成功。
+
+每项保留原版本、时间、fresh/reused、原始源码清单与审阅记录。相关 Python 依赖、CLI 入口、实际非代码输入和权限变化使旧证据失效；不相关维护文案无需重跑模型。运行记录中的来源路径仅用于追溯，实际账号信息不进入发行物。原始索引/产物在检查与归档时都重新校验；打包不调用模型或 GPU。
+
+历史验收保留在维护仓 Git 与本地 `release/history/`，但不作为新版本默认依据；不再使用固定日期目录、`runtime02` 或隐式 `--reuse-prior-live`。旧收据 schema 不升级成通过记录，须重新执行本次离线检查。缺授权或独立试用时保持未发布，预览包不能冒充正式包。
 
 ## 使用者边界
 
