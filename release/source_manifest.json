@@ -188,7 +188,7 @@
     {
       "mode": 436,
       "path": "docs/stages.md",
-      "sha256": "2fad0f237c82af7a5bb7836bd1b21112f22fa247ef215e060f55331086cfecc4"
+      "sha256": "6feed66cf9bd2b7d0ded53ebf588e6a1fc5bdffd4a4de43a5a0d2d24f5d42f06"
     },
     {
       "mode": 436,
@@ -404,6 +404,36 @@
       "mode": 420,
       "path": "skills/autoresearch-baseline-quality/references/baseline-review-method.md",
       "sha256": "15f996157d18b17209d0640bec24e2c39711fbac682ee7eaac830c7a7a8a568c"
+    },
+    {
+      "mode": 436,
+      "path": "skills/autoresearch-optimization-surface/LICENSE.md",
+      "sha256": "c22044e34fc2d0a0775032b248ac92219cb67faa2daad7a6aaa5cc45e3c0b4b3"
+    },
+    {
+      "mode": 436,
+      "path": "skills/autoresearch-optimization-surface/SKILL.md",
+      "sha256": "0dc55ac5b1ae429a132cca67afc22a204cdd8f1fc674ddde71e2dd0b1f2c2767"
+    },
+    {
+      "mode": 436,
+      "path": "skills/autoresearch-optimization-surface/references/surface-analysis.md",
+      "sha256": "3310fae3e49797d6418921399a9787019a6c11e965c70c3c8c800b78f1571807"
+    },
+    {
+      "mode": 436,
+      "path": "skills/autoresearch-task-authoring/LICENSE.md",
+      "sha256": "c22044e34fc2d0a0775032b248ac92219cb67faa2daad7a6aaa5cc45e3c0b4b3"
+    },
+    {
+      "mode": 436,
+      "path": "skills/autoresearch-task-authoring/SKILL.md",
+      "sha256": "4669ba9060c838c41f370b852216d7b5370626798f88245622da536401c2ccf2"
+    },
+    {
+      "mode": 436,
+      "path": "skills/autoresearch-task-authoring/references/authoring-notes.md",
+      "sha256": "006c55732db7b4725052abf39343461663f98bcfb435d63caa853663da621359"
     },
     {
       "mode": 420,

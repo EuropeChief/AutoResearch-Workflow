@@ -12,6 +12,8 @@
 
 产物可以集中在一份 `research/design.md`。1.2 的优化面审查须引用题面、允许修改范围和已有代码，判断是否真正存在方法空间，不能只凭文字宣称；1.3 记录候选原则与未验证假设。用户确认 GO 后 finish 1；此时**尚未冻结 Baseline/Reference**。
 
+1.2 建议调用随包的 [autoresearch-optimization-surface](../skills/autoresearch-optimization-surface/SKILL.md)，辅助比较候选方向、方法空间与最小验证实验；优化方向实质变化时可再次调用。有用结论写入现有设计文档。它是辅助资料，不属于规则来源，不新增门禁、检查或独立报告；未注册时可直接读文件，缺失不阻塞阶段推进。
+
 ## 2：构建环境并验证 Baseline
 
 2.1 优先运行一次当前题包版本的原生 NOP Trial，保存同次配置、结果、reward、非空日志和版本依据；同时保留有效候选的独立评分实跑。若 NOP 只走无提交早退，还须用有效候选覆盖真实评分分支。同版本 NOP 原件可复用，阶段检查不触发重复运行。
@@ -19,6 +21,8 @@
 顺序：2.1 环境冒烟 → 2.2 探索 → 2.3 协议预锁 → 2.4 正式 Baseline → 2.5 审查和冻结。
 
 按 [题目适配边界](interfaces/task-adapter.md) 建立题面、Docker、Starter、Public/Dev、可信评分与必要隔离。采用能满足真实可见性、只读/恢复及评分可信性的简单实现；跨权限调用确有需要时才加 Broker。实现环境后 `task configure` 登记类型与入口。
+
+设计题面和任务接口时，建议调用随包的 [autoresearch-task-authoring](../skills/autoresearch-task-authoring/SKILL.md)，辅助表达允许修改面、输入输出、预算和评分合同，并检查是否泄露参考答案；任务合同实质调整时可再次调用。直接完善已有设计文档、题面和接口说明，使用方式与阶段 1 的辅助 Skill 相同，不运行其来源中的独立门禁。
 
 PCA 版须分别制作 environment/ 和 tests/ 两个构建 context。2.1 登记真实 Harbor 最小移交/独立评分记录，不能仅以结构检查通过关闭；见 [PCA 环境合同](interfaces/environment.md)。无正式 Hidden 权限可用授权同接口数据，明确不是官方验收。当前政策不要求安排或等待专门 12h 浸泡；保留真实环境与工具健康检查、运行异常记录和处理，稳定性记录为可选诊断，未做不称通过。旧任务使用其原版本，不由本版迁移。
 

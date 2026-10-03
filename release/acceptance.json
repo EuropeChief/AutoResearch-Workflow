@@ -1,6 +1,6 @@
 {
-  "at": "2026-10-03T18:08:16+00:00",
-  "checked_links": 90,
+  "at": "2026-10-03T18:22:11+00:00",
+  "checked_links": 96,
   "fresh_cli_init_and_resume_status": true,
   "model_calls": 0,
   "native_tests": "282",
@@ -18,7 +18,7 @@
   "rule_count": 50,
   "schema_version": 2,
   "scope": "tool contracts, not scientific or platform acceptance",
-  "source_manifest_sha256": "74f92b1a5f33c48845f7428161650526bdda23ed4ce32554909d8ed5c26366b9",
+  "source_manifest_sha256": "e5a9d602c1d1d049fb04cd930f00af71c94009d0f2f73776dfd34b3076b92705",
   "status": "contracts_passed",
   "version": "0.3.0"
 }
