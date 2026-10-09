@@ -14,3 +14,5 @@ description: 执行或分析 AutoResearch 可行性实验、Baseline/Reference �
 5. 双轨结束后从实际有效结果选唯一 `best_method`，在干净快照按正式协议复验，绑定最终源码与逐次结果。只复验最终方法，不机械给两轨候选各做五次；无提升如实解释，不伪造成功。[最终方法](../../rules/README.md#m10)
 
 已有同协议原始证据足够时直接核对复用；影响科学结果的变更才补相关实验。不影响单次协议/结果时可按空闲 GPU 并行，性能指标受资源竞争影响则独占或串行。产物直接是运行结果、日志、条件性模型和比较结论，不要求先 lock、登记 start/finish 或建立 selection 账本。
+
+需批量执行或复算时使用[独立实验工具](../../docs/experiments.md)：`experiment run` 接受方法、协议和输出目录；`experiment summarize` 只读已有结果。已有入口可直接接入，不必另造调度器。工具的 `COMPLETE` 仅表示声明的结果/证据完整，不等于科学门槛或 Baseline 审查通过；证据不足时保留诊断，不补造数据。

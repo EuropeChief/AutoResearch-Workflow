@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Codex/Pi 共用的 AutoResearch 新流程与阶段编排统一入口。"""
+"""AutoResearch 能力入口；旧命令仅供尚未退出的实现使用。"""
 
 from __future__ import annotations
 
@@ -9,16 +9,7 @@ import sys
 from pathlib import Path
 
 from autoresearch_flow import FLOW_VERSION
-from autoresearch_flow.core import FlowError, Registry, TaskStore, _read_json, _canonical_digest, _require
-from autoresearch_flow.experiments import FAILED_RUN_STATUSES, ExperimentBook, baseline_check, score_check
-from autoresearch_flow.experiment_runner import ExperimentRunner
-from autoresearch_flow.runtime import Runtime
-from autoresearch_flow.w4_evidence import DeliveryEvidence
-from autoresearch_flow.w4_package import DeliveryPackage, check_package
-from autoresearch_flow.stages import StageFlow
-from autoresearch_flow.pca_contract import check_task, check_execution_receipt, check_nop_record, check_stability
-from autoresearch_flow.policies import policy_status
-from autoresearch_flow.task_git import TaskGit
+from autoresearch_flow.common import FlowError
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -95,8 +86,10 @@ def _parser() -> argparse.ArgumentParser:
             command.add_argument("--file", type=Path, required=True)
         if name == "ref":
             command.add_argument("--path", action="append", required=True)
-    experiment = commands.add_parser("experiment", help="正式协议、运行登记与统计")
+    experiment = commands.add_parser("experiment", help="独立 run/summarize；其余为旧账本接口")
     actions = experiment.add_subparsers(dest="experiment_action", required=True)
+    from autoresearch_flow.experiment_cli import add_commands
+    add_commands(actions)
     for name in ("lock", "extend", "start", "finish", "report", "baseline-check", "score-check", "execute"):
         command = actions.add_parser(name)
         command.add_argument("--task-root", type=Path, required=True)
@@ -174,6 +167,27 @@ def _emit(payload: dict, output_format: str) -> None:
 
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
+    if args.command == "experiment" and args.experiment_action in {"run", "summarize"}:
+        from autoresearch_flow.experiment_cli import dispatch
+        try:
+            payload = dispatch(args)
+            _emit({"action": "experiment." + args.experiment_action, **payload}, args.format)
+            return 0 if payload["status"] == "COMPLETE" else 2
+        except (FlowError, OSError, ValueError) as exc:
+            _emit({"action": "experiment." + args.experiment_action, "status": "error",
+                   "code": getattr(exc, "code", "INPUT_ERROR"), "message": str(exc)}, args.format)
+            return 2
+    # Legacy commands retain their old contract, but are not imported for the new seam.
+    from autoresearch_flow.core import Registry, TaskStore, _read_json, _canonical_digest, _require
+    from autoresearch_flow.experiments import FAILED_RUN_STATUSES, ExperimentBook, baseline_check, score_check
+    from autoresearch_flow.experiment_runner import ExperimentRunner
+    from autoresearch_flow.runtime import Runtime
+    from autoresearch_flow.w4_evidence import DeliveryEvidence
+    from autoresearch_flow.w4_package import DeliveryPackage, check_package
+    from autoresearch_flow.stages import StageFlow
+    from autoresearch_flow.pca_contract import check_task, check_execution_receipt, check_nop_record, check_stability
+    from autoresearch_flow.policies import policy_status
+    from autoresearch_flow.task_git import TaskGit
     action = args.command if args.command == "version" else f"{args.command}.{getattr(args, 'environment_action', None) or getattr(args, 'rules_action', None) or getattr(args, 'task_action', None) or getattr(args, 'experiment_action', None) or getattr(args, 'runtime_action', None) or getattr(args, 'delivery_action', None) or getattr(args, 'stage_action', None)}"
     try:
         if args.command == "environment":

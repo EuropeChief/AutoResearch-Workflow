@@ -24,6 +24,7 @@ from .core import (FlowError, TASK_ID_RE, _atomic_json, _canonical_digest, _read
                    _require, _sha256)
 from .experiments import FAILED_RUN_STATUSES, ExperimentBook, evidence, number
 from .w4_evidence import DeliveryEvidence
+from .experiment_run import nvidia_devices
 
 
 def _ref(root, path):
@@ -32,21 +33,6 @@ def _ref(root, path):
 
 def _now():
     return datetime.now(timezone.utc).isoformat(timespec="microseconds")
-
-
-def nvidia_devices():
-    """Read-only host observation, not a grant to use the observed devices."""
-    def query(argument):
-        try:
-            result = subprocess.run(["nvidia-smi", argument, "--format=csv,noheader,nounits"],
-                                    capture_output=True, text=True, timeout=10, check=True)
-        except (OSError, subprocess.SubprocessError) as exc:
-            raise FlowError("HOST_DEPENDENCY_UNAVAILABLE", "无法读取 NVIDIA 设备；请用户检查 nvidia-smi，不自动安装或改宿主") from exc
-        return [[x.strip() for x in row] for row in csv.reader(result.stdout.splitlines()) if row]
-    inventory = query("--query-gpu=index,uuid,name,driver_version")
-    busy = {row[0] for row in query("--query-compute-apps=gpu_uuid,pid")}
-    return [{"id": row[0], "uuid": row[1], "name": row[2], "driver": row[3], "busy": row[1] in busy}
-            for row in inventory]
 
 
 class DevicePool:
