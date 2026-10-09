@@ -17,7 +17,7 @@ class PublicRulesTests(unittest.TestCase):
             root = Path(temp)
             copied = root / "renamed-workflow"
             shutil.copytree(FLOW, copied, ignore=shutil.ignore_patterns(
-                ".git", "__pycache__", "runs", "build", "local"))
+                ".git", "__pycache__", "runs", "results", "build", "local"))
             registry = Registry(copied)
             self.assertEqual(registry.repository_root, copied)
             self.assertEqual(registry.check_sources(), [])

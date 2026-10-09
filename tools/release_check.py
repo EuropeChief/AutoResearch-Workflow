@@ -25,7 +25,7 @@ from tools.release_evidence import validate_evidence
 # This is a deployment allowlist, not a recursive copy of the maintainer's workspace.
 SOURCE_DIRECTORIES = {"autoresearch_flow", "rules", "templates", "model_profiles",
                       "skills", "tests", "tools", "pilots", "sources", "docs"}
-GENERATED_DIRECTORIES = {"__pycache__", "runs", "build", "release", "runtime",
+GENERATED_DIRECTORIES = {"__pycache__", "runs", "results", "build", "release", "runtime",
                          "tmp", "venv", "node_modules"}
 SPECIAL_FILES = {"Dockerfile", ".gitignore", ".gitattributes", ".dockerignore"}
 SNAPSHOT_DOCUMENTS = {Path("rules/provenance/PCA_RULE_ALIGNMENT.md")}

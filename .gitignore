@@ -12,6 +12,7 @@ htmlcov/
 **/.autoresearch-flow/
 pilots/*/build/
 pilots/*/runs/
+pilots/*/results/
 pilots/.release-evidence-*.json
 runtime/
 runs/

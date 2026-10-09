@@ -1,63 +1,48 @@
 {
-  "schema_version": 2,
-  "image": "sha256:REPLACE_WITH_IMAGE_DIGEST",
-  "codex_version": "0.147.0",
-  "harness": {
-    "version": "0.23.0",
-    "executable": "/REPLACE_WITH_LOCAL_HARBOR_VENV/bin/harbor",
-    "task": "harbor_task"
-  },
+  "schema_version": 3,
+  "track": "seed",
+  "image": "sha256:REPLACE_WITH_FULL_IMAGE_ID",
+  "codex_version": "0.160.0",
+  "model_profile": "/YOUR_WORKFLOW/local/model_profiles/seed.toml",
+  "candidate": "starter",
+  "prompt": "agent_prompt.md",
   "public_files": [
     {
-      "source": {
-        "path": "public/instruction.md",
-        "sha256": "REPLACE_WITH_SHA256"
-      },
+      "source": "public/instruction.md",
       "destination": "instruction.md"
-    }
-  ],
-  "starter_files": [
+    },
     {
-      "source": {
-        "path": "starter/method.py",
-        "sha256": "REPLACE_WITH_SHA256"
-      },
-      "destination": "method.py"
+      "source": "public/public_eval",
+      "destination": "public_eval"
     }
   ],
-  "prompt": {
-    "path": "agent_prompt.md",
-    "sha256": "REPLACE_WITH_SHA256"
-  },
+  "private_paths": [
+    "reference",
+    "optimization_evidence"
+  ],
   "evaluation": {
+    "mode": "worker",
     "command": [
-      "/opt/task/evaluate"
+      "/opt/conda/bin/python",
+      "/workspace/public_eval/run.py",
+      "--candidate",
+      "{candidate}",
+      "--output",
+      "{output}"
     ],
-    "smoke_args": [
-      "--smoke"
-    ],
-    "timeout_seconds": 600
-  },
-  "boundaries": {
-    "readable": [
-      "/workspace/instruction.md"
-    ],
-    "readonly": [
-      "/workspace/instruction.md",
-      "/workspace/starter",
-      "/opt/task/evaluate"
-    ],
-    "unreadable": [
-      "/tests",
-      "/opt/task/hidden"
-    ]
+    "timeout_seconds": 7200
   },
   "resources": {
-    "cpus": 8,
-    "memory": "32g",
-    "gpus": {
-      "codex": "0",
-      "seed": "1"
-    }
+    "cpus": 4,
+    "memory": "16g",
+    "gpu_ids": [
+      "0"
+    ]
+  },
+  "duration": {
+    "minimum_seconds": 36000
+  },
+  "security": {
+    "mode": "default"
   }
 }

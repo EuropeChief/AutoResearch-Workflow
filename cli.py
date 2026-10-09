@@ -111,22 +111,31 @@ def _parser() -> argparse.ArgumentParser:
             command.add_argument("--plan", type=Path, required=True)
             command.add_argument("--retry-infra", action="append", default=[], metavar="RUN_ID",
                                  help="显式重试本队列已登记的外部异常；不允许重试方法失败")
-    runtime = commands.add_parser("runtime", help="Codex 双轨启动、预检、原始日志与计时")
+    runtime = commands.add_parser("runtime", help="独立本轨运行；旧 task-root 接口保留其原合同")
     actions = runtime.add_subparsers(dest="runtime_action", required=True)
-    for name in ("prepare", "check", "preflight", "run", "resume", "finalize", "recover", "status", "attach", "exclude"):
+    for name in ("prepare", "check", "preflight", "run", "resume", "finalize", "recover", "status", "attach", "exclude", "pause", "stop", "timing", "jobs", "logs"):
         command = actions.add_parser(name)
-        command.add_argument("--task-root", type=Path, required=True)
+        command.add_argument("--task-root", type=Path, help="旧状态接口，不用于独立本轨运行")
+        command.add_argument("--runtime-dir", type=Path, help="已准备的独立本轨运行目录")
         if name in {"prepare", "exclude"}:
-            command.add_argument("--file", type=Path, required=True)
+            command.add_argument("--file", type=Path, help="旧状态接口输入文件")
+        if name == "prepare":
+            command.add_argument("--config", type=Path, help="独立本轨 schema 3 配置")
+            command.add_argument("--output-dir", type=Path, help="新的本轨输出目录，不覆盖已有运行")
         if name != "prepare":
-            command.add_argument("--track", choices=("codex", "seed"), required=True)
+            command.add_argument("--track", choices=("codex", "seed"), help="旧接口轨迹选择；新接口已由本轨目录绑定")
         if name == "preflight":
             command.add_argument("--allow-live", action="store_true")
+            command.add_argument("--allow-busy-gpu", action="store_true", help="仅显式获准共享短探针使用，不默认抢占设备")
         if name == 'finalize':
             command.add_argument('--confirm-final-score', action='store_true')
-        if name in {"run", "resume"}:
-            command.add_argument("--budget-seconds", type=int, required=True)
+        if name in {"run", "resume", "recover"}:
+            command.add_argument("--budget-seconds", type=int, help="仅旧分段接口使用；新接口没有整轨墙钟限制")
             command.add_argument("--confirm-cost", action="store_true")
+        if name == 'resume':
+            command.add_argument('--prompt', help='原会话的续跑提示，不修改原 Goal')
+        if name in {'logs','jobs'}:
+            command.add_argument('--job-id')
     delivery = commands.add_parser("delivery", help="Agent 轨迹整理、最终方法、包与独立 QA 交接")
     actions = delivery.add_subparsers(dest="delivery_action", required=True)
     for name in ("trajectory-finalize", "trajectory-review", "best-select", "best-verify",
@@ -171,6 +180,16 @@ def _emit(payload: dict, output_format: str) -> None:
 
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
+    from autoresearch_flow.runtime_cli import independent, dispatch as runtime_dispatch
+    if independent(args):
+        try:
+            payload = runtime_dispatch(args)
+            _emit({"action": "runtime." + args.runtime_action, **payload}, args.format)
+            return 0
+        except (FlowError, OSError, ValueError, TypeError) as exc:
+            _emit({"action": "runtime." + args.runtime_action, "status": "error",
+                   "code": getattr(exc, "code", "INPUT_ERROR"), "message": str(exc)}, args.format)
+            return 2
     if args.command == "package":
         from autoresearch_flow.package_cli import dispatch
         try:
@@ -204,6 +223,13 @@ def main(argv: list[str] | None = None) -> int:
                    "code": getattr(exc, "code", "INPUT_ERROR"), "message": str(exc)}, args.format)
             return 2
     # Legacy commands retain their old contract, but are not imported for the new seam.
+    if args.command == 'runtime' and (args.task_root is None or
+            args.runtime_action in {'prepare', 'exclude'} and args.file is None or
+            args.runtime_action != 'prepare' and args.track is None or
+            args.runtime_action in {'run', 'resume'} and args.budget_seconds is None):
+        _emit({'action': 'runtime.' + args.runtime_action, 'status': 'error', 'code': 'RUNTIME_INPUT',
+               'message': '旧 runtime 接口须提供原 task-root/file/track/budget 输入；新接口使用 config/output-dir 或 runtime-dir'}, args.format)
+        return 2
     from autoresearch_flow.core import Registry, TaskStore, _read_json, _canonical_digest, _require
     from autoresearch_flow.experiments import FAILED_RUN_STATUSES, ExperimentBook, baseline_check, score_check
     from autoresearch_flow.experiment_runner import ExperimentRunner
