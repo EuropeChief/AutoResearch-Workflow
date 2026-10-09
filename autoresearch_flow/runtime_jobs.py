@@ -22,6 +22,7 @@ from .runtime_files import read_tail
 
 IDENTIFIER = re.compile(r'[a-f0-9]{32}')
 BUSY_STATUSES = {'running', 'observation_pending'}
+CODEX_PROTECTION_DIRS = frozenset({'.git', '.agents', '.codex', '.aws'})
 
 
 def public_result(stdout, exit_code):
@@ -47,7 +48,7 @@ def freeze_candidate(source, target, limit=64 * 1024 * 1024):
     source, target = Path(source), Path(target)
     _require(source.is_dir() and not source.is_symlink(), 'CANDIDATE_INVALID', '候选须为普通目录')
     _require(not target.exists(), 'JOB_EXISTS', '不覆盖候选快照')
-    files, total = {}, 0
+    files, total, ignored = {}, 0, []
     target.mkdir(parents=True)
     try:
         for path in sorted(source.rglob('*')):
@@ -55,6 +56,15 @@ def freeze_candidate(source, target, limit=64 * 1024 * 1024):
             info = path.lstat()
             _require(not stat.S_ISLNK(info.st_mode) and (stat.S_ISREG(info.st_mode) or stat.S_ISDIR(info.st_mode)),
                      'CANDIDATE_INVALID', '候选快照不接受符号链接或特殊文件')
+            # Native Codex temporarily creates empty mount targets while
+            # evaluate.py runs. The tool sees read-only mounts, but the host
+            # sees mode-0755 directories. Only empty reserved root directories
+            # are infrastructure; preserve actual content and nested directories.
+            if (len(relative.parts) == 1 and relative.name in CODEX_PROTECTION_DIRS
+                    and stat.S_ISDIR(info.st_mode)
+                    and next(path.iterdir(), None) is None):
+                ignored.append(str(relative))
+                continue
             if path.is_dir():
                 (target / relative).mkdir(exist_ok=True)
                 continue
@@ -83,7 +93,10 @@ def freeze_candidate(source, target, limit=64 * 1024 * 1024):
             directory.chmod(0o755)
         shutil.rmtree(target)
         raise
-    return {'files': files, 'sha256': _canonical_digest(files), 'bytes': total}
+    result = {'files': files, 'sha256': _canonical_digest(files), 'bytes': total}
+    if ignored:
+        result['ignored_sandbox_protection_dirs'] = ignored
+    return result
 
 
 class FileJobs:

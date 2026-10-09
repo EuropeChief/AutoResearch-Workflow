@@ -130,6 +130,38 @@ class JobsTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(FlowError):
             freeze_candidate(self.source, self.root / 'snapshot', limit=1)
 
+    async def test_empty_codex_protection_dirs_are_not_submission(self):
+        # Native Codex briefly creates these mount targets while submit runs.
+        names = ['.agents', '.aws', '.codex', '.git']
+        for name in names:
+            (self.source / name).mkdir()
+        # Sandbox read-only mount permissions differ from host target modes.
+        for mode in [0o555, 0o755]:
+            for name in names:
+                (self.source / name).chmod(mode)
+            target = self.root / ('snapshot-' + str(mode))
+            result = freeze_candidate(self.source, target)
+            self.assertEqual({p.name for p in target.iterdir()}, {'method.py'})
+            self.assertEqual(result['ignored_sandbox_protection_dirs'], names)
+            self.assertEqual(set(result['files']), {'method.py'})
+
+    async def test_actual_metadata_content_and_other_dirs_are_preserved(self):
+        for name in ['.git', '.aws', '.agents', '.codex', 'ordinary']:
+            path = self.source / name
+            path.mkdir()
+            (path / 'actual.txt').write_text('actual submission content')
+            if name == 'ordinary':
+                (path / '.git').mkdir(mode=0o555)
+            path.chmod(0o555)
+        (self.source / 'writable-empty').mkdir()
+        target = self.root / 'snapshot'
+        result = freeze_candidate(self.source, target)
+        for name in ['.git', '.aws', '.agents', '.codex', 'ordinary']:
+            self.assertEqual((target / name / 'actual.txt').read_text(), 'actual submission content')
+        self.assertTrue((target / 'writable-empty').is_dir())
+        self.assertTrue((target / 'ordinary/.git').is_dir())
+        self.assertFalse(result.get('ignored_sandbox_protection_dirs'))
+
     async def test_file_response_readonly_and_request_validation(self):
         path = self.jobs.root / 'requests' / ('a'*32 + '.json')
         path.write_text(json.dumps({'request_id': 'a'*32, 'operation': 'submit', 'source': '/tests'}))

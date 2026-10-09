@@ -12,7 +12,7 @@ from pathlib import Path
 from .common import FlowError, _require
 from .runtime_events import Redactor
 
-METHODS = {'initialize', 'thread/start', 'thread/resume', 'thread/read',
+METHODS = {'initialize', 'model/list', 'thread/start', 'thread/resume', 'thread/read',
            'thread/goal/get', 'thread/goal/set', 'turn/start', 'turn/interrupt'}
 
 

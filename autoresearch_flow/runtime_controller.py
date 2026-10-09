@@ -273,6 +273,12 @@ class Controller:
                 self.clock.record('fact',evidence='actual native backend start/restart',
                                   note='原 Codex home 与 thread/Goal 不重建；不杀其他进程')
             self.connect()
+            if not recover:
+                from .runtime_profiles import acknowledge_kept_model
+                notice = acknowledge_kept_model(self.directory / 'codex_home/config.toml',
+                    self.config['model']['model'], self.rpc.request('model/list', {'includeHidden': True}))
+                if notice:
+                    _atomic_json(self.directory / 'ui-model-notice.json', notice)
             if recover:
                 value = self.session.attach(self.state['objective'])
             else:

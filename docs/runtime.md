@@ -15,6 +15,8 @@ JSON 指定镜像 ID/digest、Codex 版本、候选目录、公开映射、Promp
 - `direct`：Agent 在真实 Codex 沙箱直接运行题目的公开程序；不启用跨权限作业通道。
 - `worker`：需要合法沙箱外 CUDA/受保护执行的题目，用 `python /workspace/evaluate.py submit` 获得 job_id，再用 `status`、`logs`、`result --job-id 原ID` 查询。请求不能指定宿主命令、路径、资源。候选快照、日志、真实退出码与有限 score/raw_metric 绑定；独立作业监督进程不因模型暂停而退出。
 
+快照不提交 Codex 临时创建的顶层空保护目录（`.git/.agents/.codex/.aws`），并记录实际忽略项；非空同名目录和其他内容仍保留，由题目检查。严格限制候选文件数的 CPU 检查可先复制合法候选原字节到临时目录；这不替代正式 worker 的实际文件检查。
+
 题目仍须提供完整、独立的 Public/Dev 程序，不能只提交依赖本地协调器的客户端。worker 是按需能力，不要求每题使用 Broker。checkpoint 等产物位于本轨 jobs/worker/作业ID/output；所选必需模型由题目适配恢复至声明候选面，不可只留在缓存。
 
 ## 操作
@@ -30,6 +32,8 @@ python cli.py runtime attach --runtime-dir /task/runtime-seed
 ```
 
 attach 用本轨独立 tmux server 只读观察原生 Codex；Ctrl-b d 退出观察，不注入 Prompt、不取消 Goal/作业，也不依赖旧 tmux server 的用户组缓存。底座不因静默、训练等待、正常压缩或墙钟强停；Agent 自主结束原 Goal，complete 不等于时长和内容合格。
+
+首次启动按原生 `model/list` 对当前显式模型记录仅显示用的升级提示确认，避免只读界面停在换模型菜单；不会采用宣传的新模型或改变推理档位。这只使用[官方 notice 配置](https://learn.chatgpt.com/docs/config-file/config-reference)，实际模型仍受冻结校验。
 
 ```bash
 python cli.py runtime pause --runtime-dir /task/runtime-seed

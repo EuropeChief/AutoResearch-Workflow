@@ -80,3 +80,25 @@ def parameter_application(model: dict) -> dict:
                'max_output_tokens': 'compaction_headroom_validation'}
     return {field: {'value': model[field], 'application': application}
             for field, application in mapping.items() if field in model}
+
+
+def acknowledge_kept_model(path: Path, model: str, catalog: dict) -> dict | None:
+    """Acknowledge native UI marketing without changing the explicit model.
+
+    model/list supplies the advertised target; never hard-code model generations
+    or select that target. This runs only before a fresh thread is created.
+    """
+    if not isinstance(catalog, dict) or not isinstance(catalog.get('data'), list):
+        return None
+    entry = next((m for m in catalog['data'] if isinstance(m, dict) and m.get('model') == model), {})
+    target = entry.get('upgrade')
+    if not isinstance(target, str) or not target or target == model:
+        return None
+    actual = tomllib.loads(path.read_text())
+    _require(actual.get('model') == model, 'RUNTIME_DRIFT', '可视化提示处理不能更改本轨模型')
+    # Do not overwrite existing native acknowledgements/preferences.
+    if 'notice' not in actual:
+        with path.open('a', encoding='utf-8') as stream:
+            stream.write('\n[notice.model_migrations]\n' + json.dumps(model) + ' = ' + json.dumps(target) + '\n')
+    return {'configured_model': model, 'advertised_upgrade': target,
+            'effective_model_changed': False, 'notice_only': True}
