@@ -23,6 +23,8 @@ description: 整理 AutoResearch 现有轨迹、最佳方法和证据，检查�
 
 ## QA 后直接交付
 
+使用[直接打包工具](../../docs/packaging.md)：一次 package 调用只需最终包、独立 report.json 和包外附件目录，自动三包、分卷核验及填表；已有目录自动生成新结果子目录。缺概述可用普通 Markdown 备注；不为打包重训、重做 QA 或补登记。
+
 1. 核完整独立报告对应当前 `package_root`；指定包外 `output_dir`，不补 qa_bind、handoff、disposition 或阶段关闭手续。
 2. 从同一个最终包压缩三个范围：完整提交包、其中的 `workspace/harbor_task/`、`optimization_evidence/`。默认语义名称不加题号；ZIP 保留 UTF-8 名称及必要权限，超过上传上限才分卷。上限和分卷默认值见[交付约定](../../rules/README.md#m13)。
 3. 在压缩输出目录写中文七项填表信息：研究子方向、优化面介绍、Baseline 描述/分数、Reference 描述/分数、小规模试跑结论。最后一项从双轨前期真实运行总结，不虚构单独试跑。缺信息据实待补，不编造，也不阻塞已满足条件的压缩。

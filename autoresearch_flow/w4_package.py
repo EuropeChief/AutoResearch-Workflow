@@ -5,13 +5,10 @@ certify scientific validity, hidden scores, or platform approval.
 """
 from __future__ import annotations
 
-import hashlib
 import math
 import re
 import shutil
-import stat
 import tempfile
-import tomllib
 import zipfile
 from pathlib import Path
 
@@ -22,130 +19,13 @@ from .w4_evidence import DeliveryEvidence, _copy_tree, _files, _safe_tree, _reje
 from .trajectory import validate_round
 from .pca_contract import check_task
 from .qa_contract import validate_qa_report, check_exposure_manifest
+from .archive_io import (package_snapshot as package_snapshot, _tree_digest, _zip_name as _zip_name, _write_zip,
+                         _verify_zip, _split_zip, _verify_upload, _archive_support)
 
 
 EXPERT_FILES = {"专家作业说明文档.md", "best_method", "expert_annotation.json",
                 "run_summary.json", "trajectory_codex.json", "trajectory_seed.json"}
 OPT_FILES = {"训练证据说明.md", "baseline_runs", "reference_runs", "comparison_summary.json"}
-
-
-def package_snapshot(root: Path) -> list[dict]:
-    """Portable content + path + mode identity, including empty directories."""
-    _require(root.is_dir() and not root.is_symlink(), "PACKAGE_MISSING", "提交包目录不存在")
-    entries = []
-    for path in [root, *sorted(root.rglob("*"))]:
-        _require(not path.is_symlink() and (path.is_file() or path.is_dir()),
-                 "PACKAGE_SYMLINK", "提交包只允许普通文件和目录，不含链接/设备/套接字")
-        item = {"path": path.relative_to(root).as_posix(), "mode": stat.S_IMODE(path.stat().st_mode),
-                "type": "directory" if path.is_dir() else "file"}
-        if path.is_file():
-            item.update(sha256=_sha256(path), bytes=path.stat().st_size)
-        entries.append(item)
-    return entries
-
-
-def _tree_digest(root: Path) -> str:
-    return _canonical_digest(package_snapshot(root))
-
-
-def _zip_name(prefix, row):
-    name = prefix if row["path"] == "." else prefix + "/" + row["path"]
-    return name + "/" if row["type"] == "directory" else name
-
-
-def _write_zip(root, path, prefix):
-    with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=6, allowZip64=True) as out:
-        for row in package_snapshot(root):
-            info = zipfile.ZipInfo(_zip_name(prefix, row), date_time=(1980, 1, 1, 0, 0, 0))
-            info.create_system = 3
-            kind = stat.S_IFDIR if row["type"] == "directory" else stat.S_IFREG
-            info.external_attr = (kind | row["mode"]) << 16
-            info.compress_type = zipfile.ZIP_DEFLATED
-            if row["type"] == "directory":
-                info.external_attr |= 0x10
-                out.writestr(info, b"")
-            else:
-                with (root / row["path"]).open("rb") as source, out.open(info, "w", force_zip64=True) as target:
-                    shutil.copyfileobj(source, target, length=1024 * 1024)
-
-
-def _verify_zip(root, path, prefix):
-    """Stream-decompress every member; verify CRC, bytes, paths and Unix modes."""
-    _require(path.is_file() and not path.is_symlink(), "ARCHIVE_INVALID", "ZIP 缺失或为链接")
-    expected = {_zip_name(prefix, row): row for row in package_snapshot(root)}
-    with zipfile.ZipFile(path) as archive:
-        members = archive.infolist()
-        _require(len(members) == len(expected) and {m.filename for m in members} == set(expected),
-                 "ARCHIVE_INVALID", "ZIP 文件/目录集合与接受包不符")
-        for member in members:
-            row = expected[member.filename]
-            _require(stat.S_IMODE(member.external_attr >> 16) == row["mode"] and member.create_system == 3,
-                     "ARCHIVE_INVALID", "ZIP 丢失 Unix 权限")
-            _require(member.filename.isascii() or member.flag_bits & 0x800,
-                     "ARCHIVE_INVALID", "非 ASCII 文件名未使用 UTF-8 标志")
-            digest = hashlib.sha256()
-            with archive.open(member) as data:
-                while block := data.read(1024 * 1024):
-                    digest.update(block)
-            if row["type"] == "file":
-                _require(digest.hexdigest() == row["sha256"] and member.file_size == row["bytes"],
-                         "ARCHIVE_INVALID", "ZIP 解包内容与源文件不同")
-    return {"path": path.name, "sha256": _sha256(path), "bytes": path.stat().st_size, "prefix": prefix,
-            "parts": [], "upload": "single_zip"}
-
-
-def _split_zip(path, maximum, limit):
-    if path.stat().st_size <= limit:
-        return
-    with path.open("rb") as source:
-        number = 1
-        while source.tell() < path.stat().st_size:
-            with path.with_name(f"{path.name}.part{number:03d}").open("xb") as part:
-                remaining = maximum
-                while remaining and (block := source.read(min(remaining, 1024 * 1024))):
-                    part.write(block)
-                    remaining -= len(block)
-            number += 1
-
-
-def _verify_upload(path, entry, maximum, limit):
-    if entry["bytes"] <= limit:
-        return entry
-    combined = hashlib.sha256()
-    parts = []
-    for number in range(1, (entry["bytes"] + maximum - 1) // maximum + 1):
-        part = path.with_name(f"{path.name}.part{number:03d}")
-        expected = min(maximum, entry["bytes"] - (number - 1) * maximum)
-        _require(part.is_file() and not part.is_symlink() and part.stat().st_size == expected,
-                 "ARCHIVE_INVALID", "分卷缺失、大小不符或为链接")
-        digest = hashlib.sha256()
-        with part.open("rb") as source:
-            while block := source.read(1024 * 1024):
-                digest.update(block)
-                combined.update(block)
-        parts.append({"path": part.name, "sha256": digest.hexdigest(), "bytes": expected})
-    _require(combined.hexdigest() == entry["sha256"], "ARCHIVE_INVALID", "分卷拼接哈希不等于完整 ZIP")
-    return {**entry, "parts": parts, "upload": "byte_parts"}
-
-
-def _archive_support(archives):
-    checksums, instructions = [], ["# 上传说明", "", "完整 ZIP 保留用于本地归档。超过上传上限的 ZIP 只上传其全部分卷，不同时上传完整 ZIP。",
-                                   "分卷为字节拼接格式，不是可分别解压的 ZIP 或原生多卷 ZIP。接收方按以下明确顺序重组后再解压。", ""]
-    for role in ("submission", "harbor_task", "optimization_evidence"):
-        entry = archives[role]
-        for item in [entry, *entry["parts"]]:
-            checksums.append(f'{item["sha256"]}  {item["path"]}')
-        instructions.extend([f'## {entry["path"]}', ""])
-        if entry["parts"]:
-            names = " ".join(p["path"] for p in entry["parts"])
-            instructions.extend(["```sh", f'cat {names} > {entry["path"]}', "```", ""])
-        else:
-            instructions.extend(["直接上传此 ZIP，无需拼接。", ""])
-        instructions.extend([f'完整文件 SHA-256：`{entry["sha256"]}`。', ""])
-    instructions.extend(["保留全部文件时可运行 `sha256sum -c SHA256SUMS.txt`。",
-                         "中文文件名使用 UTF-8；Linux 解压建议 `unzip`，其读取 Unix 权限字段保留脚本可执行位。",
-                         "`archives.json` 绑定独立 QA、源包快照及三份压缩包；这些材料均在提交包之外。", ""])
-    return {"SHA256SUMS.txt": "\n".join(checksums) + "\n", "上传说明.md": "\n".join(instructions)}
 
 
 def _archive_scopes(root, name):

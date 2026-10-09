@@ -2,7 +2,7 @@
 
 由专家 Agent（Codex 或 Pi）驱动，复用研究设计、任务实现、实验验证、Agent 迭代、材料交付五类能力，让主要工作留在题目本身。
 
-本分支正在进行轻量化改造：入口、能力指南、[独立实验运行/统计](docs/experiments.md)及[材料整理/格式检查](docs/materials.md)已实现；打包和 Codex 底座工具待后续工作项实现。新的 experiment 和 materials 接口不依赖任务状态，其他旧命令尚未全部解耦；不要将本分支用于正式长程运行。已发布 `v1.0.0` 从对应 Git 标签取得，[旧发布记录](RELEASE.md)不代表本分支通过发布验收。
+本分支正在进行轻量化改造：入口、能力指南、[独立实验运行/统计](docs/experiments.md)、[材料整理/格式检查](docs/materials.md)及 [QA 后直接打包/填表](docs/packaging.md)已实现；Codex 底座待后续工作项。新的 experiment、materials 和 package 接口不依赖任务状态，其他旧命令尚未全部解耦；不要将本分支用于正式长程运行。已发布 `v1.0.0` 从对应 Git 标签取得，[旧发布记录](RELEASE.md)不代表本分支通过发布验收。
 
 ## 开始使用
 
