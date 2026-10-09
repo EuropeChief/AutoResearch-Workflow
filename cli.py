@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""AutoResearch 能力入口；旧命令仅供尚未退出的实现使用。"""
+"""AutoResearch 无状态能力入口；历史状态接口仅为兼容旧任务保留。"""
 
 from __future__ import annotations
 
@@ -15,7 +15,8 @@ from autoresearch_flow.common import FlowError
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=f"AutoResearch 新流程统一入口（{FLOW_VERSION}）")
     parser.add_argument("--format", choices=("text", "json"), default="text", help="输出格式；机器调用建议 json")
-    commands = parser.add_subparsers(dest="command", required=True)
+    commands = parser.add_subparsers(dest="command", required=True,
+                                     metavar="{version,materials,package,harbor,rules,environment,experiment,runtime}")
     commands.add_parser("version", help="显示工具版本")
     from autoresearch_flow.materials_cli import add_commands as add_material_commands
     add_material_commands(commands)
@@ -31,7 +32,7 @@ def _parser() -> argparse.ArgumentParser:
     selection = rule_show.add_mutually_exclusive_group(required=True)
     selection.add_argument("--id", dest="rule_id")
     selection.add_argument("--step")
-    environment = commands.add_parser("environment", help="PCA 双镜像结构/实跑证据检查，不执行 Harbor 或 QA")
+    environment = commands.add_parser("environment", help="PCA 双镜像结构/实跑证据检查（只读兼容诊断，不执行 Harbor 或 QA）")
     env_actions = environment.add_subparsers(dest="environment_action", required=True)
     stability = env_actions.add_parser("verify-stability", help="可选只读诊断：核已有 12h 记录，不启动容器、不写通过收据")
     stability.add_argument("--task-root", type=Path, required=True, help="记录及其原始证据的范围根；最终交付时为包根")
@@ -48,7 +49,10 @@ def _parser() -> argparse.ArgumentParser:
             command.add_argument("--score-contract", type=Path, help="独立的评分合同 JSON；非完整标注 JSON")
             command.add_argument("--best-method", type=Path)
 
-    task = commands.add_parser("task", help="题目状态")
+    # The stateful task/stage routes remain parseable for historical work, but
+    # must not appear in the default entry surface for a new task.
+    task = commands.add_parser("task", help=argparse.SUPPRESS,
+                               description="历史任务状态兼容接口；新题不初始化状态账本")
     task_actions = task.add_subparsers(dest="task_action", required=True)
     task_init = task_actions.add_parser("init", help="显式初始化已有题目目录，不运行题目")
     task_init.add_argument("--task-root", type=Path, required=True)
@@ -77,7 +81,8 @@ def _parser() -> argparse.ArgumentParser:
     configure = task_actions.add_parser("configure", help="登记题目类型和适配入口")
     configure.add_argument("--task-root", type=Path, required=True)
     configure.add_argument("--file", type=Path, required=True)
-    stage = commands.add_parser("stage", help="六阶段状态、证据登记、冻结与返修")
+    stage = commands.add_parser("stage", help=argparse.SUPPRESS,
+                                description="历史阶段账本兼容接口；新题按证据接续")
     actions = stage.add_subparsers(dest="stage_action", required=True)
     for name in ("status", "check", "template", "record", "finish", "reopen", "ref"):
         command = actions.add_parser(name)
@@ -92,12 +97,15 @@ def _parser() -> argparse.ArgumentParser:
             command.add_argument("--file", type=Path, required=True)
         if name == "ref":
             command.add_argument("--path", action="append", required=True)
-    experiment = commands.add_parser("experiment", help="独立 run/summarize；其余为旧账本接口")
-    actions = experiment.add_subparsers(dest="experiment_action", required=True)
+    experiment = commands.add_parser("experiment", help="独立 run/summarize（旧账本动作仅兼容旧任务）")
+    experiment_actions = experiment.add_subparsers(
+        dest="experiment_action", required=True, metavar="{run,summarize}"
+    )
     from autoresearch_flow.experiment_cli import add_commands
-    add_commands(actions)
+    add_commands(experiment_actions)
     for name in ("lock", "extend", "start", "finish", "report", "baseline-check", "score-check", "execute"):
-        command = actions.add_parser(name)
+        command = experiment_actions.add_parser(name, help=argparse.SUPPRESS,
+                                     description="历史实验账本兼容接口；新题使用 run/summarize")
         command.add_argument("--task-root", type=Path, required=True)
         if name in {"lock", "extend", "start", "finish", "baseline-check", "score-check"}:
             command.add_argument("--file", type=Path, required=True)
@@ -113,32 +121,34 @@ def _parser() -> argparse.ArgumentParser:
             command.add_argument("--plan", type=Path, required=True)
             command.add_argument("--retry-infra", action="append", default=[], metavar="RUN_ID",
                                  help="显式重试本队列已登记的外部异常；不允许重试方法失败")
-    runtime = commands.add_parser("runtime", help="独立本轨运行；旧 task-root 接口保留其原合同")
+    runtime = commands.add_parser("runtime", help="独立本轨运行（旧 task-root 参数仅兼容旧任务）")
     actions = runtime.add_subparsers(dest="runtime_action", required=True)
     for name in ("prepare", "check", "preflight", "run", "resume", "finalize", "recover", "status", "attach", "exclude", "pause", "stop", "timing", "jobs", "logs"):
         command = actions.add_parser(name)
-        command.add_argument("--task-root", type=Path, help="旧状态接口，不用于独立本轨运行")
+        command.add_argument("--task-root", type=Path, help=argparse.SUPPRESS)
         command.add_argument("--runtime-dir", type=Path, help="已准备的独立本轨运行目录")
         if name in {"prepare", "exclude"}:
-            command.add_argument("--file", type=Path, help="旧状态接口输入文件")
+            command.add_argument("--file", type=Path,
+                                 help="排除无效时段的有据记录 JSON" if name == "exclude" else argparse.SUPPRESS)
         if name == "prepare":
             command.add_argument("--config", type=Path, help="独立本轨 schema 3 配置")
             command.add_argument("--output-dir", type=Path, help="新的本轨输出目录，不覆盖已有运行")
         if name != "prepare":
-            command.add_argument("--track", choices=("codex", "seed"), help="旧接口轨迹选择；新接口已由本轨目录绑定")
+            command.add_argument("--track", choices=("codex", "seed"), help=argparse.SUPPRESS)
         if name == "preflight":
             command.add_argument("--allow-live", action="store_true")
             command.add_argument("--allow-busy-gpu", action="store_true", help="仅显式获准共享短探针使用，不默认抢占设备")
         if name == 'finalize':
             command.add_argument('--confirm-final-score', action='store_true')
         if name in {"run", "resume", "recover"}:
-            command.add_argument("--budget-seconds", type=int, help="仅旧分段接口使用；新接口没有整轨墙钟限制")
+            command.add_argument("--budget-seconds", type=int, help=argparse.SUPPRESS)
             command.add_argument("--confirm-cost", action="store_true")
         if name == 'resume':
             command.add_argument('--prompt', help='原会话的续跑提示，不修改原 Goal')
         if name in {'logs','jobs'}:
             command.add_argument('--job-id')
-    delivery = commands.add_parser("delivery", help="Agent 轨迹整理、最终方法、包与独立 QA 交接")
+    delivery = commands.add_parser("delivery", help=argparse.SUPPRESS,
+                                   description="历史交付账本兼容接口；新题使用 materials/package")
     actions = delivery.add_subparsers(dest="delivery_action", required=True)
     for name in ("trajectory-finalize", "trajectory-review", "best-select", "best-verify",
                  "build", "check", "archive", "form", "qa-handoff", "qa-bind"):
@@ -159,6 +169,18 @@ def _parser() -> argparse.ArgumentParser:
             command.add_argument("--max-part-bytes", type=int, default=290_000_000)
         if name == "qa-bind":
             command.add_argument("--report", type=Path, required=True)
+    # argparse keeps hidden subcommands in ``choices`` so compatibility calls
+    # still parse, but remove their display actions and stale names from the
+    # default help surface.
+    commands._choices_actions[:] = [
+        action for action in commands._choices_actions
+        if action.dest not in {"task", "stage", "delivery"}
+    ]
+    experiment_actions._choices_actions[:] = [
+        action for action in experiment_actions._choices_actions
+        if action.dest not in {"lock", "extend", "start", "finish", "report",
+                               "baseline-check", "score-check", "execute"}
+    ]
     return parser
 
 def _emit(payload: dict, output_format: str) -> None:

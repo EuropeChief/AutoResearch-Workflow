@@ -1,6 +1,6 @@
 # 独立 Codex 运行底座
 
-每次只处理一轨，不读取任务阶段、规则锁或另一轨状态。专家制作题目可用 Codex/Pi；正式轨迹由 Codex CLI 生成。新题使用[本轨配置模板](../templates/runtime.example.json)和[中文 Prompt](../templates/agent-prompt.zh.md)，旧 `--task-root` 接口不用于新实例。
+每次只处理一轨，不读取任务阶段、规则锁或另一轨状态。专家制作题目可用 Codex/Pi；正式轨迹由 Codex CLI 生成。新题使用[本轨配置模板](../templates/runtime.example.json)和[中文 Prompt](../templates/agent-prompt.zh.md)，只传入 `--runtime-dir`；旧 `--task-root` 参数仅为历史任务兼容保留。
 
 ## 输入与执行模式
 

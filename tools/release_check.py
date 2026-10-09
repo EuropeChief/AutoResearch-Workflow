@@ -189,14 +189,17 @@ def main():
                             "check_documents(source_files())")]
         run(relocated_check, relocated_flow)
         isolated = run([sys.executable, "-m", "unittest", "discover", "-s", str(relocated_flow / "tests"), "-v"], root)
-        task = root / "new-task"
-        task.mkdir()
         cli = [sys.executable, str(relocated_flow / "cli.py"), "--format", "json"]
-        run(cli + ["rules", "check"], task)
-        run(cli + ["task", "init", "--task-root", str(task), "--task-id", "release-smoke", "--confirm-init"], task)
-        run(cli + ["task", "check", "--task-root", str(task)], task)
-        state = json.loads(run(cli + ["stage", "status", "--task-root", str(task)], task))
-        assert state["current_stage"] == "1"
+        run(cli + ["rules", "check"], root)
+        help_output = run([sys.executable, str(relocated_flow / "cli.py"), "--help"], root)
+        for capability in ("materials", "package", "harbor", "runtime"):
+            assert capability in help_output, f"relocated CLI omitted {capability}"
+        # A fresh release smoke must exercise only stateless entry points.  In
+        # particular it must not create the retired .autoresearch-flow ledger.
+        run([sys.executable, str(relocated_flow / "cli.py"), "materials", "--help"], root)
+        run([sys.executable, str(relocated_flow / "cli.py"), "package", "--help"], root)
+        run([sys.executable, str(relocated_flow / "cli.py"), "harbor", "--help"], root)
+        assert not (root / ".autoresearch-flow").exists(), "release smoke created legacy state"
     report = {"schema_version": 2, "status": "released" if args.release else "contracts_passed",
               "release_ready": args.release,
               "pending": [] if args.release else ["独立新会话入口试用暂缓；正式发行包尚未验收"],
@@ -208,7 +211,7 @@ def main():
               "relocated_tests": re.search(r"Ran (\d+) tests", isolated).group(1),
               "relocation_without_host_config_or_auth": True,
               "relocation_without_design_or_pilot_runs": True,
-              "fresh_cli_init_and_resume_status": True,
+              "fresh_cli_capabilities": True,
               "model_calls": 0, "scope": "tool contracts, not scientific or platform acceptance"}
     if live:
         assert live == validate_evidence(args.evidence_manifest, FLOW, all_files), "Evidence changed during validation"

@@ -1,4 +1,6 @@
-# 状态与证据：统一登记和接续
+# 状态与证据：统一登记和接续（历史兼容接口）
+
+> 本页只保留给依赖旧状态账本的历史任务。新题不初始化 `.autoresearch-flow`，请从[六阶段导航](../stages.md)和当前能力入口开始。
 
 此模块登记阶段状态并复用实验、运行和交付检查，不运行训练、调用模型或代替独立 QA。题目根下使用 `.autoresearch-flow/state.json` schema 2；不可覆盖记录在 `.autoresearch-flow/stage_records/`。
 
