@@ -18,11 +18,13 @@ class NoticeTests(unittest.TestCase):
         self.catalog = {'data': [{'model': 'configured-old', 'upgrade': 'advertised-new'}]}
 
     def test_acknowledges_target_but_preserves_model_and_permissions(self):
+        self.path.chmod(0o444)
         before = tomllib.loads(self.path.read_text())
         report = acknowledge_kept_model(self.path, 'configured-old', self.catalog)
         after = tomllib.loads(self.path.read_text())
         self.assertEqual(after.pop('notice'), {'model_migrations': {'configured-old': 'advertised-new'}})
         self.assertEqual(after, before)
+        self.assertEqual(self.path.stat().st_mode & 0o777, 0o444)
         self.assertFalse(report['effective_model_changed'])
 
     def test_custom_model_or_no_upgrade_leaves_config_unchanged(self):

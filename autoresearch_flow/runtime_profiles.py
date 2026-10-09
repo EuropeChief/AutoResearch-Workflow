@@ -3,7 +3,9 @@ from __future__ import annotations
 
 import json
 import hashlib
+import os
 from pathlib import Path
+import tempfile
 import tomllib
 from urllib.parse import urlsplit
 
@@ -98,7 +100,16 @@ def acknowledge_kept_model(path: Path, model: str, catalog: dict) -> dict | None
     _require(actual.get('model') == model, 'RUNTIME_DRIFT', '可视化提示处理不能更改本轨模型')
     # Do not overwrite existing native acknowledgements/preferences.
     if 'notice' not in actual:
-        with path.open('a', encoding='utf-8') as stream:
-            stream.write('\n[notice.model_migrations]\n' + json.dumps(model) + ' = ' + json.dumps(target) + '\n')
+        text = path.read_text() + '\n[notice.model_migrations]\n' + json.dumps(model) + ' = ' + json.dumps(target) + '\n'
+        # Prepared config is mode 0444. Native display preferences use atomic
+        # replacement in the expert-owned home, not in-place chmod/append.
+        with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', dir=path.parent, delete=False) as stream:
+            temporary = Path(stream.name)
+            stream.write(text)
+        try:
+            temporary.chmod(path.stat().st_mode & 0o777)
+            os.replace(temporary, path)
+        finally:
+            temporary.unlink(missing_ok=True)
     return {'configured_model': model, 'advertised_upgrade': target,
             'effective_model_changed': False, 'notice_only': True}
