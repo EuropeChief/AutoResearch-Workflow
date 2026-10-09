@@ -13,6 +13,8 @@ description: 整理 AutoResearch 现有轨迹、最佳方法和证据，检查�
 - 依[三目录与说明](../../rules/README.md#m12)、[具体格式](../../rules/README.md#c07)组装；核唯一最终源码、同协议复验、全部 B/R 原始证据、模型重载、NOP 及净时长取证。最终包内能追到说明所引用的必要证据，不能依赖包外旧目录。[训练证据](../../rules/README.md#m11)
 - 重点核 JSON 根结构/字段/类型、seed/role/哈希/路径、题目身份和数值口径，检查题面/源码/说明/轨迹是否矛盾或残留旧内容。必要额外材料留正确位置；流程审批、阶段账本、返修前后对比不进包，只留当前正确交付及不能抹去的真实研究事实。
 
+使用[独立材料工具](../../docs/materials.md)处理需要的部分：materials trajectory 整理自写记录，materials assemble 按实际来源组包，materials check 只读指定最终包。已有合格材料直接复用。工具输出精确位置与待实质审阅项；格式通过不等于 QA 通过，不为了补程序字段编造轨迹、时长或科研结论。
+
 ## 独立 QA 与返修
 
 把确定的最终包路径交给用户，在新的独立会话使用项目方 [autoresearch-task-qa](../autoresearch-task-qa/SKILL.md)。制作会话不替代此检查，QA 只在该包内取证。[QA 边界](../../rules/README.md#m13)

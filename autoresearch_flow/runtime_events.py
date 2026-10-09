@@ -4,7 +4,7 @@ from __future__ import annotations
 import math
 import re
 
-from .core import _require
+from .common import _require
 
 
 class Redactor:

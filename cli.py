@@ -17,6 +17,8 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--format", choices=("text", "json"), default="text", help="输出格式；机器调用建议 json")
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("version", help="显示工具版本")
+    from autoresearch_flow.materials_cli import add_commands as add_material_commands
+    add_material_commands(commands)
 
     rules = commands.add_parser("rules", help="中央规则包")
     rules_actions = rules.add_subparsers(dest="rules_action", required=True)
@@ -159,7 +161,7 @@ def _emit(payload: dict, output_format: str) -> None:
         print(f"变更规则：{', '.join(payload['changed_rules']) or '无'}；受影响阶段：{payload['affected_stages']}")
     for issue in payload.get("issues", []):
         print(f"- {issue['code']}: {issue['message']}" if isinstance(issue, dict) else f"- {issue}")
-    if payload["action"].startswith(("rules.show", "environment.", "experiment.", "runtime.", "delivery.", "stage.", "task.configure", "task.policy", "task.git")):
+    if payload["action"].startswith(("rules.show", "environment.", "experiment.", "materials.", "runtime.", "delivery.", "stage.", "task.configure", "task.policy", "task.git")):
         print(json.dumps({key: value for key, value in payload.items() if key not in {"action", "issues"}}, ensure_ascii=False, indent=2))
     if payload.get("next_action"):
         print(f"下一步：{payload['next_action']}")
@@ -167,6 +169,18 @@ def _emit(payload: dict, output_format: str) -> None:
 
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
+    if args.command == "materials":
+        from autoresearch_flow.materials_cli import dispatch
+        try:
+            payload = dispatch(args)
+            _emit({"action": "materials." + args.materials_action, **payload}, args.format)
+            if payload["status"] == "assembled":
+                return 0 if payload["format_check"]["status"] == "format_checked_not_qa" else 2
+            return 0 if payload["status"] in {"prepared", "format_checked_not_qa"} else 2
+        except (FlowError, OSError, ValueError, TypeError) as exc:
+            _emit({"action": "materials." + args.materials_action, "status": "error",
+                   "code": getattr(exc, "code", "INPUT_ERROR"), "message": str(exc)}, args.format)
+            return 2
     if args.command == "experiment" and args.experiment_action in {"run", "summarize"}:
         from autoresearch_flow.experiment_cli import dispatch
         try:
