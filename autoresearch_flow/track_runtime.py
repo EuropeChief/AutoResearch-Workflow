@@ -71,7 +71,7 @@ def _validate(config, base, output, model):
              'IMAGE_NOT_PINNED', '须指定镜像 ID 或 digest，不使用漂移 tag')
     _require(re.fullmatch(r'\d+\.\d+\.\d+', str(config.get('codex_version', ''))),
              'INVALID_RUNTIME', '须指定 Codex 支持版本')
-    _require(config.get('purpose', 'formal') in {'formal', 'preflight'}, 'INVALID_RUNTIME', '运行用途不合法')
+    _require(config.get('purpose', 'formal') in {'formal', 'preflight', 'acceptance'}, 'INVALID_RUNTIME', '运行用途不合法')
     evaluation = config.get('evaluation')
     _require(isinstance(evaluation, dict) and set(evaluation) <= {'command', 'mode', 'timeout_seconds', 'max_candidate_bytes'}
              and evaluation.get('mode', 'direct') in {'direct', 'worker'}, 'INVALID_EVALUATOR', '须指定公开执行模式')
@@ -182,8 +182,11 @@ class TrackRuntime:
                 _copy_input(Path(config['codex_vendor']), temporary/'codex_runtime',readonly=True)
             prompt_text=prompt.read_text(encoding='utf-8')
             seconds=config['duration']['minimum_seconds']
-            duration=(f'本轨净有效迭代至少 {seconds//3600} 小时；以只读 /run/autoresearch/responses/progress.json 查询进度。'
-                      '由你自主收口，不以最终提升为必须条件，不把外部中断墙钟算入有效时间。')
+            if config.get('purpose', 'formal') == 'formal':
+                duration=(f'本轨净有效迭代至少 {seconds//3600} 小时；以只读 /run/autoresearch/responses/progress.json 查询进度。'
+                          '由你自主收口，不以最终提升为必须条件，不把外部中断墙钟算入有效时间。')
+            else:
+                duration='本次仅按 Prompt 明确的授权范围进行有界验收，不用于正式轨迹时长证明。'
             if config['evaluation'].get('mode','direct')=='worker':
                 entry=('python /workspace/evaluate.py submit；保存 job_id 后用 '
                        'python /workspace/evaluate.py status 或 logs 或 result --job-id 原ID 查询，'

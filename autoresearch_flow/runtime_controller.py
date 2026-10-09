@@ -27,6 +27,8 @@ from .track_runtime import TrackRuntime
 def goal_objective(config):
     if config.get('purpose') == 'preflight':
         return '完成本轨 prompt 中有界合成预检；不训练，不用于正式轨迹时长证明。'
+    if config.get('purpose') == 'acceptance':
+        return '完成本轨 prompt 中有界真实题适配验收；只用授权资源和合法公开入口，不用于正式轨迹时长证明。'
     seconds = config['duration']['minimum_seconds']
     return (f'独立合法完成本轨优化探索，净有效迭代至少 {seconds} 秒；只用公开合法入口，'
             '自行维护轨迹 JSON 和 best_method。不得因未提升而提前退出；真实满足时长、产物和合法性后自主收口。')

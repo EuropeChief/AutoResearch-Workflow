@@ -137,7 +137,8 @@ def _parser() -> argparse.ArgumentParser:
             command.add_argument("--track", choices=("codex", "seed"), help=argparse.SUPPRESS)
         if name == "preflight":
             command.add_argument("--allow-live", action="store_true")
-            command.add_argument("--allow-busy-gpu", action="store_true", help="仅显式获准共享短探针使用，不默认抢占设备")
+        if name in {"preflight", "run"}:
+            command.add_argument("--allow-busy-gpu", action="store_true", help="仅显式获准的有界预检/适配验收可共享设备，不用于正式训练")
         if name == 'finalize':
             command.add_argument('--confirm-final-score', action='store_true')
         if name in {"run", "resume", "recover"}:

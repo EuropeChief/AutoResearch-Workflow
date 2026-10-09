@@ -10,6 +10,8 @@ JSON 指定镜像 ID/digest、Codex 版本、候选目录、公开映射、Promp
 
 镜像已有 Python、题目依赖与公开数据、Codex 0.160.0；可选 `codex_vendor` 引用本机已有 vendor。宿主已有 Harbor 0.23.0、Docker/Compose、tmux 与标准 `websockets` 15.x；GPU 另需 NVIDIA Docker。底座不从零安装环境。
 
+默认 `purpose=formal` 用于正式轨迹；`preflight` 仅用于不训练的合成验收，`acceptance` 用于按当次授权执行的真实题适配（可以包含题目原协议训练）。两类验收都不承诺正式 7h/10h，不能通过 `runtime finalize` 冒充正式轨迹。资源与费用范围由验收 Prompt 和本次授权限定，不降低正式题目要求。
+
 - `direct`：Agent 在真实 Codex 沙箱直接运行题目的公开程序；不启用跨权限作业通道。
 - `worker`：需要合法沙箱外 CUDA/受保护执行的题目，用 `python /workspace/evaluate.py submit` 获得 job_id，再用 `status`、`logs`、`result --job-id 原ID` 查询。请求不能指定宿主命令、路径、资源。候选快照、日志、真实退出码与有限 score/raw_metric 绑定；独立作业监督进程不因模型暂停而退出。
 
@@ -45,13 +47,13 @@ python cli.py runtime logs --runtime-dir /task/runtime-seed --job-id 原ID
 
 只挂载显式公开面、本轨候选/产物/Codex home/工作区，不挂整题根、参考解、另一轨或 Docker socket。根文件系统只读、非 root Agent、worker 另用 UID、命令网络关闭。凭据仅 Codex 父进程使用，工具不能读 /codex。题目镜像内部仍须正确隔离资产。
 
-默认安全策略阻塞时返回实际阶段，不自动放宽。仅取得当前适用许可后可将 security 改为：
+默认安全策略阻塞时返回实际阶段，不自动放宽。宿主 Docker/Compose 使用操作者已有配置；Compose 插件若在非默认位置，启动前显式设置 `DOCKER_CONFIG`，底座及独立作业继承该环境，不安装或改写宿主组件。仅取得当前适用许可后可将 security 改为：
 
 ```json
 {"mode":"codex_nested","authorization":"具体本次许可范围，不是永久许可"}
 ```
 
-只引入限定 AppArmor 例外与默认拒绝的共享 seccomp，不使用 privileged、SYS_ADMIN、无限 seccomp 或关闭 Codex 沙箱。默认 GPU 占用即拒绝；allow-busy-gpu 只用于已获准的小型预检，不用于正式抢占。
+只引入限定 AppArmor 例外与默认拒绝的共享 seccomp，不使用 privileged、SYS_ADMIN、无限 seccomp 或关闭 Codex 沙箱。默认 GPU 占用即拒绝；`--allow-busy-gpu` 只用于当次明确获准的有界预检，或 `purpose=acceptance/preflight` 的适配验收启动，不能放行正式训练或操作他人进程。共享验收仍须满足本次显存/算力及单作业授权范围。
 
 ## 记录与计时
 

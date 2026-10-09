@@ -63,6 +63,21 @@ key = "OPENAI_API_KEY"
         self.assertFalse((self.root / '.autoresearch').exists())
         self.assertEqual((runtime.directory / 'solution/method.py').read_text(), 'value = 1\n')
 
+    def test_real_task_acceptance_is_explicit_and_not_a_formal_trajectory(self):
+        cfg = copy.deepcopy(self.config)
+        cfg['purpose'] = 'acceptance'
+        (self.root / 'prompt.md').write_text('有界真实题验收：{{DURATION_REQUIREMENT}}\n')
+        runtime = self.prepare('task-acceptance', cfg)
+        self.assertEqual(runtime.status()['purpose'], 'acceptance')
+        self.assertEqual(runtime.status()['minimum_seconds'], 36000)
+        prompt = (runtime.directory / 'prompt.md').read_text()
+        self.assertIn('仅按 Prompt 明确的授权范围', prompt)
+        self.assertNotIn('{{DURATION_REQUIREMENT}}', prompt)
+        self.assertNotIn('净有效迭代至少 10 小时', prompt)
+        cfg['purpose'] = 'unknown-test-mode'
+        with self.assertRaises(FlowError):
+            self.prepare('unknown-purpose', cfg)
+
     def test_snapshot_is_independent_of_live_source_and_other_track(self):
         runtime = self.prepare()
         source_hash = runtime.status()['implementation_sha256']

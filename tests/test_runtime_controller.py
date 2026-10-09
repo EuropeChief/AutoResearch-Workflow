@@ -15,6 +15,38 @@ from test_independent_runtime import TrackPreparationTests
 
 
 class ControllerTests(TrackPreparationTests, unittest.IsolatedAsyncioTestCase):
+    def test_authorized_shared_gpu_acceptance_reaches_background_controller(self):
+        import cli
+        runtime = self.prepare('shared-acceptance', dict(self.config, purpose='acceptance'))
+        args = cli._parser().parse_args(['runtime', 'run', '--runtime-dir', str(runtime.directory),
+                                       '--confirm-cost', '--allow-busy-gpu'])
+        with patch('autoresearch_flow.runtime_cli.subprocess.Popen') as launch:
+            launch.return_value.pid = 1234
+            result = dispatch(args)
+        self.assertEqual(result['controller_pid'], 1234)
+        self.assertIn('--allow-busy', launch.call_args.args[0])
+
+    def test_shared_gpu_exception_cannot_start_formal_training(self):
+        runtime = self.prepare('formal-shared')
+        args = SimpleNamespace(runtime_action='run', runtime_dir=runtime.directory,
+                               task_root=None, confirm_cost=True, allow_busy_gpu=True)
+        with patch('autoresearch_flow.runtime_cli.subprocess.Popen') as launch:
+            with self.assertRaisesRegex(FlowError, '仅.*验收'):
+                dispatch(args)
+        launch.assert_not_called()
+
+    def test_acceptance_cannot_be_finalized_as_formal_even_with_long_timing(self):
+        cfg = dict(self.config, purpose='acceptance')
+        runtime = self.prepare('acceptance', cfg)
+        path = runtime.directory / 'state.json'
+        state = json.loads(path.read_text())
+        state.update(thread_id='acceptance-thread', goal={'status': 'complete'})
+        path.write_text(json.dumps(state))
+        args = SimpleNamespace(runtime_action='finalize', runtime_dir=runtime.directory, task_root=None)
+        with patch('autoresearch_flow.runtime_cli.activity_summary', return_value={'net_active_seconds': 40000, 'unresolved': []}):
+            with self.assertRaisesRegex(FlowError, '不能作为正式轨迹'):
+                dispatch(args)
+
     async def test_running_track_lock_prevents_preflight_or_second_controller(self):
         runtime=self.prepare()
         lock=(runtime.directory/'controller.lock').open('a')

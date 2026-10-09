@@ -45,14 +45,18 @@ def dispatch(args):
         return _read_json(runtime.directory / 'preflight.json')
     if args.runtime_action in {'run','recover'}:
         _require(args.confirm_cost,'MODEL_PERMISSION','首次真实模型调用须明确 --confirm-cost')
-        _, state, _ = runtime._load()
+        config, state, _ = runtime._load()
+        shared_gpu = bool(getattr(args, 'allow_busy_gpu', False))
+        _require(not shared_gpu or config.get('purpose', 'formal') in {'preflight', 'acceptance'},
+                 'GPU_SCOPE', '共享 GPU 例外仅用于明确授权的有界验收，不用于正式训练')
         recovering=args.runtime_action=='recover'
         _require(bool(state['thread_id']) if recovering else state['thread_id'] is None,
                  'THREAD_EXISTS','首次 run 不允许已有会话；recover 必须有原 threadId')
         root = runtime.directory / 'implementation'
         with (runtime.directory / 'logs/controller.log').open('a') as stream:
             proc = subprocess.Popen([sys.executable,'-m','autoresearch_flow.runtime_controller',
-                '--runtime-dir',str(runtime.directory)]+(['--recover'] if recovering else []), cwd=root,
+                '--runtime-dir',str(runtime.directory)]+(['--recover'] if recovering else [])
+                +(['--allow-busy'] if shared_gpu else []), cwd=root,
                 env={**os.environ,'PYTHONPATH':str(root)},stdin=subprocess.DEVNULL,stdout=stream,stderr=stream,start_new_session=True)
         return {'status':'starting','controller_pid':proc.pid,'runtime_dir':str(runtime.directory),
                 'next_action':'runtime status，然后 attach 原生可视化界面；关闭观察端不停止本轨'}
@@ -113,7 +117,7 @@ def dispatch(args):
         path=runtime.directory/'logs/activity.jsonl'
         rows=[json.loads(line) for line in path.read_text().splitlines()] if path.exists() else []
         timing=activity_summary(rows)
-        _require(config.get('purpose','formal')=='formal','PREFLIGHT_NOT_FORMAL','合成预检不能作为正式轨迹证据')
+        _require(config.get('purpose','formal')=='formal','PREFLIGHT_NOT_FORMAL','预检或适配验收不能作为正式轨迹证据')
         _require(state.get('goal',{}).get('status')=='complete','GOAL_NOT_COMPLETE','由 Agent 自主完成原 Goal 后再收口')
         _require(timing['net_active_seconds']>=config['duration']['minimum_seconds'] and not timing['unresolved'],
                  'TIMING_NOT_READY','净时长不足或还有待核区间，不能称为正式完成')

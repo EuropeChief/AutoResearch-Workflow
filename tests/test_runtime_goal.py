@@ -1,6 +1,7 @@
 import unittest
 from autoresearch_flow.common import FlowError
 from autoresearch_flow.runtime_rpc import GoalSession
+from autoresearch_flow.runtime_controller import goal_objective
 
 
 class FakeRpc:
@@ -24,6 +25,15 @@ class FakeRpc:
 
 
 class GoalRecoveryTests(unittest.TestCase):
+    def test_task_acceptance_goal_does_not_forbid_its_authorized_training(self):
+        objective = goal_objective({'purpose': 'acceptance', 'duration': {'minimum_seconds': 36000}})
+        self.assertIn('适配验收', objective)
+        self.assertNotIn('不训练', objective)
+        self.assertNotIn('36000', objective)
+        self.assertIn('不用于正式', objective)
+        self.assertIn('不训练', goal_objective({'purpose': 'preflight'}))
+        self.assertIn('36000', goal_objective({'purpose': 'formal', 'duration': {'minimum_seconds': 36000}}))
+
     def test_resume_original_goal_without_resetting_objective_or_counters(self):
         rpc = FakeRpc()
         session = GoalSession(rpc, model='configured', thread_id='original')
