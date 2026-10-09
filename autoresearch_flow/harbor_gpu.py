@@ -31,7 +31,7 @@ async def host_output(*args):
 
 
 class GpuDockerEnvironment(DockerEnvironment):
-    def __init__(self, *args, gpu_ids=None, allow_busy=False, **kwargs):
+    def __init__(self, *args, gpu_ids=None, allow_busy=False, cpu_only_when_zero=False, **kwargs):
         if importlib.metadata.version('harbor') != '0.23.0':
             raise ValueError('thin provider currently verified only against Harbor 0.23.0')
         if kwargs.get('keep_containers'):
@@ -42,6 +42,14 @@ class GpuDockerEnvironment(DockerEnvironment):
         self._allow_busy = allow_busy in (True, 'true')
         self._gpu_temp = self._gpu_overlay = None
         super().__init__(*args, **kwargs)
+        # A native Trial may have a GPU Agent and a CPU-only Verifier (or vice
+        # versa). Only an explicit zero-GPU task phase can opt out; nonzero
+        # phases still require the exact selected count and actual admission.
+        if cpu_only_when_zero:
+            if cpu_only_when_zero is not True:
+                raise ValueError('cpu_only_when_zero must be a boolean')
+            if self._effective_gpus == 0:
+                self._gpu_ids = []
         if self._is_windows_container:
             raise ValueError('thin GPU provider requires Linux NVIDIA Docker')
         if self._effective_gpus != len(self._gpu_ids):

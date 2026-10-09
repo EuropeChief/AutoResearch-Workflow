@@ -65,4 +65,6 @@ logs/activity.jsonl 与作业原件可复算：真实模型 turn/健康作业取
 
 Seed 可设 262144 上下文、160000 压缩阈值、65536 输出余量。前两项实际生成 Codex 参数，max_output_tokens 只校验压缩余量，不假称服务端输出限制。原生 Unix 控制通道为 WebSocket，标准客户端经 Codex proxy 连接，未自建 WebSocket 服务。[官方 App Server](https://learn.chatgpt.com/docs/app-server)
 
+收口后可将已恢复的本轨 `solution/` 作为明确候选交给[原生 Harbor 评分入口](harbor.md)，不重新启动模型或依赖旧 Runtime/阶段状态。原件按[材料接口](materials.md)选取，不能整体上传含鉴权的本轨目录。
+
 短合成验收不证明十小时稳定性、真实压缩或最终评分。[内部实施状态](maintenance/lightweight-lp5-20261009.md)

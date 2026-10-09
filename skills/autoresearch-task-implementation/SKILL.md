@@ -13,4 +13,6 @@ description: 将 AutoResearch 研究方向实现为题面、公开开发环境�
 4. 沿 `/tests/test.sh` 的真实调用落实指标、分类失败与 reward，清除预写结果并可信原子替换。见[评分出口](../../rules/README.md#c04)、[结果防伪](../../rules/README.md#c01)。存在 Agent 可见 Git 时处理[答案线索](../../rules/README.md#c02)，不删除专家研究仓库。
 5. 在已有资源授权内验证实际公开反馈和有效候选评分链路，保留当前版本的原生 NOP Trial；不能以 pytest、手工 Docker 或早退 NOP 证明全部候选分支。目标版本配置与调用核[Harbor 要求](../../rules/README.md#m07)、[运行配置](../../rules/README.md#c06)。模型/GPU 调用无授权或环境不足时先处理具体阻塞，不冒充已实跑。
 
+需要 NOP 或明确候选的实际 Trial 时使用[原生 Harbor 接口](../../docs/harbor.md)，以实际题包/候选为输入，不初始化旧阶段状态。只读 inspect 可复用仍对应当前题包的原件。
+
 产物是能运行的 `harbor_task/`、专家侧 `reference/` 和必要调用/隔离证据。B/R 实际运行、代表性及评分锚点交给[实验能力](../autoresearch-experiment-validation/SKILL.md)。代码改了哪里就核相关路径；无关训练和证明不自动重跑，不额外生成逐条约束签字表或全套攻击报告。

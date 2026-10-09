@@ -21,6 +21,8 @@ def _parser() -> argparse.ArgumentParser:
     add_material_commands(commands)
     from autoresearch_flow.package_cli import add_commands as add_package_command
     add_package_command(commands)
+    from autoresearch_flow.harbor_cli import add_commands as add_harbor_commands
+    add_harbor_commands(commands)
 
     rules = commands.add_parser("rules", help="中央规则包")
     rules_actions = rules.add_subparsers(dest="rules_action", required=True)
@@ -172,7 +174,7 @@ def _emit(payload: dict, output_format: str) -> None:
         print(f"变更规则：{', '.join(payload['changed_rules']) or '无'}；受影响阶段：{payload['affected_stages']}")
     for issue in payload.get("issues", []):
         print(f"- {issue['code']}: {issue['message']}" if isinstance(issue, dict) else f"- {issue}")
-    if payload["action"].startswith(("rules.show", "environment.", "experiment.", "materials.", "package", "runtime.", "delivery.", "stage.", "task.configure", "task.policy", "task.git")):
+    if payload["action"].startswith(("rules.show", "environment.", "harbor.", "experiment.", "materials.", "package", "runtime.", "delivery.", "stage.", "task.configure", "task.policy", "task.git")):
         print(json.dumps({key: value for key, value in payload.items() if key not in {"action", "issues"}}, ensure_ascii=False, indent=2))
     if payload.get("next_action"):
         print(f"下一步：{payload['next_action']}")
@@ -180,6 +182,16 @@ def _emit(payload: dict, output_format: str) -> None:
 
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
+    if args.command == "harbor":
+        from autoresearch_flow.harbor_cli import dispatch
+        try:
+            payload = dispatch(args)
+            _emit({"action": "harbor." + args.harbor_action, **payload}, args.format)
+            return 0 if payload["status"] == "native_trial_verified" else 2
+        except (FlowError, OSError, ValueError, TypeError) as exc:
+            _emit({"action": "harbor." + args.harbor_action, "status": "error", "code": getattr(exc, "code", "INPUT_ERROR"),
+                   "message": str(exc)}, args.format)
+            return 2
     from autoresearch_flow.runtime_cli import independent, dispatch as runtime_dispatch
     if independent(args):
         try:
