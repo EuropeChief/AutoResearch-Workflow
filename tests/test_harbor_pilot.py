@@ -14,8 +14,8 @@ spec.loader.exec_module(pilot)
 
 class VerdictTests(unittest.TestCase):
     def test_build_contexts_exclude_local_python_cache(self):
-        from tools.release_check import payload_files, source_files
-        sources, payload = set(source_files()), set(payload_files())
+        from tools.release_check import development_files, payload_files, source_files
+        sources, development, payload = set(source_files()), set(development_files()), set(payload_files())
         for context in ('environment', 'tests'):
             path = PILOT.parent/context/'.dockerignore'
             with self.subTest(context=context):
@@ -24,7 +24,8 @@ class VerdictTests(unittest.TestCase):
                 self.assertIn('**/__pycache__', patterns)
                 self.assertIn('**/*.py[cod]', patterns)
                 self.assertIn(path, sources, 'Build exclusions must be source-bound')
-                self.assertIn(path, payload, 'Relocated package must retain build exclusions')
+                self.assertIn(path, development, 'Relocated developer fixture must retain build exclusions')
+                self.assertNotIn(path, payload, 'A developer pilot is not a default runtime dependency')
 
     def setUp(self):
         temporary = tempfile.TemporaryDirectory()

@@ -6,9 +6,7 @@ import gzip
 import hashlib
 import io
 import json
-import os
 import re
-import subprocess
 import sys
 import tarfile
 import tempfile
@@ -19,16 +17,8 @@ ROOT = FLOW
 sys.path.insert(0, str(FLOW))
 from autoresearch_flow import FLOW_VERSION
 from autoresearch_flow.core import _sha256
-from tools.release_check import payload_files, release_files, source_snapshot
+from tools.release_check import check_documents, payload_files, release_files, runtime_smoke, source_snapshot
 from tools.release_evidence import validate_evidence
-
-
-def _run(command, cwd):
-    result = subprocess.run(command, cwd=cwd, capture_output=True, text=True, timeout=180,
-                            env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"}, check=False)
-    if result.returncode:
-        raise RuntimeError(f"{command}:\n{(result.stdout + result.stderr)[-6000:]}")
-    return result.stdout + result.stderr
 
 
 def _payload(*, preview=False, evidence_manifest=None):
@@ -131,14 +121,10 @@ def main():
             if (not target.is_file() or target.is_symlink() or _sha256(target) != record['sha256']
                     or target.stat().st_mode & 0o777 != record['mode']):
                 raise RuntimeError(f"round-trip mismatch: {relative}")
-        commands = [
-            [sys.executable, "cli.py", "--format", "json", "rules", "check"],
-            [sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v"],
-        ]
-        checks = []
-        for command in commands:
-            output = _run(command, extracted)
-            checks.append({"command": command, "exit_code": 0, "output_tail": output[-2000:]})
+        if any((extracted / name).exists() for name in ("tests", "pilots", "tools", "local", "docs/maintenance")):
+            raise RuntimeError("development/private files unexpectedly included")
+        check_documents([extracted / relative for relative in files], extracted)
+        checks = runtime_smoke(extracted)
     if files != _payload(preview=args.preview, evidence_manifest=args.evidence_manifest):
         raise RuntimeError("inputs changed while building archive; validation not issued")
     digest = hashlib.sha256(archive.read_bytes()).hexdigest()
@@ -149,6 +135,7 @@ def main():
                   "roundtrip_file_hashes": "passed", "roundtrip_permissions": "passed", "checks": checks,
                   "model_calls": 0, "docker_images_included": False,
                   "pilot_runs_included": False, "credentials_included": False,
+                  "development_tests_included": False, "maintenance_records_included": False,
                   "design_archive_included": False}
     validation_path.write_text(json.dumps(validation, ensure_ascii=False, indent=2) + "\n")
     checksum_path.write_text(f"{digest}  {archive.name}\n")

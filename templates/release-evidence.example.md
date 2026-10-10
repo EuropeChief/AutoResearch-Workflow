@@ -1,35 +1,26 @@
 # 发布证据索引（维护者使用）
 
-它只定位已有验收结果，不增加每题材料或自动启动实验。维护 Agent 从实际产物提取引用，审阅人核查不可机械判断的结论；不得预填通过或把下列示意值当真实证据。运行前保存当时 `release/source_manifest.json` 原件；其中须有文件内容与 mode，不能运行后拿新清单倒签旧证据。
+只索引真实原件，不增加每题记录或自动调用模型/GPU。默认运行包不带本文；旧 schema 1 留给历史收据，当前用 schema 2，不改写旧证据适配旧字段。
 
-索引 JSON 顶层：`schema_version: 1`、`release_version`、`limitations: [实际未覆盖范围]`、`checks: [四项记录]`。四项 id 及 claims 键见下表；只有已证明的键才能写 `true`。索引所在目录为证据根；所有引用用 `{"path":"根内相对路径","sha256":"完整哈希"}`，禁止绝对路径、`..` 与符号链接。各 result 内的引用相对该 result 文件所在目录。
+顶层：`schema_version: 2`、`release_version`、`limitations` 非空数组、`checks` 四项。各引用为 `{"path":"证据根内相对路径","sha256":"完整SHA-256"}`，禁止父目录跳转、绝对路径和符号链接。result 里的引用也相对索引根。索引可位于工作侧 `local/`，由工具从既有原件计算引用；不能公开此目录。
 
-每项记录字段：
+通过项字段：`id`、`status: passed`、`mode: fresh/reused`、`origin_version`、带时区 `origin_at`、`sources`、`evidence` 原件数组、`result` 定位索引、`reviewer`、`review` 和 `claims`。审阅记录说明授权、覆盖和限制；所有 claim 必须有依据，不能用填写 true 覆盖原件失败。
 
-| 字段 | 内容 |
-|---|---|
-| id / status | 下表 id；通过时 status=passed。只有 1.0.0 的 `independent_trial` 可经用户明确指示标为 waived；不能伪造结果或 claims |
-| mode | 新验收为 fresh；复用为 reused。首发豁免项使用 explicit_user_authorization |
-| origin_version / origin_at | 原运行版本与带时区 ISO 时间 |
-| origin_sources | 原运行源码清单引用；相关源码与权限必须仍适用 |
-| evidence | 非空原件引用数组，可直接引用已有报告、日志、原生事件 |
-| result | 下表对应的结果定位 JSON 引用 |
-| reviewer / review | 通过项须有具名审阅人及审阅记录，解释覆盖和限制；可共用一份短记录 |
-| claims | 通过项中的键均为 true；它不能覆盖实际产物中的失败。waived 项不得提供 claims/result，须附 `waiver`（用户、日期、理由及授权记录引用） |
+`sources` 用当时冻结原件，不运行后倒签清单：
 
-| id | claims 键 | result 内容 |
-|---|---|---|
-| native_runtime | native_tui, same_thread_resume, observer_detach, logs_and_timing, short_run_not_final | status=passed；state 指向真实 `.autoresearch-flow/runtime/seed/state.json`，trajectory 指向其 Agent 原件；jobs 为实际 Harbor job.json 引用数组；observer 为只读观察/脱离探针报告引用 |
-| harbor_transfer | candidate_transfer, independent_verifier, reward_retrieval | status=passed；transfer_report 引用实际候选移交探针报告，含 trial.mode=separate、reward=1、候选哈希及原件 evidence |
-| gpu_dispatch | authorized_devices, actual_gpu_execution, no_duplicate_jobs | status=passed；authorized_devices 为本次获准 GPU 标识；runs 中每项有唯一 run_id、execution 引用、cuda_result 引用 |
-| independent_trial | fresh_session, entry_sufficient, legal_pause_resume, no_unresolved_defects | status=passed；实际 session_id、fresh_session=true、blocking_findings=[]、session_record 引用；审阅说明入口是否自足、是否需要作者补充 |
+- `{"kind":"runtime_snapshot","record":<真实snapshot.json引用>}`：核 `implementation/` 原件哈希、只读冻结及执行标志，依赖从当前入口静态展开，包括动态作业入口及资产。
+- `{"kind":"harbor_snapshot","record":<真实report.json引用>}`：核同次 `program_files` 与冻结 `implementation/`。
+- 独立入口试用的 `source_manifest` 绑定全运行包及同根 `implementation/` 原字节。
 
-1.0.0 首发可以把上述 `independent_trial` 记录标为 `waived`，并在 `limitations` 明确“independent new-session trial waived for first release 1.0.0”。其他版本不得使用该例外；其他三项仍须提供真实原件并通过机械及人工审阅。
+纯 `autoresearch_flow/__init__.py` 的 `FLOW_VERSION` 字面量变化可以复用，收据明确记录；除此之外，不忽略影响执行的源代码变化。CPU Harbor 的条件 GPU 路径由 GPU 项单独证明，不冒称 CPU 已测 GPU。
 
-原生运行检查直接加载冻结运行配置、原件哈希、两段同一正式 thread、公开评测事件、Agent 八字段轨迹与 Harbor 配置；试验时长必须不足正式门槛，且 `final_snapshot` 实际拒绝，不能消耗最终查询。observer 报告须记录 `continued_without_observer=true`，且 segments 中至少一项 `observer_detached=true`。保留原生状态和相对目录，不把摘要替代整套可核原件；鉴权文件不需要交给发布工具，也不能公开打包。
+| id | claims | result 必要定位内容 |
+| --- | --- | --- |
+| native_runtime | native_tui, same_thread_resume, observer_detach, logs_and_timing, short_run_not_final | status=passed；state/activity/rpc/timing/trajectory 均为同一独立 runtime 的原件引用；observation_review 引用真实 TUI 观察/脱离审阅记录。工具核实际完成 Goal、同线程暂停恢复、新成功公开结果、净时长及 Agent 八字段轨迹；观察部分须据事实人工审阅 |
+| harbor_transfer | candidate_transfer, independent_verifier, reward_retrieval | status=passed；trials 为当前源码的 CPU NOP 与有效候选 report 原件引用。程序只读重核相同 Trial 的 job/config/result/artifacts/reward/日志及 separate，不执行评分 |
+| gpu_dispatch | authorized_devices, actual_gpu_execution, no_duplicate_jobs | status=passed；authorized_devices 为本次许可设备；admission 为薄 provider 实际 Docker/CUDA 探针原件；jobs 为独立公开入口的实际成功作业原件，核源码、设备声明、CUDA 运算与唯一 job ID |
+| independent_trial | fresh_session, entry_sufficient, legal_pause_resume, no_unresolved_defects | status=passed；session_id、fresh_session=true、blocking_findings=[]、session_record 引用。审阅说明入口自足性及作者补充 |
 
-有界连续运行允许在回答中途按预算暂停；恢复段须有自身的新成功公开评测且无原生错误，不能用首段成绩替代。不强制短测每段产生最终回答，不把 `budget_exhausted` 改写为 `completed`；短测通过只证明恢复后有真实工作，不能据此开放正式最终评分。
+只有独立入口试用允许本版明确例外：项内 `status: waived`、`mode: explicit_user_authorization`、`approval` 引用；不提供 claims/result。授权 JSON 必有 `kind: release_exception`、当前 release_version、scope=independent_trial、approved_by=user、日期、理由及用户明确原话；limitations 披露 independent trial waived。不能自动继承旧版本许可或豁免其他三项。
 
-GPU 的 execution 原件须有 `exit_code=0`、`devices`；cuda_result 来自真实 CUDA 小程序，含 `cuda_available=true`、`matmul_finite=true`、`visible_devices`，与分配标识一致。不能用 GPU 型号文本或“nvidia-smi 成功”代替计算结果。不要求重跑完整科研训练。
-
-自动检查只证明上述机械条件和绑定；审阅人仍核查运行授权、记录真实性、独立性和未覆盖范围。特殊 AppArmor 许可不会因通过发布检查而成为其他环境的默认权限。工具不复制原件或凭据，只将引用、哈希及覆盖结论写入验收收据。
+运行原件、授权和不可机械判断的观察仍须审阅；收据不宣称正式长轨、具体题目 QA、真实压缩或完整科研训练矩阵已通过。程序不需要读取 auth.json，不复制证据或凭据到发行物。

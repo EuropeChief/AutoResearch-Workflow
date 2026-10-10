@@ -1,61 +1,41 @@
-# 发布状态与维护验收
+# 轻量版发行与验证范围
 
-## 1.0.0 历史发布记录
+本文件说明共享软件的发行，不给每道题增加发布检查。制作题目从 [START_HERE.md](START_HERE.md) 开始；维护变更读 [MAINTAINING.md](MAINTAINING.md)。当前版本是否完成发布，以 `release/acceptance.json` 的版本、状态和绑定清单为准，不能把历史通过用于当前源码。
 
-**1.0.0 为首个正式版本。** 本次验收结果及源码快照由 `release/acceptance.json` 和 `release/source_manifest.json` 绑定；须以这两份收据的实际状态为准。仅面向新任务和匹配版本接续，不迁移旧任务。根据用户明确指示，1.0.0 省略独立新会话入口试用，该项记作 waived，不作通过声明。此豁免只适用于 1.0.0，后续版本须按完整发布合同验收。
+## 当前接口与覆盖
 
-下表和后续显式证据说明属于 1.0.0 的历史发布记录，不能作为当前轻量分支的默认能力声明。当前分支已完成 LP-0–LP-7 的离线合同与入口收口，默认使用无状态能力、独立本轨运行和新的 `materials/package/harbor` 接口；LP-7T 两题真实适配和 LP-8 正式发行仍待完成。当前离线收据若为 `contracts_passed`，表示工具合同通过，不表示新版本已发布。
+2.0.0 改为五类能力、无状态实验/材料/打包、单轨独立 Codex 底座和显式原生 Harbor 接口。默认运行包不含设计目录、开发测试/夹具、维护记录或旧账本模板；这些仍在 Git 源码仓追溯。旧题使用原版本，不自动迁移状态或热切健康轨迹。
 
-| 能力 | 当前证据与限制 |
-|---|---|
-| 规则、状态、实验/评分、QA 后三包及填表 | 离线合同与异路径部署可核；科学结论仍须实质审查，QA 在独立会话进行 |
-| 原生 Codex TUI、预算暂停、同会话恢复、只读观察 | 1.0.0 全新 Seed CPU 任务完成预检、首次运行及两次原会话恢复；三个正式分段均有真实成功公开评测，实际监督墙钟累计492.121秒，见 [证据与局限](pilots/pca_cpu/TUI_PROBE.md)。恢复段在工作中预算暂停，不冒称最终回答或最佳收口完成，不代表十小时正式轨迹通过 |
-| 有限本地复验队列 | CPU 合同及[两卡 GPU 实测](pilots/gpu_queue/README.md)通过，1.0.0 新增六次短探针实际CUDA运算12.665秒，串并行同结果、完成后无重复启动；不据此宣称共享卡独占或 Harbor GPU provider 已验证 |
-| Harbor 双镜像评分链 | 当前源码的 CPU 合成验收完成候选移交、独立 Verifier 与 reward 回收；新增 NOP 必交合同已有离线回归及一次原生 `nop` CPU 合成短测（34 秒、0 异常、reward 1.0，原件见 `pilots/pca_cpu/runs/nop-20261004T001/`）。这不是正式题包或 Hidden 数据验收 |
-| 环境适配 | Harbor 0.23.0、Codex CLI 0.147.0 为已适配目标；每题镜像/资源/provider 均须预检，其他版本不自动兼容 |
-| 完整发行 | 独立新会话入口试用按用户指示在 1.0.0 豁免，真实题目试用留待使用者后续完成。其他发布证据须通过本文件的当前验收。GPT、真实压缩与正式长程未由 CPU 短测证明 |
+| 已验内容 | 实际范围与限制 |
+| --- | --- |
+| 工具与迁移 | 全量离线回归、源码仓异路径回归，以及精简运行包的解包、链接/原件哈希/权限与公开 CLI 检查；不依赖设计目录、题目状态或作者鉴权 |
+| 单轨运行 | Codex CLI 0.160.0；ToB-17 的 Seed 与 ToB-24 的 GPT 各两次原协议 Public/Dev 训练、原 thread/Goal 暂停恢复与后台作业保留；两轨独立控制和日志/净时长已核。相关修复的当前运行路径由 ToB-24 最新冻结源码证明，不把 ToB-17 较早源码冒称全量最新实测 |
+| Harbor 与 GPU | Harbor 0.23.0、Docker Compose 2.39.4；CPU 合成 NOP、有效候选、失败候选的独立 Verifier/artifacts/reward；薄 GPU provider 的实际分配/CUDA 运算和公开 worker 已核。不是所有真实题的完整 GPU Final Trial 或并行训练性能承诺 |
+| 环境例外 | 验收仅在各次获准容器中使用限定 AppArmor/seccomp 兼容模式；默认仍是普通策略，不修改宿主、不继承旧许可 |
+| 未测/豁免 | 2.0.0 的独立新会话入口试用由用户于 2026-10-10 明确豁免，**不是通过**；实际新题入口易用性留待后续使用反馈。短验收不证明正式 7h/10h、真实上下文压缩、科研锚点或具体题包 QA |
 
-更新规则、接口或处理使用反馈时，先读 [维护说明](MAINTAINING.md)；它不增加每题操作步骤。
+原始训练、会话、配置和授权保留在维护工作侧，不公开鉴权、真实题目或模型。公开收据绑定原件引用/哈希与适用源码。全量开发记录位于源码仓 `docs/maintenance/`；1.0.0 的发布、旧 Codex 0.147.0 和预算监督行为仅从对应 tag/历史记录读取，不作为本版默认说明。
 
-教程与两个完整 QA Skill 已纳入仓库，使用方式见 [README](README.md)。`release/source_manifest.json` 与 `release/acceptance.json` 在重新生成前只代表其记录快照，不代表当前工作树。
+## 维护者怎样发布
 
-项目方 QA Skill 原样保留；其配套自测有一项仍断言旧报告文案（201/202通过），没有为通过测试改动权威 Skill。流程自身的完整测试数量和结果见发布收据；两者不能混称。
-
-## 维护者离线检查
-
-在流程根执行：
+以下工具只在**完整源码仓**提供，运行包不要求使用者执行它们。
 
 ```bash
 python3 tools/release_check.py
+python3 tools/build_migration.py --preview --output-dir /明确的预览目录
 ```
 
-默认检查源码语法、规则哈希、活动文档链接、全量测试和仓库单独异路径部署，不启动 Docker/模型或读取 pilot 运行原件。原样官方 Skill 中指向待审任务的示意链接、历史快照链接不当作本仓导航。
+离线检查不启动 Docker、模型或 GPU。它核规则原件、完整回归与干净目录；结果 `contracts_passed`、`release_ready=false`，预览包不能冒称正式包。测试失败应修复或据权威变化说明失效，不能仅为绿色删测。
 
-通过后生成当前离线清单与验收，`release_ready=false`；被替换的旧记录按内容归档。此结果只证明离线合同，不代表正式发布。
-
-仅在需要验证归档链路时：
+实际验收完成后，由维护 Agent 以本地证据索引引用已有原件、当时冻结实现和短审阅记录；索引 schema 2 说明见源码仓的 `templates/release-evidence.example.md`，不要求使用者填审批资料。
 
 ```bash
-python3 tools/build_migration.py --preview --output-dir /显式预览输出目录
+python3 tools/release_check.py --release --evidence-manifest /本次证据根/manifest.json
+python3 tools/build_migration.py --evidence-manifest /本次证据根/manifest.json --output-dir /明确的新发行目录
 ```
 
-预览要求当前源码内容与权限匹配离线清单，并重跑解包校验；产物明确标为 preview。只打包当前单仓、锁定的教程/Skill 原件和本次两份验收收据；不包含历史收据、真实运行原件、个人配置或设计仓。文件执行权限、中文路径、解包文件集合与哈希必须一致。
+发布校验读取实际独立轨状态、同 Goal 接续、公开结果、净时长、Agent 自写轨迹、原生 Harbor Trial 与 GPU 分配/计算原件；TUI 观察和许可范围由具名审阅记录支持。源代码、原件和执行标志不符即拒绝复用；只允许 `__init__.py` 中纯版本常量变化，不忽略其他行为/安全变更。版本专属独立试用豁免必须有本次用户明确授权原话和未验范围，不能沿用 1.0.0 许可，其他三项不能豁免。
 
-## 显式发布证据
+归档再次核输入、完整文件集合、中文路径、SHA-256 和全部 rwx 权限，运行实际 CLI；不包含 Docker 镜像、运行原件、个人资料或开发测试。`release/history/` 保留被替换收据原字节，但不进入默认包。
 
-由维护 Agent 在实际验收后整理一份证据索引，不要求使用者逐项抄写结果。格式和各类原件见 [证据模板说明](templates/release-evidence.example.md)。索引放在本地验收材料目录（例如被排除的 `local/release-evidence/`），不放进源码发行物；路径相对索引所在目录，必须能定位真实原件和原运行源码清单。
-
-```bash
-python3 tools/release_check.py --release --evidence-manifest /本次验收目录/manifest.json
-python3 tools/build_migration.py --evidence-manifest /本次验收目录/manifest.json --output-dir /新发行输出目录
-```
-
-没有显式证据，`--release` 在运行测试前即拒绝。正式收据必须覆盖原生 TUI/正式监督与恢复、Harbor 独立评分和实际 GPU 分配，机械检查读取真实输出中的会话、评测、Verifier 开关、短跑门禁、reward、设备与计算结果。独立新会话试用通常也须通过；**仅版本 1.0.0** 接受 `independent_trial` 记为 `waived`，并绑定用户授权记录及限制说明。其他门槛不能豁免，后续版本不接受该例外。
-
-每项保留原版本、时间、fresh/reused、原始源码清单与审阅记录。相关 Python 依赖、CLI 入口、实际非代码输入和权限变化使旧证据失效；不相关维护文案无需重跑模型。原生连续迭代短测可在预算到期时暂停，但恢复段必须有自身的新成功公开结果且无原生错误，不能用旧成绩或缺少真实工作冒充恢复成功，不强制每段完成最终回答。运行记录中的来源路径仅用于追溯，实际账号信息不进入发行物。原始索引/产物在检查与归档时都重新校验；打包不调用模型或 GPU。
-
-历史验收保留在维护仓 Git 与本地 `release/history/`，但不作为新版本默认依据；不再使用固定日期目录、`runtime02` 或隐式 `--reuse-prior-live`。旧收据 schema 不升级成通过记录，须重新执行本次离线检查。除首发独立试用例外外，缺少任一发布证据时保持未发布，预览包不能冒充正式包。
-
-## 使用者边界
-
-每题无需重跑工具全套发布测试，但须完成题目相关预检、合法独立迭代及最终包独立 QA。见 [START_HERE.md](START_HERE.md)。历史安全例外不得自动移植；旧任务使用原版本，当前不迁移其状态。
+源码/证据和归档验收完成后才创建版本 tag；GitHub 同步目标为 [EuropeChief/AutoResearch-Workflow](https://github.com/EuropeChief/AutoResearch-Workflow)，按明确上传授权执行，不 force push、不提交个人配置或运行原件。
