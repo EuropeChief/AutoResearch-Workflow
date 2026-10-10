@@ -1,6 +1,6 @@
 你将在当前任务中进行独立方法迭代。先阅读 Harness 提供的 `instruction.md`，明确目标、资源、可修改范围、禁止行为和公开评分规则。TASK_ROOT=/workspace，OUTPUT_DIR=/expert_evidence。
 
-先完整运行未修改的 Baseline（Scaffold 题按题面声明的朴素 Baseline 入口），随后只在题面允许的 `/workspace/solution` 内实现方法，使用 `/workspace/evaluate` 的真实 Public/Dev 结果比较。不能读取私有 tests、Reference、Hidden、其他轨迹或专家材料，不能修改可信评测、固定数据或预写评分结果。此公开入口由题目适配提供，若本题入口不同，启动前由专家统一修订两组同一 Prompt。
+先完整运行未修改的 Baseline（Scaffold 题按题面声明的朴素 Baseline 入口），随后只在题面允许的 `/workspace/solution` 内实现方法，使用真实 Public/Dev 结果比较。公开调用方式：{{PUBLIC_EVALUATION}} 不能读取私有 tests、Reference、Hidden、其他轨迹或专家材料，不能修改可信评测、固定数据或预写评分结果。
 
 每完成一轮，由你向 `/expert_evidence/trajectory.jsonl` 追加八字段对象：`round`（从 1 递增）、`policy_name`、`method_summary`（中文 1–3 句话）、`status`（成功为 ok，失败按真实类型）、`score`（Public/Dev 原始指标，即反馈中的 raw_metric.value，不是归一化 score；未出分为 null）、`failure_reason`（成功为 null，失败写明原因）、`retained_best`（本轮刷新当前最佳时 true，否则 false）、`time`（本轮完成时间 YYYY-MM-DD HH:mm:ss）。如实记录失败；不要增加其他字段、伪造实验或分数。以题面方向判断好坏，原始 error 越低可能越好。
 

@@ -25,10 +25,19 @@ from tools.release_evidence import validate_evidence
 # This is a deployment allowlist, not a recursive copy of the maintainer's workspace.
 SOURCE_DIRECTORIES = {"autoresearch_flow", "rules", "templates", "model_profiles",
                       "skills", "tests", "tools", "pilots", "sources", "docs"}
-GENERATED_DIRECTORIES = {"__pycache__", "runs", "build", "release", "runtime",
+GENERATED_DIRECTORIES = {"__pycache__", "runs", "results", "build", "release", "runtime",
                          "tmp", "venv", "node_modules"}
 SPECIAL_FILES = {"Dockerfile", ".gitignore", ".gitattributes", ".dockerignore"}
 SNAPSHOT_DOCUMENTS = {Path("rules/provenance/PCA_RULE_ALIGNMENT.md")}
+RUNTIME_DIRECTORIES = {"autoresearch_flow", "rules", "skills", "sources", "model_profiles"}
+RUNTIME_DOCUMENTS = {"README.md", "START_HERE.md", "AGENTS.md", "MAINTAINING.md", "RELEASE.md",
+                     "docs/stages.md", "docs/experiments.md", "docs/materials.md", "docs/packaging.md",
+                     "docs/runtime.md", "docs/harbor.md", "docs/troubleshooting.md"}
+RUNTIME_TEMPLATES = {"README.md", "agent-prompt.zh.md", "runtime.example.json",
+                     "delivery-form.example.json", "materials-sources.example.json",
+                     "nop-execution.example.json", "harbor-execution.example.json",
+                     "expert-annotation.example.json", "run-summary.example.json",
+                     "research-notes.example.md", "change-note.example.md"}
 
 
 def distributable_name(name):
@@ -75,8 +84,8 @@ def source_files(flow=None):
     return sorted(files)
 
 
-def payload_files(flow=None):
-    """One self-contained workflow root; never parent directories or secrets."""
+def development_files(flow=None):
+    """Maintainer sources and locked originals, including tests and fixtures."""
     flow = FLOW if flow is None else flow
     registry = Registry(flow)
     assert registry.check_sources() == [], "Rule sources drifted"
@@ -90,7 +99,24 @@ def payload_files(flow=None):
     return sorted(set(files))
 
 
-def check_documents(files):
+def payload_files(flow=None):
+    """Minimal runtime deployment; development files remain in the Git repository."""
+    flow = FLOW if flow is None else flow
+    files = []
+    for path in development_files(flow):
+        relative = path.relative_to(flow)
+        name = relative.as_posix()
+        if relative.parts[:2] in {("rules", "history"), ("rules", "provenance")}:
+            continue
+        if (relative.parts[0] in RUNTIME_DIRECTORIES or name in RUNTIME_DOCUMENTS
+                or name in {"cli.py", ".gitignore", ".gitattributes"}
+                or (relative.parts[0] == "templates" and relative.name in RUNTIME_TEMPLATES)):
+            files.append(path)
+    return files
+
+
+def check_documents(files, flow=None):
+    flow = FLOW if flow is None else flow
     links = 0
     for path in files:
         if path.suffix == ".py":
@@ -99,8 +125,9 @@ def check_documents(files):
             json.loads(path.read_text())
         elif path.suffix == ".toml":
             tomllib.loads(path.read_text())
-        elif (path.suffix == ".md" and path.relative_to(FLOW) not in SNAPSHOT_DOCUMENTS
-              and not path.relative_to(FLOW).parts[:2] in {
+        elif (path.suffix == ".md" and path.relative_to(flow) not in SNAPSHOT_DOCUMENTS
+              and path.relative_to(flow).parts[:2] != ("docs", "maintenance")
+              and not path.relative_to(flow).parts[:2] in {
                   ("skills", "autoresearch-task-qa"), ("skills", "autoresearch-baseline-quality")}):
             for target in re.findall(r"\]\(([^)]+)\)", path.read_text()):
                 if target.startswith(("http:", "https:", "#", "mailto:")):
@@ -149,11 +176,27 @@ def run(command, cwd):
     environment.pop("PYTHONPATH", None)
     environment["PYTHONDONTWRITEBYTECODE"] = "1"
     result = subprocess.run(command, cwd=cwd, env=environment, capture_output=True,
-                            text=True, timeout=120, check=False)
+                            text=True, timeout=240, check=False)
     output = result.stdout + result.stderr
     if result.returncode:
         raise RuntimeError(f"{command}:\n{output[-6000:]}")
     return output
+
+
+def runtime_smoke(flow):
+    """Exercise the archive's real public entry without tests, a ledger or accounts."""
+    cli = [sys.executable, str(flow / "cli.py")]
+    checks = []
+    commands = [cli + ["--format", "json", "rules", "check"], cli + ["--help"]]
+    commands += [cli + [name, "--help"] for name in ("experiment", "materials", "package", "harbor", "runtime")]
+    for command in commands:
+        output = run(command, flow)
+        checks.append({"command": ["python3", "cli.py", *command[2:]], "exit_code": 0,
+                       "output_tail": output[-1200:]})
+    for capability in ("experiment", "materials", "package", "harbor", "runtime"):
+        assert capability in checks[1]["output_tail"], f"archive omitted {capability}"
+    assert not (flow / ".autoresearch-flow").exists(), "archive smoke created a legacy ledger"
+    return checks
 
 
 def main():
@@ -169,13 +212,15 @@ def main():
     assert registry.check_sources() == [], "Rule sources drifted"
     files = source_files()
     links = check_documents(files)
+    development = development_files()
     all_files = payload_files()
     checked_files = source_snapshot(all_files)
+    checked_development = source_snapshot(development)
     live = validate_evidence(args.evidence_manifest, FLOW, all_files) if args.release else None
     native = run([sys.executable, "-m", "unittest", "discover", "-s", str(FLOW / "tests"), "-v"], ROOT)
     with tempfile.TemporaryDirectory(prefix="ar-release-relocation-") as temporary:
         root = Path(temporary)
-        for source in all_files + release_files():
+        for source in development + release_files():
             target = root / source.relative_to(ROOT)
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(source, target)
@@ -189,17 +234,19 @@ def main():
                             "check_documents(source_files())")]
         run(relocated_check, relocated_flow)
         isolated = run([sys.executable, "-m", "unittest", "discover", "-s", str(relocated_flow / "tests"), "-v"], root)
-        task = root / "new-task"
-        task.mkdir()
-        cli = [sys.executable, str(relocated_flow / "cli.py"), "--format", "json"]
-        run(cli + ["rules", "check"], task)
-        run(cli + ["task", "init", "--task-root", str(task), "--task-id", "release-smoke", "--confirm-init"], task)
-        run(cli + ["task", "check", "--task-root", str(task)], task)
-        state = json.loads(run(cli + ["stage", "status", "--task-root", str(task)], task))
-        assert state["current_stage"] == "1"
+    with tempfile.TemporaryDirectory(prefix="ar-runtime-relocation-") as temporary:
+        root = Path(temporary)
+        for source in all_files:
+            target = root / source.relative_to(FLOW)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, target)
+        assert all(not (root / name).exists() for name in ("tests", "pilots", "tools", "local", "config.toml", "auth.json"))
+        assert not (root / "docs/maintenance").exists()
+        check_documents([root / p.relative_to(FLOW) for p in all_files], root)
+        smoke = runtime_smoke(root)
     report = {"schema_version": 2, "status": "released" if args.release else "contracts_passed",
               "release_ready": args.release,
-              "pending": [] if args.release else ["独立新会话入口试用暂缓；正式发行包尚未验收"],
+              "pending": [] if args.release else ["离线合同已核；显式发布证据和正式归档尚未验收"],
               "at": _utc_now(), "version": FLOW_VERSION, "qa_revision": registry.manifest.get("qa_revision"),
               "package_revision": registry.manifest.get("package_revision"),
               "python": sys.version.split()[0], "rule_count": len(registry.catalog["rules"]),
@@ -208,7 +255,9 @@ def main():
               "relocated_tests": re.search(r"Ran (\d+) tests", isolated).group(1),
               "relocation_without_host_config_or_auth": True,
               "relocation_without_design_or_pilot_runs": True,
-              "fresh_cli_init_and_resume_status": True,
+              "fresh_cli_capabilities": True,
+              "runtime_payload_files": len(all_files), "development_files": len(development),
+              "runtime_without_development_files": True, "runtime_smoke": smoke,
               "model_calls": 0, "scope": "tool contracts, not scientific or platform acceptance"}
     if live:
         assert live == validate_evidence(args.evidence_manifest, FLOW, all_files), "Evidence changed during validation"
@@ -216,10 +265,11 @@ def main():
     release = FLOW / "release"
     release.mkdir(exist_ok=True)
     assert checked_files == source_snapshot(payload_files()), "Sources changed during validation"
+    assert checked_development == source_snapshot(development_files()), "Development sources changed during validation"
     preserve_receipts(release)
     _atomic_json(release / "source_manifest.json", {
         "schema_version": 2, "version": FLOW_VERSION, "package_revision": registry.manifest.get("package_revision"),
-        "scope": "source and locked rule dependencies; excludes design archive, generated release reports and local pilot/build data",
+        "scope": "runtime allowlist and locked originals; excludes development tests/tools/pilots/maintenance records and local assets",
         "files": checked_files})
     report["source_manifest_sha256"] = _sha256(release / "source_manifest.json")
     _atomic_json(release / "acceptance.json", report)

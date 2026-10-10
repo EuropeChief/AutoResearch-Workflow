@@ -2,7 +2,7 @@
 from pathlib import Path
 import re
 
-from .core import _read_json, _require
+from .common import _read_json, _require
 
 QA_IDS = {f"QA{i:02d}" for i in range(1, 22)}
 G_IDS = {f"G{i:02d}" for i in range(1, 4)}

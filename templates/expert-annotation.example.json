@@ -1,0 +1,16 @@
+{
+  "task_id": "<platform_task_id>",
+  "task_type": "S1",
+  "research_direction": "<实际研究方向>",
+  "optimization_surface": "<实际可编程优化面>",
+  "score_contract": {
+    "metric": "<实际原始指标>",
+    "direction": "minimize",
+    "split": "dev",
+    "protocol": "<实际协议版本>",
+    "baseline": {"raw_value": null, "normalized_score": 0.0},
+    "reference": {"raw_value": null, "normalized_score": null},
+    "upper_bound": {"raw_value": null, "source": "estimated_attainable_upper_bound"}
+  },
+  "isolation": {"reference_visible_to_agent": false, "hidden_assets_visible_to_agent": false}
+}

@@ -8,7 +8,7 @@ from datetime import datetime
 import math
 import re
 
-from .core import FlowError, _require
+from .common import FlowError, _require
 
 ROUND_FIELDS = frozenset({"round", "policy_name", "method_summary", "status", "score",
                           "failure_reason", "retained_best", "time"})

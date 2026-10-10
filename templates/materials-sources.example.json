@@ -1,0 +1,17 @@
+{
+  "workspace/harbor_task": "../task/harbor_task",
+  "workspace/reference": "../task/reference",
+  "expert_evidence/专家作业说明文档.md": "../task/materials/专家作业说明文档.md",
+  "expert_evidence/expert_annotation.json": "../task/materials/expert_annotation.json",
+  "expert_evidence/run_summary.json": "../task/materials/run_summary.json",
+  "expert_evidence/trajectory_codex.json": "../task/materials/trajectory_codex.json",
+  "expert_evidence/trajectory_seed.json": "../task/materials/trajectory_seed.json",
+  "expert_evidence/nop_trial": "../task/evidence/nop_trial",
+  "expert_evidence/best_retest": "../task/runs/best_method",
+  "expert_evidence/timing.json": "../task/materials/timing.json",
+  "expert_evidence/runtime_logs": "../task/evidence/runtime_logs",
+  "optimization_evidence/baseline_runs": "../task/runs/baseline",
+  "optimization_evidence/reference_runs": "../task/runs/reference",
+  "optimization_evidence/comparison_summary.json": "../task/comparison/comparison_summary.json",
+  "optimization_evidence/训练证据说明.md": "../task/materials/训练证据说明.md"
+}

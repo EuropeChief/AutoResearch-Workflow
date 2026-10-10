@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Codex/Pi 共用的 AutoResearch 新流程与阶段编排统一入口。"""
+"""AutoResearch 无状态能力入口；历史状态接口仅为兼容旧任务保留。"""
 
 from __future__ import annotations
 
@@ -9,23 +9,21 @@ import sys
 from pathlib import Path
 
 from autoresearch_flow import FLOW_VERSION
-from autoresearch_flow.core import FlowError, Registry, TaskStore, _read_json, _canonical_digest, _require
-from autoresearch_flow.experiments import FAILED_RUN_STATUSES, ExperimentBook, baseline_check, score_check
-from autoresearch_flow.experiment_runner import ExperimentRunner
-from autoresearch_flow.runtime import Runtime
-from autoresearch_flow.w4_evidence import DeliveryEvidence
-from autoresearch_flow.w4_package import DeliveryPackage, check_package
-from autoresearch_flow.stages import StageFlow
-from autoresearch_flow.pca_contract import check_task, check_execution_receipt, check_nop_record, check_stability
-from autoresearch_flow.policies import policy_status
-from autoresearch_flow.task_git import TaskGit
+from autoresearch_flow.common import FlowError
 
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=f"AutoResearch 新流程统一入口（{FLOW_VERSION}）")
     parser.add_argument("--format", choices=("text", "json"), default="text", help="输出格式；机器调用建议 json")
-    commands = parser.add_subparsers(dest="command", required=True)
+    commands = parser.add_subparsers(dest="command", required=True,
+                                     metavar="{version,materials,package,harbor,rules,environment,experiment,runtime}")
     commands.add_parser("version", help="显示工具版本")
+    from autoresearch_flow.materials_cli import add_commands as add_material_commands
+    add_material_commands(commands)
+    from autoresearch_flow.package_cli import add_commands as add_package_command
+    add_package_command(commands)
+    from autoresearch_flow.harbor_cli import add_commands as add_harbor_commands
+    add_harbor_commands(commands)
 
     rules = commands.add_parser("rules", help="中央规则包")
     rules_actions = rules.add_subparsers(dest="rules_action", required=True)
@@ -34,7 +32,7 @@ def _parser() -> argparse.ArgumentParser:
     selection = rule_show.add_mutually_exclusive_group(required=True)
     selection.add_argument("--id", dest="rule_id")
     selection.add_argument("--step")
-    environment = commands.add_parser("environment", help="PCA 双镜像结构/实跑证据检查，不执行 Harbor 或 QA")
+    environment = commands.add_parser("environment", help="PCA 双镜像结构/实跑证据检查（只读兼容诊断，不执行 Harbor 或 QA）")
     env_actions = environment.add_subparsers(dest="environment_action", required=True)
     stability = env_actions.add_parser("verify-stability", help="可选只读诊断：核已有 12h 记录，不启动容器、不写通过收据")
     stability.add_argument("--task-root", type=Path, required=True, help="记录及其原始证据的范围根；最终交付时为包根")
@@ -51,7 +49,10 @@ def _parser() -> argparse.ArgumentParser:
             command.add_argument("--score-contract", type=Path, help="独立的评分合同 JSON；非完整标注 JSON")
             command.add_argument("--best-method", type=Path)
 
-    task = commands.add_parser("task", help="题目状态")
+    # The stateful task/stage routes remain parseable for historical work, but
+    # must not appear in the default entry surface for a new task.
+    task = commands.add_parser("task", help=argparse.SUPPRESS,
+                               description="历史任务状态兼容接口；新题不初始化状态账本")
     task_actions = task.add_subparsers(dest="task_action", required=True)
     task_init = task_actions.add_parser("init", help="显式初始化已有题目目录，不运行题目")
     task_init.add_argument("--task-root", type=Path, required=True)
@@ -80,7 +81,8 @@ def _parser() -> argparse.ArgumentParser:
     configure = task_actions.add_parser("configure", help="登记题目类型和适配入口")
     configure.add_argument("--task-root", type=Path, required=True)
     configure.add_argument("--file", type=Path, required=True)
-    stage = commands.add_parser("stage", help="六阶段状态、证据登记、冻结与返修")
+    stage = commands.add_parser("stage", help=argparse.SUPPRESS,
+                                description="历史阶段账本兼容接口；新题按证据接续")
     actions = stage.add_subparsers(dest="stage_action", required=True)
     for name in ("status", "check", "template", "record", "finish", "reopen", "ref"):
         command = actions.add_parser(name)
@@ -95,10 +97,15 @@ def _parser() -> argparse.ArgumentParser:
             command.add_argument("--file", type=Path, required=True)
         if name == "ref":
             command.add_argument("--path", action="append", required=True)
-    experiment = commands.add_parser("experiment", help="正式协议、运行登记与统计")
-    actions = experiment.add_subparsers(dest="experiment_action", required=True)
+    experiment = commands.add_parser("experiment", help="独立 run/summarize（旧账本动作仅兼容旧任务）")
+    experiment_actions = experiment.add_subparsers(
+        dest="experiment_action", required=True, metavar="{run,summarize}"
+    )
+    from autoresearch_flow.experiment_cli import add_commands
+    add_commands(experiment_actions)
     for name in ("lock", "extend", "start", "finish", "report", "baseline-check", "score-check", "execute"):
-        command = actions.add_parser(name)
+        command = experiment_actions.add_parser(name, help=argparse.SUPPRESS,
+                                     description="历史实验账本兼容接口；新题使用 run/summarize")
         command.add_argument("--task-root", type=Path, required=True)
         if name in {"lock", "extend", "start", "finish", "baseline-check", "score-check"}:
             command.add_argument("--file", type=Path, required=True)
@@ -114,23 +121,35 @@ def _parser() -> argparse.ArgumentParser:
             command.add_argument("--plan", type=Path, required=True)
             command.add_argument("--retry-infra", action="append", default=[], metavar="RUN_ID",
                                  help="显式重试本队列已登记的外部异常；不允许重试方法失败")
-    runtime = commands.add_parser("runtime", help="Codex 双轨启动、预检、原始日志与计时")
+    runtime = commands.add_parser("runtime", help="独立本轨运行（旧 task-root 参数仅兼容旧任务）")
     actions = runtime.add_subparsers(dest="runtime_action", required=True)
-    for name in ("prepare", "check", "preflight", "run", "resume", "finalize", "recover", "status", "attach", "exclude"):
+    for name in ("prepare", "check", "preflight", "run", "resume", "finalize", "recover", "status", "attach", "exclude", "pause", "stop", "timing", "jobs", "logs"):
         command = actions.add_parser(name)
-        command.add_argument("--task-root", type=Path, required=True)
+        command.add_argument("--task-root", type=Path, help=argparse.SUPPRESS)
+        command.add_argument("--runtime-dir", type=Path, help="已准备的独立本轨运行目录")
         if name in {"prepare", "exclude"}:
-            command.add_argument("--file", type=Path, required=True)
+            command.add_argument("--file", type=Path,
+                                 help="排除无效时段的有据记录 JSON" if name == "exclude" else argparse.SUPPRESS)
+        if name == "prepare":
+            command.add_argument("--config", type=Path, help="独立本轨 schema 3 配置")
+            command.add_argument("--output-dir", type=Path, help="新的本轨输出目录，不覆盖已有运行")
         if name != "prepare":
-            command.add_argument("--track", choices=("codex", "seed"), required=True)
+            command.add_argument("--track", choices=("codex", "seed"), help=argparse.SUPPRESS)
         if name == "preflight":
             command.add_argument("--allow-live", action="store_true")
+        if name in {"preflight", "run"}:
+            command.add_argument("--allow-busy-gpu", action="store_true", help="仅显式获准的有界预检/适配验收可共享设备，不用于正式训练")
         if name == 'finalize':
             command.add_argument('--confirm-final-score', action='store_true')
-        if name in {"run", "resume"}:
-            command.add_argument("--budget-seconds", type=int, required=True)
+        if name in {"run", "resume", "recover"}:
+            command.add_argument("--budget-seconds", type=int, help=argparse.SUPPRESS)
             command.add_argument("--confirm-cost", action="store_true")
-    delivery = commands.add_parser("delivery", help="Agent 轨迹整理、最终方法、包与独立 QA 交接")
+        if name == 'resume':
+            command.add_argument('--prompt', help='原会话的续跑提示，不修改原 Goal')
+        if name in {'logs','jobs'}:
+            command.add_argument('--job-id')
+    delivery = commands.add_parser("delivery", help=argparse.SUPPRESS,
+                                   description="历史交付账本兼容接口；新题使用 materials/package")
     actions = delivery.add_subparsers(dest="delivery_action", required=True)
     for name in ("trajectory-finalize", "trajectory-review", "best-select", "best-verify",
                  "build", "check", "archive", "form", "qa-handoff", "qa-bind"):
@@ -151,6 +170,18 @@ def _parser() -> argparse.ArgumentParser:
             command.add_argument("--max-part-bytes", type=int, default=290_000_000)
         if name == "qa-bind":
             command.add_argument("--report", type=Path, required=True)
+    # argparse keeps hidden subcommands in ``choices`` so compatibility calls
+    # still parse, but remove their display actions and stale names from the
+    # default help surface.
+    commands._choices_actions[:] = [
+        action for action in commands._choices_actions
+        if action.dest not in {"task", "stage", "delivery"}
+    ]
+    experiment_actions._choices_actions[:] = [
+        action for action in experiment_actions._choices_actions
+        if action.dest not in {"lock", "extend", "start", "finish", "report",
+                               "baseline-check", "score-check", "execute"}
+    ]
     return parser
 
 def _emit(payload: dict, output_format: str) -> None:
@@ -166,7 +197,7 @@ def _emit(payload: dict, output_format: str) -> None:
         print(f"变更规则：{', '.join(payload['changed_rules']) or '无'}；受影响阶段：{payload['affected_stages']}")
     for issue in payload.get("issues", []):
         print(f"- {issue['code']}: {issue['message']}" if isinstance(issue, dict) else f"- {issue}")
-    if payload["action"].startswith(("rules.show", "environment.", "experiment.", "runtime.", "delivery.", "stage.", "task.configure", "task.policy", "task.git")):
+    if payload["action"].startswith(("rules.show", "environment.", "harbor.", "experiment.", "materials.", "package", "runtime.", "delivery.", "stage.", "task.configure", "task.policy", "task.git")):
         print(json.dumps({key: value for key, value in payload.items() if key not in {"action", "issues"}}, ensure_ascii=False, indent=2))
     if payload.get("next_action"):
         print(f"下一步：{payload['next_action']}")
@@ -174,6 +205,76 @@ def _emit(payload: dict, output_format: str) -> None:
 
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
+    if args.command == "harbor":
+        from autoresearch_flow.harbor_cli import dispatch
+        try:
+            payload = dispatch(args)
+            _emit({"action": "harbor." + args.harbor_action, **payload}, args.format)
+            return 0 if payload["status"] == "native_trial_verified" else 2
+        except (FlowError, OSError, ValueError, TypeError) as exc:
+            _emit({"action": "harbor." + args.harbor_action, "status": "error", "code": getattr(exc, "code", "INPUT_ERROR"),
+                   "message": str(exc)}, args.format)
+            return 2
+    from autoresearch_flow.runtime_cli import independent, dispatch as runtime_dispatch
+    if independent(args):
+        try:
+            payload = runtime_dispatch(args)
+            _emit({"action": "runtime." + args.runtime_action, **payload}, args.format)
+            return 0
+        except (FlowError, OSError, ValueError, TypeError) as exc:
+            _emit({"action": "runtime." + args.runtime_action, "status": "error",
+                   "code": getattr(exc, "code", "INPUT_ERROR"), "message": str(exc)}, args.format)
+            return 2
+    if args.command == "package":
+        from autoresearch_flow.package_cli import dispatch
+        try:
+            payload = dispatch(args)
+            _emit({"action": "package", **payload}, args.format)
+            return 0
+        except (FlowError, OSError, ValueError, TypeError) as exc:
+            _emit({"action": "package", "status": "error",
+                   "code": getattr(exc, "code", "INPUT_ERROR"), "message": str(exc)}, args.format)
+            return 2
+    if args.command == "materials":
+        from autoresearch_flow.materials_cli import dispatch
+        try:
+            payload = dispatch(args)
+            _emit({"action": "materials." + args.materials_action, **payload}, args.format)
+            if payload["status"] == "assembled":
+                return 0 if payload["format_check"]["status"] == "format_checked_not_qa" else 2
+            return 0 if payload["status"] in {"prepared", "format_checked_not_qa"} else 2
+        except (FlowError, OSError, ValueError, TypeError) as exc:
+            _emit({"action": "materials." + args.materials_action, "status": "error",
+                   "code": getattr(exc, "code", "INPUT_ERROR"), "message": str(exc)}, args.format)
+            return 2
+    if args.command == "experiment" and args.experiment_action in {"run", "summarize"}:
+        from autoresearch_flow.experiment_cli import dispatch
+        try:
+            payload = dispatch(args)
+            _emit({"action": "experiment." + args.experiment_action, **payload}, args.format)
+            return 0 if payload["status"] == "COMPLETE" else 2
+        except (FlowError, OSError, ValueError) as exc:
+            _emit({"action": "experiment." + args.experiment_action, "status": "error",
+                   "code": getattr(exc, "code", "INPUT_ERROR"), "message": str(exc)}, args.format)
+            return 2
+    # Legacy commands retain their old contract, but are not imported for the new seam.
+    if args.command == 'runtime' and (args.task_root is None or
+            args.runtime_action in {'prepare', 'exclude'} and args.file is None or
+            args.runtime_action != 'prepare' and args.track is None or
+            args.runtime_action in {'run', 'resume'} and args.budget_seconds is None):
+        _emit({'action': 'runtime.' + args.runtime_action, 'status': 'error', 'code': 'RUNTIME_INPUT',
+               'message': '旧 runtime 接口须提供原 task-root/file/track/budget 输入；新接口使用 config/output-dir 或 runtime-dir'}, args.format)
+        return 2
+    from autoresearch_flow.core import Registry, TaskStore, _read_json, _canonical_digest, _require
+    from autoresearch_flow.experiments import FAILED_RUN_STATUSES, ExperimentBook, baseline_check, score_check
+    from autoresearch_flow.experiment_runner import ExperimentRunner
+    from autoresearch_flow.runtime import Runtime
+    from autoresearch_flow.w4_evidence import DeliveryEvidence
+    from autoresearch_flow.w4_package import DeliveryPackage, check_package
+    from autoresearch_flow.stages import StageFlow
+    from autoresearch_flow.pca_contract import check_task, check_execution_receipt, check_nop_record, check_stability
+    from autoresearch_flow.policies import policy_status
+    from autoresearch_flow.task_git import TaskGit
     action = args.command if args.command == "version" else f"{args.command}.{getattr(args, 'environment_action', None) or getattr(args, 'rules_action', None) or getattr(args, 'task_action', None) or getattr(args, 'experiment_action', None) or getattr(args, 'runtime_action', None) or getattr(args, 'delivery_action', None) or getattr(args, 'stage_action', None)}"
     try:
         if args.command == "environment":

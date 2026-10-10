@@ -1,10 +1,11 @@
 {
-  "at": "2026-10-03T19:10:09+00:00",
-  "checked_links": 96,
-  "fresh_cli_init_and_resume_status": true,
+  "at": "2026-10-10T02:10:05+00:00",
+  "checked_links": 154,
+  "development_files": 245,
+  "fresh_cli_capabilities": true,
   "model_calls": 0,
-  "native_tests": "285",
-  "package_revision": "1.0.0",
+  "native_tests": "490",
+  "package_revision": "2.0.0",
   "pending": [],
   "python": "3.13.13",
   "qa_coverage_count": 38,
@@ -12,7 +13,7 @@
   "release_evidence": {
     "checks": [
       {
-        "bound_source_count": 20,
+        "bound_source_count": 18,
         "claims": {
           "logs_and_timing": true,
           "native_tui": true,
@@ -22,92 +23,46 @@
         },
         "evidence": [
           {
-            "path": "pca_cpu/runs/release-seed-v100-approved-20261004/result.json",
-            "sha256": "c5263f8a08dc56eacdbaa4bc49a565eddb7ac995dcb0a02cb320c288d7b67523"
+            "path": "lp8-release-20261010/native.json",
+            "sha256": "e56aa10adae3ec37e6f52050b5b4c02f5b69be9e8cbe7bd4e4a534214e0aacab"
           },
           {
-            "path": "pca_cpu/runs/release-seed-v100-approved-20261004/.autoresearch-flow/runtime/seed/state.json",
-            "sha256": "245b3fbb66af570732d6972d47c441d60e43c551ab90e9fba2b64036b67de040"
+            "path": "lp7t-tob24-20261009/codex-gpu4-r3/runtime/snapshot.json",
+            "sha256": "a54cbc177d69f78bc0cd75b81d60a39049b2e7b73a346baf655b82ec4ded49a4"
           },
           {
-            "path": "pca_cpu/runs/release-seed-v100-approved-20261004/.autoresearch-flow/runtime/seed/formal/output/trajectory.jsonl",
-            "sha256": "a244ff15d5b9e3ec3bbab963017e07afb87764ae4195d56180cffc9b6abffbef"
-          },
-          {
-            "path": "pca_cpu/runs/release-seed-v100-approved-20261004/observer.json",
-            "sha256": "cc313c2dc143750f839bc6f253d9aa50b312fab1aa12e7364816cba50e6715e2"
-          },
-          {
-            "path": "pca_cpu/runs/release-seed-v100-approved-20261004/.autoresearch-flow/runtime/seed/logs/60ef35106df04e45badf5dc5f51dcb8b/events.jsonl",
-            "sha256": "3a54fa80c64d5dce35170e0e05a3f52ab0fc265644684d4fbb46020ad97ba31c"
-          },
-          {
-            "path": "pca_cpu/runs/release-seed-v100-approved-20261004/.autoresearch-flow/runtime/seed/logs/60ef35106df04e45badf5dc5f51dcb8b/native.jsonl",
-            "sha256": "63c03fde83f7a9614593dee3ebe7a8617699e9fcce0d20abbac88c8f094e1847"
-          },
-          {
-            "path": "pca_cpu/runs/release-seed-v100-approved-20261004/.autoresearch-flow/runtime/seed/logs/60ef35106df04e45badf5dc5f51dcb8b/screen.txt",
-            "sha256": "199c60f9987784eaad3d6212e298ef956d04477e857597430f315c79ef78a004"
-          },
-          {
-            "path": "pca_cpu/runs/release-seed-v100-approved-20261004/.autoresearch-flow/runtime/seed/logs/cbfd1fa453d64bf6a77319d2ede61e65/events.jsonl",
-            "sha256": "5bcd9114384f24168f92cb0257a559d0ff26deed1983bdc9e244e79ae9fd744a"
-          },
-          {
-            "path": "pca_cpu/runs/release-seed-v100-approved-20261004/.autoresearch-flow/runtime/seed/logs/cbfd1fa453d64bf6a77319d2ede61e65/native.jsonl",
-            "sha256": "27f0f29a410ef67866a300fe1affe6c93f07325b8d08b97f235ef42719b8e61e"
-          },
-          {
-            "path": "pca_cpu/runs/release-seed-v100-approved-20261004/.autoresearch-flow/runtime/seed/logs/cbfd1fa453d64bf6a77319d2ede61e65/screen.txt",
-            "sha256": "b1ff36e74f1709dfd7572bf129f1826d45641231f6e0b02f0fc46954dd587a05"
-          },
-          {
-            "path": "pca_cpu/runs/release-seed-v100-approved-20261004/.autoresearch-flow/runtime/seed/logs/1ac87693e29647d28e346706b5c81c0b/events.jsonl",
-            "sha256": "3e3abd9834b2c1ca2b524210a51cff1e945e289fdec385168bfb8c9df47cd7d4"
-          },
-          {
-            "path": "pca_cpu/runs/release-seed-v100-approved-20261004/.autoresearch-flow/runtime/seed/logs/1ac87693e29647d28e346706b5c81c0b/native.jsonl",
-            "sha256": "0c7945e10d1e4d90faeacc87b1e876488d60ab76919af00af623fef3b64343a5"
-          },
-          {
-            "path": "pca_cpu/runs/release-seed-v100-approved-20261004/.autoresearch-flow/runtime/seed/logs/1ac87693e29647d28e346706b5c81c0b/screen.txt",
-            "sha256": "4b7b423ce6928db4e1f8e1610e4e55a96de5cb01c5da3f57c18b2e896a4bfd04"
-          },
-          {
-            "path": "pca_cpu/runs/release-seed-v100-approved-20261004/.autoresearch-flow/runtime/seed/logs/556935ca13124661ba976f53c5f116ac/events.jsonl",
-            "sha256": "5d7ac4e7ae83e47d5e52859febe818c3f00ae1f45f0b83039e9778ab17f80c19"
-          },
-          {
-            "path": "pca_cpu/runs/release-seed-v100-approved-20261004/.autoresearch-flow/runtime/seed/logs/556935ca13124661ba976f53c5f116ac/native.jsonl",
-            "sha256": "94dda547b06b7c4c7a3a7947c31854f11c050c91078aa7fb04224a79447c04fe"
-          },
-          {
-            "path": "pca_cpu/runs/release-seed-v100-approved-20261004/.autoresearch-flow/runtime/seed/logs/556935ca13124661ba976f53c5f116ac/screen.txt",
-            "sha256": "2d17fd0b87d36fa99ac6e770f026f13bb718cbf5292964d7692e43d9bf763c9a"
+            "path": "lp7t-tob24-20261009/README.md",
+            "sha256": "a859fb05ea0314f785d9f2130d1db3226b71c3319512c230bdf942c1cdc324a6"
           }
         ],
         "id": "native_runtime",
         "mechanical_result": "passed",
-        "mode": "fresh",
-        "origin_at": "2026-10-03T18:49:02+00:00",
-        "origin_sources": {
-          "path": "pca_cpu/runs/release-seed-v100-approved-20261004/origin_sources.json",
-          "sha256": "0aba32c44a8ecdbbe33f9f8c4c0346477a60356a0fe04eded0a61a7bbef104b2"
-        },
-        "origin_version": "1.0.0",
+        "metadata_only_changes": [
+          "autoresearch_flow/__init__.py:FLOW_VERSION"
+        ],
+        "mode": "reused",
+        "origin_at": "2026-10-09T14:57:39Z",
+        "origin_version": "8a3ef24",
         "result": {
-          "path": "pca_cpu/runs/release-seed-v100-approved-20261004/result.json",
-          "sha256": "c5263f8a08dc56eacdbaa4bc49a565eddb7ac995dcb0a02cb320c288d7b67523"
+          "path": "lp8-release-20261010/native.json",
+          "sha256": "e56aa10adae3ec37e6f52050b5b4c02f5b69be9e8cbe7bd4e4a534214e0aacab"
         },
         "review": {
-          "path": "pca_cpu/runs/release-seed-v100-approved-20261004/REVIEW.md",
-          "sha256": "11b753bbefdb1a49a3a8807df9c86e7a79312afc904d67248f7b530107847627"
+          "path": "lp8-release-20261010/review.md",
+          "sha256": "287e5fbc36d815f055c95d95fce23a5b064034b47712704e5b9021bb2514a607"
         },
-        "reviewer": "Codex 发布维护 Agent",
+        "reviewer": "Codex maintainer (LP-8, 2026-10-10)",
+        "sources": {
+          "kind": "runtime_snapshot",
+          "record": {
+            "path": "lp7t-tob24-20261009/codex-gpu4-r3/runtime/snapshot.json",
+            "sha256": "a54cbc177d69f78bc0cd75b81d60a39049b2e7b73a346baf655b82ec4ded49a4"
+          }
+        },
         "status": "passed"
       },
       {
-        "bound_source_count": 14,
+        "bound_source_count": 5,
         "claims": {
           "candidate_transfer": true,
           "independent_verifier": true,
@@ -115,32 +70,42 @@
         },
         "evidence": [
           {
-            "path": "pca_cpu/runs/harbor-20261003T184915314137Z/result.json",
-            "sha256": "75b5886e2b4adc51326c9e5f5ecfecc8ef487cb59b8505d46403b5095b30878b"
+            "path": "lp8-release-20261010/harbor.json",
+            "sha256": "4a6aacaf70b2068e09d7303491cf9e2d4cd792ad6091df56b35a714437f122df"
           },
           {
-            "path": "pca_cpu/runs/harbor-20261003T184915314137Z/report.json",
-            "sha256": "200a36fe9714ec191fad307810b26436a65948d2eaaea34ca8c50c1104debf56"
+            "path": "lp6-native-20261009/final-valid/report.json",
+            "sha256": "9723661550f36a10d348a64504c994bb57fa112d31731cf49c211683829d7e29"
+          },
+          {
+            "path": "lp7t-tob24-20261009/README.md",
+            "sha256": "a859fb05ea0314f785d9f2130d1db3226b71c3319512c230bdf942c1cdc324a6"
           }
         ],
         "id": "harbor_transfer",
         "mechanical_result": "passed",
-        "mode": "fresh",
-        "origin_at": "2026-10-03T18:49:08+00:00",
-        "origin_sources": {
-          "path": "pca_cpu/runs/harbor-20261003T184915314137Z/origin_sources.json",
-          "sha256": "24cf3cee774fc7fc686a42331c6f7b05b349989c37c40a31f0cf875580488a3b"
-        },
-        "origin_version": "1.0.0",
+        "metadata_only_changes": [
+          "autoresearch_flow/__init__.py:FLOW_VERSION"
+        ],
+        "mode": "reused",
+        "origin_at": "2026-10-09T09:24:08Z",
+        "origin_version": "LP-6:harbor_native@2122518ef96968fc535f7860aa95af4c9cae913b1d0ed8081507d0695773d915",
         "result": {
-          "path": "pca_cpu/runs/harbor-20261003T184915314137Z/result.json",
-          "sha256": "75b5886e2b4adc51326c9e5f5ecfecc8ef487cb59b8505d46403b5095b30878b"
+          "path": "lp8-release-20261010/harbor.json",
+          "sha256": "4a6aacaf70b2068e09d7303491cf9e2d4cd792ad6091df56b35a714437f122df"
         },
         "review": {
-          "path": "pca_cpu/runs/harbor-20261003T184915314137Z/REVIEW.md",
-          "sha256": "2b024d97554630caf6a8ae98a8dc5844d7457bc8df449658e0a214d62064adfe"
+          "path": "lp8-release-20261010/review.md",
+          "sha256": "287e5fbc36d815f055c95d95fce23a5b064034b47712704e5b9021bb2514a607"
         },
-        "reviewer": "Codex 发布维护 Agent",
+        "reviewer": "Codex maintainer (LP-8, 2026-10-10)",
+        "sources": {
+          "kind": "harbor_snapshot",
+          "record": {
+            "path": "lp6-native-20261009/final-valid/report.json",
+            "sha256": "9723661550f36a10d348a64504c994bb57fa112d31731cf49c211683829d7e29"
+          }
+        },
         "status": "passed"
       },
       {
@@ -152,66 +117,152 @@
         },
         "evidence": [
           {
-            "path": "gpu_queue/runs/release-gpu-v100-20261004/result.json",
-            "sha256": "dca0d8499bf2a31383f34fa59dfcdc15689bf4b02730fe1e9a07bbd141d63013"
+            "path": "lp8-release-20261010/gpu.json",
+            "sha256": "8d3faa6484871035ac6e70dfa47150d4d8b2c38d60bbde45eb6dcbcd8f7fdef1"
+          },
+          {
+            "path": "lp7t-tob24-20261009/codex-gpu4-r3/runtime/snapshot.json",
+            "sha256": "a54cbc177d69f78bc0cd75b81d60a39049b2e7b73a346baf655b82ec4ded49a4"
+          },
+          {
+            "path": "lp7t-tob24-20261009/README.md",
+            "sha256": "a859fb05ea0314f785d9f2130d1db3226b71c3319512c230bdf942c1cdc324a6"
           }
         ],
         "id": "gpu_dispatch",
         "mechanical_result": "passed",
-        "mode": "fresh",
-        "origin_at": "2026-10-03T18:50:36.346491+00:00",
-        "origin_sources": {
-          "path": "gpu_queue/runs/release-gpu-v100-20261004/origin_sources.json",
-          "sha256": "0ad9625ab1f5fdbb1eb97aceeacdb8233c8cbf690cb5c5179067f29076430ff4"
-        },
-        "origin_version": "1.0.0",
+        "metadata_only_changes": [
+          "autoresearch_flow/__init__.py:FLOW_VERSION"
+        ],
+        "mode": "reused",
+        "origin_at": "2026-10-09T14:59:26Z",
+        "origin_version": "8a3ef24",
         "result": {
-          "path": "gpu_queue/runs/release-gpu-v100-20261004/result.json",
-          "sha256": "dca0d8499bf2a31383f34fa59dfcdc15689bf4b02730fe1e9a07bbd141d63013"
+          "path": "lp8-release-20261010/gpu.json",
+          "sha256": "8d3faa6484871035ac6e70dfa47150d4d8b2c38d60bbde45eb6dcbcd8f7fdef1"
         },
         "review": {
-          "path": "gpu_queue/runs/release-gpu-v100-20261004/REVIEW.md",
-          "sha256": "f0a63b41191f3821777250d5f7f631ed8622e15be286dd3456e4576f52f2761c"
+          "path": "lp8-release-20261010/review.md",
+          "sha256": "287e5fbc36d815f055c95d95fce23a5b064034b47712704e5b9021bb2514a607"
         },
-        "reviewer": "Codex 发布维护 Agent",
+        "reviewer": "Codex maintainer (LP-8, 2026-10-10)",
+        "sources": {
+          "kind": "runtime_snapshot",
+          "record": {
+            "path": "lp7t-tob24-20261009/codex-gpu4-r3/runtime/snapshot.json",
+            "sha256": "a54cbc177d69f78bc0cd75b81d60a39049b2e7b73a346baf655b82ec4ded49a4"
+          }
+        },
         "status": "passed"
       },
       {
+        "approval": {
+          "path": "lp8-release-20261010/approval.json",
+          "sha256": "6b80ca5f1152ea5a55d1c80671df7bf85125075b600b4563f6fb82bc68da0394"
+        },
         "id": "independent_trial",
         "mechanical_result": "waived_by_user",
         "mode": "explicit_user_authorization",
-        "status": "waived",
-        "waiver": {
-          "approval": {
-            "path": "pca_cpu/runs/release-seed-v100-approved-20261004/first-release-authorization.json",
-            "sha256": "6a8fa62831c565b3093f61e36d5629b77b5542e8419e46de98d6f53a16e2b7ac"
-          },
-          "approved_at": "2026-10-04",
-          "approved_by": "user",
-          "reason": "Independent new-session trial skipped for the first formal release by explicit user instruction."
-        }
+        "origin_at": null,
+        "origin_version": null,
+        "status": "waived"
       }
     ],
     "limitations": [
-      "Independent new-session trial waived for first release 1.0.0 by explicit user instruction.",
-      "CPU synthetic Seed supervision is bounded, not a 10h scientific trajectory or proof of compaction.",
-      "GPT, other providers, actual tasks and Harbor GPU provider are not proven by these probes.",
-      "Raw pilot logs, model credentials and local configuration are not distributed.",
-      "A narrowly authorized AppArmor exception was used only for this CPU pilot; it is not a default.",
-      "Bundled authoritative QA Skill is unmodified; one upstream self-test still asserts older report wording."
+      "Independent new-session entry trial explicitly waived by user for 2.0.0 on 2026-10-10; not passed.",
+      "Bounded acceptance does not prove formal 7h/10h, real compaction, scientific anchors or task QA.",
+      "CPU Harbor separate trials plus GPU public-worker admission; not a complete real-task GPU Final Trial or GPU parallel performance test.",
+      "ToB-17 used earlier frozen runtime; current changed execution paths are covered by ToB-24 r3 and offline regressions.",
+      "TUI readonly observation reviewed in LP-7T record, not a screen recording or an automated replay.",
+      "Container security exceptions apply only to their original authorized acceptance scope."
     ],
-    "manifest_sha256": "a81595e59e706ddd9930eaed01d147bc34e87d28e34468c3b0038c3f65134d46",
-    "schema_version": 1,
-    "validation_scope": "integrity and source applicability; claim semantics reviewed in linked records"
+    "manifest_sha256": "5f39676838fbfb658374c38d29efe7d524b1da23310d4eaff305234b7abfb59f",
+    "schema_version": 2,
+    "validation_scope": "originals and current execution-source binding; TUI observation/authorization reviewed separately"
   },
   "release_ready": true,
-  "relocated_tests": "285",
+  "relocated_tests": "490",
   "relocation_without_design_or_pilot_runs": true,
   "relocation_without_host_config_or_auth": true,
   "rule_count": 50,
+  "runtime_payload_files": 130,
+  "runtime_smoke": [
+    {
+      "command": [
+        "python3",
+        "cli.py",
+        "--format",
+        "json",
+        "rules",
+        "check"
+      ],
+      "exit_code": 0,
+      "output_tail": "{\"action\": \"rules.check\", \"coverage_count\": 38, \"flow_version\": \"2.0.0\", \"issues\": [], \"next_action\": \"规则包结构可读；这不是逐条语义复核或真实题目质检\", \"rule_count\": 50, \"status\": \"ok\"}\n"
+    },
+    {
+      "command": [
+        "python3",
+        "cli.py",
+        "--help"
+      ],
+      "exit_code": 0,
+      "output_tail": "usage: cli.py [-h] [--format {text,json}]\n              {version,materials,package,harbor,rules,environment,experiment,runtime} ...\n\nAutoResearch 新流程统一入口（2.0.0）\n\npositional arguments:\n  {version,materials,package,harbor,rules,environment,experiment,runtime}\n    version             显示工具版本\n    materials           独立轨迹整理、按来源组包、包内只读格式检查\n    package             独立完整 QA 后直接生成三份 ZIP 与七项填表材料\n    harbor              原生双镜像 NOP/冻结候选评分；不启动轨迹或选择方法\n    rules               中央规则包\n    environment         PCA 双镜像结构/实跑证据检查（只读兼容诊断，不执行 Harbor 或 QA）\n    experiment          独立 run/summarize（旧账本动作仅兼容旧任务）\n    runtime             独立本轨运行（旧 task-root 参数仅兼容旧任务）\n\noptions:\n  -h, --help            show this help message and exit\n  --format {text,json}  输出格式；机器调用建议 json\n"
+    },
+    {
+      "command": [
+        "python3",
+        "cli.py",
+        "experiment",
+        "--help"
+      ],
+      "exit_code": 0,
+      "output_tail": "usage: cli.py experiment [-h] {run,summarize} ...\n\npositional arguments:\n  {run,summarize}\n    run            独立运行方法/协议，不初始化题目或登记账本\n    summarize      只读统计已有逐次结果，不运行方法\n\noptions:\n  -h, --help       show this help message and exit\n"
+    },
+    {
+      "command": [
+        "python3",
+        "cli.py",
+        "materials",
+        "--help"
+      ],
+      "exit_code": 0,
+      "output_tail": "usage: cli.py materials [-h] {trajectory,assemble,check} ...\n\npositional arguments:\n  {trajectory,assemble,check}\n    trajectory          Agent 自写 JSONL/JSON 整理为 rounds 根对象\n    assemble            少量真实路径映射组包，不默选最终方法\n    check               仅以指定最终包为取证边界，输出格式问题，不运行 QA\n\noptions:\n  -h, --help            show this help message and exit\n"
+    },
+    {
+      "command": [
+        "python3",
+        "cli.py",
+        "package",
+        "--help"
+      ],
+      "exit_code": 0,
+      "output_tail": "usage: cli.py package [-h] --package-root PACKAGE_ROOT --qa-report QA_REPORT\n                      --output-dir OUTPUT_DIR [--name NAME]\n                      [--upload-limit-bytes UPLOAD_LIMIT_BYTES]\n                      [--part-bytes PART_BYTES] [--form-notes FORM_NOTES]\n\noptions:\n  -h, --help            show this help message and exit\n  --package-root PACKAGE_ROOT\n                        明确指定的最终提交包\n  --qa-report QA_REPORT\n                        包外独立会话的当前完整 report.json\n  --output-dir OUTPUT_DIR\n                        包外附件目录；已有目录内自动生成新批次，不覆盖\n  --name NAME           完整包语义名称；子仓名固定，不默认添加题号\n  --upload-limit-bytes UPLOAD_LIMIT_BYTES\n  --part-bytes PART_BYTES\n                        默认 min(290000000, 上传上限)，超限才分卷\n  --form-notes FORM_NOTES\n                        可选 Markdown 概述，不要求审批/引用 JSON\n"
+    },
+    {
+      "command": [
+        "python3",
+        "cli.py",
+        "harbor",
+        "--help"
+      ],
+      "exit_code": 0,
+      "output_tail": "usage: cli.py harbor [-h] {run,inspect} ...\n\npositional arguments:\n  {run,inspect}\n    run          保留原生 Trial，并核实际 artifacts/reward\n    inspect      只读复核已有原生原件与版本绑定，不重新评分\n\noptions:\n  -h, --help     show this help message and exit\n"
+    },
+    {
+      "command": [
+        "python3",
+        "cli.py",
+        "runtime",
+        "--help"
+      ],
+      "exit_code": 0,
+      "output_tail": "usage: cli.py runtime [-h]\n                      {prepare,check,preflight,run,resume,finalize,recover,status,attach,exclude,pause,stop,timing,jobs,logs} ...\n\npositional arguments:\n  {prepare,check,preflight,run,resume,finalize,recover,status,attach,exclude,pause,stop,timing,jobs,logs}\n\noptions:\n  -h, --help            show this help message and exit\n"
+    }
+  ],
+  "runtime_without_development_files": true,
   "schema_version": 2,
   "scope": "tool contracts, not scientific or platform acceptance",
-  "source_manifest_sha256": "d5539d7fd8b371f41055637b5020104106bfbab42dc08d501fbcbb57545825ed",
+  "source_manifest_sha256": "2b44bb3e2d9ae7ffaff1e2bdbc04e69be1da183bd8ba525539de57c90ec83e43",
   "status": "released",
-  "version": "1.0.0"
+  "version": "2.0.0"
 }

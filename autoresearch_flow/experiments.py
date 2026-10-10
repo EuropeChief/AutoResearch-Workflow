@@ -11,6 +11,7 @@ import math
 import statistics
 from contextlib import contextmanager
 from pathlib import Path
+from .experiment_data import number, normalize
 
 from .core import (FlowError, TaskStore, SHA256_RE, TASK_ID_RE, _atomic_json,
                    _canonical_digest, _read_json, _require, _safe_repository_file,
@@ -22,9 +23,6 @@ FAILED_RUN_STATUSES = frozenset({
 })
 
 
-def number(value, label):
-    _require(type(value) in (int, float) and math.isfinite(value), "INVALID_NUMBER", f"{label} 必须是有限数值（不能是布尔值）")
-    return value
 
 
 def _finite_json(value):
@@ -71,19 +69,6 @@ def validate_protocol(p):
     _require(number(p.get("reload_tolerance", 0), "reload_tolerance") >= 0, "INVALID_PROTOCOL", "重载容差不得为负")
 
 
-def normalize(raw, baseline, upper_bound, direction, *, hard_gate_passed=True):
-    """Unclipped score; gate failures return -1, not a value-based validity test."""
-    for label, value in (("B", baseline), ("U", upper_bound)):
-        number(value, label)
-    _require(direction in {"maximize", "minimize"}, "INVALID_SCORE", "指标方向无效")
-    sign = 1 if direction == "maximize" else -1
-    _require(sign * (upper_bound - baseline) > 0, "INVALID_SCORE", "U 必须严格位于 B 的改善方向")
-    _require(type(hard_gate_passed) is bool, "INVALID_SCORE", "Hard Gate 必须是布尔值")
-    if not hard_gate_passed:
-        return -1.0
-    number(raw, "raw_metric")
-    score = (raw - baseline) / (upper_bound - baseline)
-    return number(score, "score")
 
 
 class ExperimentBook:

@@ -6,6 +6,7 @@ from pathlib import Path
 import tempfile
 import unittest
 import shutil
+from unittest.mock import patch
 
 from autoresearch_flow import FLOW_VERSION
 from tools.release_evidence import validate_bindings, validate_evidence
@@ -67,6 +68,7 @@ class ReleaseEvidenceTests(unittest.TestCase):
         return validate_bindings(self.manifest, self.flow, self.files)
 
     def waive_independent_trial(self, *, gate='independent_trial'):
+        self.data['release_version'] = '1.0.0'  # Historical schema-1 exception only.
         reason = 'Independent new-session trial skipped for the first formal release by explicit user instruction.'
         authorization = {'kind': 'first_release_exception', 'release_version': '1.0.0',
                          'scope': 'independent_trial', 'approved_by': 'user',
@@ -106,7 +108,9 @@ class ReleaseEvidenceTests(unittest.TestCase):
                 if change == 'raw': check['evidence'] = []
                 with self.assertRaises(ValueError): self.validate()
 
+    @patch('tools.release_evidence.FLOW_VERSION', '1.0.0')
     def test_only_first_release_independent_trial_can_be_explicitly_waived(self):
+        self.data['release_version'] = '1.0.0'
         self.install_synthetic_results()
         self.waive_independent_trial()
         self.validate()
@@ -121,6 +125,7 @@ class ReleaseEvidenceTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'version mismatch'):
             self.validate()
 
+    @patch('tools.release_evidence.FLOW_VERSION', '1.0.0')
     def test_first_release_waiver_cannot_be_used_for_another_gate(self):
         self.waive_independent_trial(gate='gpu_dispatch')
         with self.assertRaisesRegex(ValueError, 'only independent_trial'):

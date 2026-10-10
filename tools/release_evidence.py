@@ -94,6 +94,9 @@ def validate_bindings(manifest_path, flow, files):
     manifest_path, flow = Path(manifest_path), Path(flow)
     require(manifest_path.is_file() and not manifest_path.is_symlink(), 'explicit evidence manifest is missing or unsafe')
     data = json.loads(manifest_path.read_text(encoding='utf-8'))
+    if data.get('schema_version') == 2:
+        from tools.release_evidence_current import validate_current
+        return validate_current(manifest_path, flow, files, mechanical=False)
     release_version = data.get('release_version')
     require(release_version == FLOW_VERSION, 'release evidence version mismatch')
     require(data.get('schema_version') == 1, 'unsupported release evidence schema')
@@ -171,6 +174,9 @@ def validate_bindings(manifest_path, flow, files):
 
 def validate_evidence(manifest_path, flow, files):
     """Public release gate: both source/original binding AND mechanical results."""
+    if json.loads(Path(manifest_path).read_text(encoding='utf-8')).get('schema_version') == 2:
+        from tools.release_evidence_current import validate_current
+        return validate_current(Path(manifest_path), Path(flow), files, mechanical=True)
     bound = validate_bindings(manifest_path, flow, files)
     manifest_path = Path(manifest_path)
     checks = json.loads(manifest_path.read_text(encoding='utf-8'))['checks']

@@ -3,7 +3,7 @@
     "path": "rules/catalog.json",
     "sha256": "f75918e89ec64dfbef888a28dbf5b177b327e3ecbc9e3ce9d1ad2a18cec9b7b4"
   },
-  "flow_version": "1.0.0",
+  "flow_version": "2.0.0",
   "schema_version": 1,
   "qa_checks": ["B01","B02","B03","B04","B05","B06","B07","B08","G01","G02","G03","H01","H02","H03","H04","H05","H06","QA01","QA02","QA03","QA04","QA05","QA06","QA07","QA08","QA09","QA10","QA11","QA12","QA13","QA14","QA15","QA16","QA17","QA18","QA19","QA20","QA21"],
   "skipped_checks": ["QA15"],
@@ -118,7 +118,7 @@
     }
   ],
   "qa_revision": "v0.3.2@2026-10-03",
-  "package_revision": "1.0.0",
+  "package_revision": "2.0.0",
   "bundled_files": [
     {
       "path": "skills/autoresearch-baseline-quality/agents/openai.yaml",

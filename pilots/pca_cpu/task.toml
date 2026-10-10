@@ -21,7 +21,7 @@ environment_mode = "separate"
 user = "root"
 
 [verifier.environment]
-docker_image = "sha256:092fd7595d04409d5bf07b8e622805c00a9dab869fb6191817b08689d10ba4fb"
+docker_image = "sha256:e9d809aa32a217542e448113af9d1ddef59e0d953714fbf218883c9a618b57b2"
 cpus = 1
 memory_mb = 512
 gpus = 0

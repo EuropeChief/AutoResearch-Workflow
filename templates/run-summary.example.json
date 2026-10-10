@@ -1,0 +1,15 @@
+{
+  "task_id": "<platform_task_id>",
+  "status": "pilot_required",
+  "image": "<实际Agent镜像>",
+  "agent_execution": [
+    {"runtime": "Codex", "model": "GPT-5.6 Sol", "duration_hours": null, "effective_rounds": null, "typical_round_minutes": null},
+    {"runtime": "Codex", "model": "Seed 2.1 Turbo", "duration_hours": null, "effective_rounds": null, "typical_round_minutes": null}
+  ],
+  "fast_iteration_exception": {
+    "used": false, "non_training": null, "short_iterations": null, "rollable_proved": false, "evidence": ""
+  },
+  "validation": {
+    "baseline_passed": false, "reference_passed": false, "optimization_evidence_complete": false, "best_method_rerun_passed": false
+  }
+}
