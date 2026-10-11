@@ -13,6 +13,7 @@ from pathlib import Path
 from .core import FlowError, _canonical_digest, _read_json, _require, _sha256
 from .experiments import evidence
 from .runtime_evaluate import TreeError, tree_digest
+from .harbor_native import solution_artifact_destination
 
 
 def task_digest(root: Path) -> str:
@@ -36,8 +37,10 @@ def check_task(root: Path) -> dict:
         config = tomllib.loads((root / "task.toml").read_text())
     except (ValueError, OSError) as exc:
         raise FlowError("TASK_TOML_INVALID", "task.toml 解析失败") from exc
-    _require(config.get("artifacts") == ["/workspace/solution"], "ARTIFACTS_CONTRACT",
-             "artifacts 只能移交 /workspace/solution 候选及必要产物")
+    try:
+        solution_artifact_destination(config)
+    except FlowError as exc:
+        raise FlowError("ARTIFACTS_CONTRACT", str(exc)) from exc
     verifier = config.get("verifier")
     _require(isinstance(verifier, dict) and verifier.get("environment_mode") == "separate",
              "VERIFIER_NOT_SEPARATE", "verifier.environment_mode 须为 separate")

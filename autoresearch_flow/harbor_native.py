@@ -11,6 +11,7 @@ import json
 import math
 import os
 from pathlib import Path, PurePosixPath
+import re
 import shutil
 import signal
 import stat
@@ -100,6 +101,69 @@ def _time(value):
     return time
 
 
+def _artifact_destination(entry):
+    destination = entry.get("destination", "")
+    _require(isinstance(destination, str), "HARBOR_ARTIFACTS", "destination 须为字符串或省略")
+    if not destination:
+        return None
+    relative = PurePosixPath(destination)
+    _require(not relative.is_absolute() and ".." not in relative.parts and "\\" not in destination
+             and bool(relative.parts) and relative.parts[0] != "manifest.json",
+             "HARBOR_ARTIFACTS", "destination 须为 artifacts 下非保留的相对目录，不可越界")
+    return relative.as_posix()
+
+
+def solution_artifact_destination(config):
+    """Resolve the unique main solution declaration, without importing Harbor."""
+    artifacts = config.get("artifacts")
+    _require(isinstance(artifacts, list), "HARBOR_ARTIFACTS", "artifacts 须为声明数组")
+    matches = []
+    for entry in artifacts:
+        if isinstance(entry, str):
+            entry = {"source": entry}
+        _require(isinstance(entry, dict), "HARBOR_ARTIFACTS", "artifact 须为路径或对象")
+        source = entry.get("source")
+        service = entry.get("service")
+        _require(isinstance(source, str) and "\\" not in source and
+                 PurePosixPath(source).is_absolute() and ".." not in PurePosixPath(source).parts
+                 and PurePosixPath(source).is_relative_to("/workspace/solution"),
+                 "HARBOR_ARTIFACTS", "artifacts 只能移交 /workspace/solution 候选及必要产物")
+        _require(service is None or isinstance(service, str),
+                 "HARBOR_ARTIFACTS", "artifact service 须为有效服务名或省略")
+        if service is not None:
+            service = service.strip()
+            _require(re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*", service) is not None,
+                     "HARBOR_ARTIFACTS", "artifact service 名不符合 Harbor schema")
+        destination = _artifact_destination(entry)
+        if PurePosixPath(source) == PurePosixPath("/workspace/solution") and service in {None, "main"}:
+            matches.append(destination)
+    _require(len(matches) == 1, "HARBOR_ARTIFACTS", "需唯一主服务的 /workspace/solution 声明")
+    return matches[0] or "workspace/solution"
+
+
+def trial_solution_path(trial, task_path):
+    """Use the Trial-bound task snapshot; never guess another artifact directory."""
+    task_toml = Path(task_path) / "task.toml"
+    _require(task_toml.is_file() and not task_toml.is_symlink(),
+             "HARBOR_ARTIFACTS", "缺绑定题包的 task.toml 普通原件")
+    try:
+        config = tomllib.loads(task_toml.read_text())
+    except (ValueError, OSError) as exc:
+        raise FlowError("HARBOR_ARTIFACTS", "绑定题包 task.toml 无法解析") from exc
+    destination = solution_artifact_destination(config)
+    root = Path(trial) / "artifacts"
+    path = root / destination
+    _require(root.is_dir() and not root.is_symlink(),
+             "HARBOR_ARTIFACTS", "Trial artifacts 须为普通目录")
+    try:
+        contained = path.resolve().is_relative_to(root.resolve())
+    except (OSError, ValueError, RuntimeError) as exc:
+        raise FlowError("HARBOR_ARTIFACTS", "产物目录无法安全解析") from exc
+    _require(contained,
+             "HARBOR_ARTIFACTS", "产物目录不得经链接越过 Trial artifacts 边界")
+    return path
+
+
 def inspect_trial(trial, *, mode, task_path, expected_files=None, expected_environment=None):
     """Inspect same-Trial originals; success never follows just the CLI exit code."""
     _require(mode in {"nop", "candidate"}, "HARBOR_MODE", "仅 NOP 或明确候选")
@@ -144,7 +208,7 @@ def inspect_trial(trial, *, mode, task_path, expected_files=None, expected_envir
             and p.is_file() and not p.is_symlink() and p.stat().st_size]
     _require(logs and all(p.is_file() and not p.is_symlink() and p.stat().st_size for p in originals),
              "HARBOR_ORIGINALS", "缺同一 Trial 的配置/结果/reward/日志")
-    transferred = trial / "artifacts/workspace/solution"
+    transferred = trial_solution_path(trial, task_path)
     actual_files = inventory(transferred)
     if mode == "candidate":
         _require(expected_files is not None and actual_files == expected_files,
@@ -156,6 +220,8 @@ def inspect_trial(trial, *, mode, task_path, expected_files=None, expected_envir
     return {"status": "native_trial_verified", "mode": mode, "rewards": rewards,
             "coverage": "nop_executed_branch_only" if mode == "nop" else "frozen_candidate_scoring",
             "candidate_files": actual_files, "trial_dir": str(trial.resolve()),
+            "artifact_path": transferred.relative_to(trial).as_posix(),
+            "artifact_contract_sha256": _sha256(Path(task_path) / "task.toml"),
             "originals": {p.relative_to(trial).as_posix(): _sha256(p) for p in originals + logs},
             "verifier_environment_mode": "separate"}
 
@@ -177,10 +243,8 @@ def validate_job(path):
              "HARBOR_SEPARATE", "Agent 声明不得与独立评分边界冲突")
     agent_env, verifier_env = task.config.environment, task.config.verifier.environment
     _require(verifier_env is not None, "HARBOR_SEPARATE", "缺独立 Verifier 环境")
+    solution_artifact_destination(declared)
     artifacts = [a if isinstance(a, str) else a.source for a in task.config.artifacts]
-    _require(all(PurePosixPath(p).is_absolute() and ".." not in PurePosixPath(p).parts
-                 and PurePosixPath(p).is_relative_to("/workspace/solution") for p in artifacts)
-             and "/workspace/solution" in artifacts, "HARBOR_ARTIFACTS", "需绝对 artifacts，包含 /workspace/solution")
     gpu_ids = config.environment.kwargs.get("gpu_ids", [])
     counts = (agent_env.gpus, verifier_env.gpus)
     _require(max(counts) == len(gpu_ids) and all(c in {0, len(gpu_ids)} for c in counts), "HARBOR_GPU",

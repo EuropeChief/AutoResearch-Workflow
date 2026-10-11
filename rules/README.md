@@ -2,6 +2,8 @@
 
 这是执行用的精简索引，不是第三个权威来源，也不是每题填写的检查表。先读本节口径，再按所用 Skill 的链接读取相关条目；有歧义或需要字段细节时回查原件。不为每个动作重算全库锁或复制一套报告。
 
+六阶段的行动、所需证据和阶段门提示见 [`stage_matrix.json`](stage_matrix.json) 及其派生阅读视图 [`stages/`](stages/)。矩阵和视图由流程维护者维护，用于定位当前检查；规则正文仍以本文件为唯一来源，不把矩阵当作题目状态账本。
+
 ## 来源与适用口径
 
 | 优先级 | 当前原件 | 版本与定位 |
@@ -101,6 +103,8 @@ Agent 视图窄于作者包时，按 [exposure manifest][E] 在 `workspace/qa_ex
 ## C05
 
 **双镜像路径与产物移交。** 默认 Agent Dockerfile/context=`environment/`，Verifier=`tests/`，各自依赖自足；核 COPY/ignore/WORKDIR/入口/实际权限。Hidden 的文件、生成或安全注入必须有来源和真实调用，不造空目录。`task.toml` 显式 `[verifier] environment_mode="separate"`，artifacts 仅移交候选与必要模型/配置，Verifier 保持源绝对路径，destination 不是容器重映射。源码 `solution/` 是可选 Oracle，不等于运行时 `/workspace/solution`。来源：[T]「Docker 路径契约」「task.toml」；[H] H01/H03；[D]。
+
+对唯一主服务的 `/workspace/solution` 声明，按 Trial 绑定的冻结题包解析宿主目录：显式 destination 对应 `<trial>/artifacts/<destination>`，省略或空字符串才默认 `artifacts/workspace/solution`。显式目录缺失不回退；核相对路径、类型、重复声明和符号链接越界。Verifier 内仍为 `/workspace/solution`，源码/模型/配置的完整移交及真实 reward 仍须检查。此段是 C05/H01 路径合同的检查器落实说明，不新增题目审批或训练要求。
 
 ## C06
 

@@ -1,0 +1,20 @@
+{
+  "evidence": {
+    "research_notes": {"path": "research/notes.md", "sha256": "替换为当前文件的64位SHA256"},
+    "research_contract": {"path": "research/contract.md", "sha256": "替换为当前文件的64位SHA256"}
+  },
+  "checks": [],
+  "reviews": [
+    {
+      "obligations": ["M01-S1"],
+      "report": "research/notes.md",
+      "reviewer": "实际审查人",
+      "conclusion": "PASS",
+      "summary": "引用已有研究记录中的方法空间结论及真实依据，不扩大其覆盖范围",
+      "bindings": {
+        "research_notes": "替换为当前文件的64位SHA256",
+        "research_contract": "替换为当前文件的64位SHA256"
+      }
+    }
+  ]
+}

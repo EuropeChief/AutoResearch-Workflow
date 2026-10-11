@@ -16,8 +16,15 @@ def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=f"AutoResearch 新流程统一入口（{FLOW_VERSION}）")
     parser.add_argument("--format", choices=("text", "json"), default="text", help="输出格式；机器调用建议 json")
     commands = parser.add_subparsers(dest="command", required=True,
-                                     metavar="{version,materials,package,harbor,rules,environment,experiment,runtime}")
+                                     metavar="{version,materials,package,harbor,rules,preflight,environment,experiment,runtime}")
     commands.add_parser("version", help="显示工具版本")
+    preflight = commands.add_parser("preflight", help="只读阶段预检：已有证据、待审结论与显式例外；不初始化状态")
+    preflight.add_argument("--task-root", type=Path, required=True)
+    preflight.add_argument("--stage", type=int, choices=range(1, 7), required=True)
+    preflight.add_argument("--inputs", type=Path, help="只引用已有证据与检查/审查结果的 JSON，不是阶段账本")
+    preflight.add_argument("--phase", choices=("enter", "exit"), default="enter")
+    preflight.add_argument("--before", help="当前阶段高成本动作/阶段门标识；与 phase exit 不混用")
+    preflight.add_argument("--changed", action="append", default=[], help="影响性变更的 M/C 规则或阶段义务 ID，仅列定向复核范围")
     from autoresearch_flow.materials_cli import add_commands as add_material_commands
     add_material_commands(commands)
     from autoresearch_flow.package_cli import add_commands as add_package_command
@@ -197,7 +204,7 @@ def _emit(payload: dict, output_format: str) -> None:
         print(f"变更规则：{', '.join(payload['changed_rules']) or '无'}；受影响阶段：{payload['affected_stages']}")
     for issue in payload.get("issues", []):
         print(f"- {issue['code']}: {issue['message']}" if isinstance(issue, dict) else f"- {issue}")
-    if payload["action"].startswith(("rules.show", "environment.", "harbor.", "experiment.", "materials.", "package", "runtime.", "delivery.", "stage.", "task.configure", "task.policy", "task.git")):
+    if payload["action"].startswith(("preflight", "rules.show", "environment.", "harbor.", "experiment.", "materials.", "package", "runtime.", "delivery.", "stage.", "task.configure", "task.policy", "task.git")):
         print(json.dumps({key: value for key, value in payload.items() if key not in {"action", "issues"}}, ensure_ascii=False, indent=2))
     if payload.get("next_action"):
         print(f"下一步：{payload['next_action']}")
@@ -205,6 +212,21 @@ def _emit(payload: dict, output_format: str) -> None:
 
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
+    if args.command == "preflight":
+        from autoresearch_flow.preflight import Preflight
+        from autoresearch_flow.common import _read_json
+        try:
+            result = Preflight(args.task_root).check(args.stage,
+                _read_json(args.inputs) if args.inputs else None,
+                before=args.before, phase=args.phase, changed=args.changed)
+            _emit({"action": "preflight", **result}, args.format)
+            return 2 if result["ready"] is False or result["ready"] is None and any(
+                row["status"] == "BLOCKED" and row["severity"] != "advisory"
+                for row in result["obligations"]) else 0
+        except (FlowError, OSError, ValueError, TypeError) as exc:
+            _emit({"action": "preflight", "status": "error", "code": getattr(exc, "code", "INPUT_ERROR"),
+                   "message": str(exc)}, args.format)
+            return 2
     if args.command == "harbor":
         from autoresearch_flow.harbor_cli import dispatch
         try:
@@ -387,7 +409,11 @@ def main(argv: list[str] | None = None) -> int:
             payload = {"action": action, **Registry().show(rule_id=args.rule_id, step=args.step)}
         elif args.command == "rules":
             registry = Registry()
-            issues = registry.check_sources()
+            source_issues = registry.check_sources()
+            from autoresearch_flow.stage_rules import StageRules
+            stage_rules = StageRules()
+            stage_issues = stage_rules.validate()
+            issues = source_issues + stage_issues
             payload = {
                 "action": action,
                 "status": "ok" if not issues else "blocked",
@@ -395,7 +421,13 @@ def main(argv: list[str] | None = None) -> int:
                 "rule_count": len(registry.catalog["rules"]),
                 "coverage_count": len(registry.catalog["coverage"]),
                 "issues": issues,
-                "next_action": "检查来源版本和哈希；不能在来源漂移时初始化题目" if issues else "规则包结构可读；这不是逐条语义复核或真实题目质检",
+                "stage_matrix": {
+                    "status": "ok" if not stage_issues else "blocked",
+                    "obligation_count": len(stage_rules.obligations()),
+                    "stage_count": len(stage_rules.stages()),
+                    "issues": stage_issues,
+                },
+                "next_action": "检查规则来源、阶段矩阵和派生视图；不能在规则包漂移时初始化题目" if issues else "规则正文、阶段矩阵和派生视图结构可读；这不是逐条语义复核或真实题目质检",
             }
         elif args.task_action.startswith("git-"):
             vcs = TaskGit(args.task_root)

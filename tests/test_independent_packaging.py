@@ -152,6 +152,14 @@ class IndependentPackagingTests(unittest.TestCase):
         self.assertEqual(text.count("\n## "), 7)
         self.assertNotIn("reviewer", text)
 
+    def test_packaging_never_demands_stage_approvals_or_preflight(self):
+        with patch("autoresearch_flow.preflight.Preflight.check",
+                   side_effect=AssertionError("No stage gate before packaging")), \
+             patch("autoresearch_flow.task_workspace.TaskWorkspace.read_decisions",
+                   side_effect=AssertionError("No historical approval lookup")):
+            self.assertEqual(self.run_package()["status"], "packaged")
+        self.assertFalse((self.root / ".autoresearch").exists())
+
     def test_copy_scanned_by_qa_is_compared_by_content_and_modes(self):
         scan = self.base / "qa-copy"
         shutil.copytree(self.root, scan)

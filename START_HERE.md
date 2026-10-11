@@ -20,4 +20,10 @@
 
 不知道从哪里继续时看[六阶段导航](docs/stages.md)。能力可以跨阶段使用；局部返修、现成材料整理或 QA 后打包直接进入相应能力，不补办前面阶段的手续。
 
+进入某一阶段时，先打开 `rules/stages/stage-<阶段>-*.md` 获取当前行动、证据和阶段门提示；阶段 1 先运行 `python -m autoresearch_flow.task_workspace --task-root <题目根> status`，确认 Git 范围，再按需执行 `init-git`、`preview` 和显式检查点。关键决定追加到题目 `.autoresearch/decision-log.md`，格式参考 `templates/decision-log.example.md`。流程维护者用 `python tools/build_stage_views.py --check` 做包内一致性检查。视图只是规则正文的导航，不是题目状态账本。
+
+进入阶段、阶段门/高成本动作前及影响性修改后，用 `python cli.py --format json preflight --task-root <题目根> --stage <1..6>`；动作前加 `--before`，退出加 `--phase exit`。引用已有检查/审查，不新建逐条 PASS 账本；具体输入、到期与例外口径见[阶段预检](docs/preflight.md)。
+
+只有研究合同、评分锚点冻结、正式双轨启动需专家明确确认。检查就绪后提交一个简短决定请求，收到答复才按预检 `proposal` 追加确认记录；未变的已有批准直接复用，机器 PASS 不等于批准。普通准备、故障恢复和独立 QA 后打包不增加审批；已完成题目的局部返修不追补历史手续。
+
 权威顺序与当前版本统一在[要求入口](rules/README.md)。关键科学结论用代码和实验支撑，未检查不能写通过；来源冲突、范围改变或需要新资源授权时提交具体问题，不反复询问已确认决定。最终 QA 由用户在独立会话进行，取证边界仅为指定最终包。
