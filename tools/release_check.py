@@ -32,12 +32,13 @@ SNAPSHOT_DOCUMENTS = {Path("rules/provenance/PCA_RULE_ALIGNMENT.md")}
 RUNTIME_DIRECTORIES = {"autoresearch_flow", "rules", "skills", "sources", "model_profiles"}
 RUNTIME_DOCUMENTS = {"README.md", "START_HERE.md", "AGENTS.md", "MAINTAINING.md", "RELEASE.md",
                      "docs/stages.md", "docs/experiments.md", "docs/materials.md", "docs/packaging.md",
-                     "docs/runtime.md", "docs/harbor.md", "docs/troubleshooting.md"}
+                     "docs/runtime.md", "docs/harbor.md", "docs/preflight.md", "docs/troubleshooting.md"}
 RUNTIME_TEMPLATES = {"README.md", "agent-prompt.zh.md", "runtime.example.json",
                      "delivery-form.example.json", "materials-sources.example.json",
                      "nop-execution.example.json", "harbor-execution.example.json",
                      "expert-annotation.example.json", "run-summary.example.json",
-                     "research-notes.example.md", "change-note.example.md"}
+                     "research-notes.example.md", "change-note.example.md",
+                     "decision-log.example.md", "preflight-inputs.example.json"}
 
 
 def distributable_name(name):
@@ -188,13 +189,25 @@ def runtime_smoke(flow):
     cli = [sys.executable, str(flow / "cli.py")]
     checks = []
     commands = [cli + ["--format", "json", "rules", "check"], cli + ["--help"]]
-    commands += [cli + [name, "--help"] for name in ("experiment", "materials", "package", "harbor", "runtime")]
+    commands += [cli + [name, "--help"] for name in ("experiment", "materials", "package", "harbor", "runtime", "preflight")]
     for command in commands:
         output = run(command, flow)
         checks.append({"command": ["python3", "cli.py", *command[2:]], "exit_code": 0,
                        "output_tail": output[-1200:]})
-    for capability in ("experiment", "materials", "package", "harbor", "runtime"):
+    for capability in ("experiment", "materials", "package", "harbor", "runtime", "preflight"):
         assert capability in checks[1]["output_tail"], f"archive omitted {capability}"
+    with tempfile.TemporaryDirectory(prefix="ar-smoke-task-") as temporary:
+        task = Path(temporary)
+        output = run(cli + ["--format", "json", "preflight", "--task-root", str(task), "--stage", "1"], flow)
+        result = json.loads(output)
+        assert result["ready"] is None and result["stage"] == 1, "advisory preflight changed behavior"
+        checks.append({"command": ["python3", "cli.py", "--format", "json", "preflight", "--task-root", "<temporary-task>", "--stage", "1"],
+                       "exit_code": 0, "scope": "missing-evidence advisory; no scientific acceptance"})
+        output = run([sys.executable, "-m", "autoresearch_flow.task_workspace", "--task-root", str(task), "decisions"], flow)
+        assert json.loads(output)["exists"] is False, "empty task gained an approval log"
+        checks.append({"command": ["python3", "-m", "autoresearch_flow.task_workspace", "--task-root", "<temporary-task>", "decisions"],
+                       "exit_code": 0, "scope": "read-only missing-log check"})
+        assert not (task / ".autoresearch").exists() and not (task / ".autoresearch-flow").exists(), "archive smoke initialized a task"
     assert not (flow / ".autoresearch-flow").exists(), "archive smoke created a legacy ledger"
     return checks
 

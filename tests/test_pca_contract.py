@@ -82,6 +82,28 @@ class EnvironmentContractTests(unittest.TestCase):
         toml.write_text(toml.read_text().replace('/workspace/solution', '/workspace'))
         with self.assertRaises(FlowError): check_task(self.task)
 
+    def test_object_artifacts_destination_accepted_without_execution(self):
+        toml = self.task / "task.toml"
+        suffix = toml.read_text().split("\n", 1)[1]
+        for destination in ('', 'destination=""\n', 'destination="solution"\n',
+                            'destination="collected/solution"\n'):
+            with self.subTest(destination=destination):
+                toml.write_text('[[artifacts]]\nsource="/workspace/solution"\n' + destination + suffix)
+                self.assertEqual(check_task(self.task)["status"], "structure_checked_not_execution")
+
+    def test_object_artifacts_do_not_weaken_source_or_path_contract(self):
+        toml = self.task / "task.toml"
+        suffix = toml.read_text().split("\n", 1)[1]
+        declarations = ['source="/workspace"\n', 'source="/workspace/solution"\nservice="other"\n',
+                        'source="/workspace/solution"\ndestination="../solution"\n',
+                        'source="/workspace/solution"\ndestination=12\n',
+                        'source="/workspace/solution"\n[[artifacts]]\nsource="/workspace/solution"\n']
+        for declaration in declarations:
+            with self.subTest(declaration=declaration), self.assertRaises(FlowError) as caught:
+                toml.write_text('[[artifacts]]\n' + declaration + suffix)
+                check_task(self.task)
+            self.assertEqual(caught.exception.code, "ARTIFACTS_CONTRACT")
+
     def test_receipt_requires_current_task_and_raw_evidence(self):
         receipt = synthetic_receipt(self.root, self.task)
         checked = check_execution_receipt(self.root, receipt, self.task)

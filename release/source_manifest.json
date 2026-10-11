@@ -23,22 +23,22 @@
     {
       "mode": 436,
       "path": "README.md",
-      "sha256": "a2dd77866f6b6a896762c814c5bde59f03c7aeebd71a5a02b48a227e2c929052"
+      "sha256": "572831343fe8618ca4e086fdc27cc81753d6fa74d482d0baf1453237b0a5d25b"
     },
     {
       "mode": 436,
       "path": "RELEASE.md",
-      "sha256": "8d9072a00ccf115f1332a3def553c730481443db0a72ecce7ce120664e01b5f2"
+      "sha256": "448ac8d8300b31e97cc5f1999aac8eeb005796e4d5bfb1063f08822047b9c4b6"
     },
     {
       "mode": 436,
       "path": "START_HERE.md",
-      "sha256": "09acab2a63c21a22c14017ce7027efed33f39f35058f8ba71afab20e135445f9"
+      "sha256": "81640ee8306ebd0c10f5e9a12514894dbb48c9e8e7c5bf5036568853ba4def84"
     },
     {
       "mode": 436,
       "path": "autoresearch_flow/__init__.py",
-      "sha256": "9c17a225ea1348324f6eef349229de7507929c4dfcf1ae85917d0722b8569c1f"
+      "sha256": "79e7fbf9ed1c3eda7f4fbeed80c365edbf02f9154d4a9639d5c790a518250f81"
     },
     {
       "mode": 436,
@@ -133,7 +133,7 @@
     {
       "mode": 436,
       "path": "autoresearch_flow/harbor_native.py",
-      "sha256": "2122518ef96968fc535f7860aa95af4c9cae913b1d0ed8081507d0695773d915"
+      "sha256": "41e52881488da04b6aecafb376f1fa458868644282b76a41f62b975f1be0dfe3"
     },
     {
       "mode": 436,
@@ -188,12 +188,17 @@
     {
       "mode": 436,
       "path": "autoresearch_flow/pca_contract.py",
-      "sha256": "a20ad971e7baea2d4f86638d8ef66a7d06dbaaa83555e579c029509e1d3f27d2"
+      "sha256": "1d1d8e310ce5918e3103953eb4183d51e9b5031d4e8eabf20ec1ad545cf37882"
     },
     {
       "mode": 436,
       "path": "autoresearch_flow/policies.py",
       "sha256": "492ff354e4664df3712eea0d8d983e4cb1176a505d293bd4585bd5481f6e265e"
+    },
+    {
+      "mode": 436,
+      "path": "autoresearch_flow/preflight.py",
+      "sha256": "ede80960a9686327c6dc0af0fd794f899707eea6f1f070aac4f88a05433f0c7b"
     },
     {
       "mode": 436,
@@ -277,6 +282,11 @@
     },
     {
       "mode": 436,
+      "path": "autoresearch_flow/stage_rules.py",
+      "sha256": "66d1bd098538ebb91ff2d183ccaac9a8e8b4b677b6be5defb1d2aaa1e42c4936"
+    },
+    {
+      "mode": 436,
       "path": "autoresearch_flow/stages.py",
       "sha256": "ac4e0558d3d7dc9b6b6c1f2e41e05aa6475c1c7d1a63905e2639cf823505b8f5"
     },
@@ -284,6 +294,11 @@
       "mode": 436,
       "path": "autoresearch_flow/task_git.py",
       "sha256": "c9e81162b2ce8e74aaf7eb30f4dfcf56f0824476c0cff67574a2ca1ebc1c7860"
+    },
+    {
+      "mode": 436,
+      "path": "autoresearch_flow/task_workspace.py",
+      "sha256": "6dbfb4142aac726d5819acba4c74081ee4a36028c498e63da5d89dab447b9d67"
     },
     {
       "mode": 436,
@@ -308,7 +323,7 @@
     {
       "mode": 436,
       "path": "cli.py",
-      "sha256": "a7a156bcd974857ea2d60743c05c3536952a6fb4a26a68fd2d990f5101126512"
+      "sha256": "83b619abd417f3adefefcb752d224afc87c26a41df1722fa64fc6647c85e8509"
     },
     {
       "mode": 436,
@@ -318,7 +333,7 @@
     {
       "mode": 436,
       "path": "docs/harbor.md",
-      "sha256": "40b5db7237998409eb3336fb5d71eb97f5e755bee5a70855001785bd5cbfcf42"
+      "sha256": "1700d2940b67d51587f5a2bd9479d75a74e42c6ed1edb6ef39838fa951b05ed2"
     },
     {
       "mode": 436,
@@ -328,7 +343,12 @@
     {
       "mode": 436,
       "path": "docs/packaging.md",
-      "sha256": "a86c2c8814c2b7c39d56562c7558f4aeef6724c4a872ef7c85a56cbc78258af3"
+      "sha256": "baee8c1eb4dcb18ddcd9a42f9390231f0c373c76867abec9edc435f729027820"
+    },
+    {
+      "mode": 436,
+      "path": "docs/preflight.md",
+      "sha256": "d2a5e9c466cc134c6f0011ee250cbd4faf1c5975821cb6feb70ac4e7ecb19fc9"
     },
     {
       "mode": 436,
@@ -338,7 +358,7 @@
     {
       "mode": 436,
       "path": "docs/stages.md",
-      "sha256": "5f14ccc849cf1d8ef1cd1198e1cfee9f18d7e252a239a11ce2114362375a70d7"
+      "sha256": "fb31b1115bc9059d7fe34de4d85b2d3fd774ebf95c71e2204ff7d8f244e25d52"
     },
     {
       "mode": 436,
@@ -358,7 +378,7 @@
     {
       "mode": 436,
       "path": "rules/README.md",
-      "sha256": "8d85464a108bb6fd101f834de6aac09a6249b1fd7902549bef2bbe0bc4578aa4"
+      "sha256": "79fbb354726daf9c2a9af4726dd865dc47b62ef7d3704f280573524c73e80b6e"
     },
     {
       "mode": 436,
@@ -368,12 +388,47 @@
     {
       "mode": 436,
       "path": "rules/manifest.json",
-      "sha256": "fe8ca1297edd3031fd2367b439a585689b2a719268d6e8f0e0c7ba03bf5dbf32"
+      "sha256": "35c12094fbf8b8755702dbe26d7cb7021c7bcd9ae58fc0134404d9e6f7be64b4"
+    },
+    {
+      "mode": 436,
+      "path": "rules/stage_matrix.json",
+      "sha256": "9f27153e4913940e9e0b52e94167a0320740eeb046a973ce007b644dbe78b6de"
+    },
+    {
+      "mode": 436,
+      "path": "rules/stages/stage-1-research-design.md",
+      "sha256": "78b758846958ae51bf55e7b8a571e2a4b60d2707731b919a846137a8cc90c680"
+    },
+    {
+      "mode": 436,
+      "path": "rules/stages/stage-2-task-implementation.md",
+      "sha256": "9377cad1cf3e75877791ddf626b9f6e2bc604928ccb66bcaa95371734eb8b160"
+    },
+    {
+      "mode": 436,
+      "path": "rules/stages/stage-3-anchor-validation.md",
+      "sha256": "35fc2ab04451d1aaab791e1b168e9fca9cc060797d593ebe4254296c92599810"
+    },
+    {
+      "mode": 436,
+      "path": "rules/stages/stage-4-agent-iteration.md",
+      "sha256": "e9372afea143d2e715f61579948c5e33ec1536db14c2a5cc5751d429482f24e7"
+    },
+    {
+      "mode": 436,
+      "path": "rules/stages/stage-5-best-method-retest.md",
+      "sha256": "aeeb840e1decb0c0e44d3405f4ec63e757e797ba68193d89538c269d0610733b"
+    },
+    {
+      "mode": 436,
+      "path": "rules/stages/stage-6-delivery-qa.md",
+      "sha256": "fe64f9fdbbbe092c7b07e30727c35c9a9e380e48501b353f0c73866829a97f55"
     },
     {
       "mode": 436,
       "path": "skills/autoresearch-agent-iteration/SKILL.md",
-      "sha256": "3ff9efaf7e627a159dcbed87ac66aca0d65a46028a440e7e56be91f9ee114e9b"
+      "sha256": "1ca174a63adf8a1a69465e101270ae66f14bf1041ed6b74155ad5d1d40736239"
     },
     {
       "mode": 420,
@@ -393,12 +448,12 @@
     {
       "mode": 436,
       "path": "skills/autoresearch-delivery/SKILL.md",
-      "sha256": "777cb8876278d116fc8e48e532bd137be202d6149e8a71624139d87ebb361f55"
+      "sha256": "47df0ec99e1e6ebc7b639825102600714092a3115318d85919c2d26804e31870"
     },
     {
       "mode": 436,
       "path": "skills/autoresearch-experiment-validation/SKILL.md",
-      "sha256": "801451523435436af465a7b3dbb67227031d8e3777e8669631b6779fad6f4457"
+      "sha256": "ecb2bcb97ec9da33fcd9266bcf18272fc535f6c1759775de74f17e088b08b0d8"
     },
     {
       "mode": 436,
@@ -418,7 +473,7 @@
     {
       "mode": 436,
       "path": "skills/autoresearch-research/SKILL.md",
-      "sha256": "b6015b640a06c3545227849b4a97685028da80c14db44dcf99247796b658f27a"
+      "sha256": "b1e477b2f69ae4885ddd4dde16576d9e7de2a8e829dfa8415b245c1d8b606949"
     },
     {
       "mode": 436,
@@ -438,7 +493,7 @@
     {
       "mode": 436,
       "path": "skills/autoresearch-task-implementation/SKILL.md",
-      "sha256": "43af2e15483a7779576a50814c0b61231727b588c843c644adbc04ea307d5a8e"
+      "sha256": "0986cfe9cb546332959b154ce933661a3e3cba9450a0e54d0d5059e6eaaeea12"
     },
     {
       "mode": 420,
@@ -612,6 +667,11 @@
     },
     {
       "mode": 436,
+      "path": "templates/decision-log.example.md",
+      "sha256": "4dcf06072943b89e7514feb9f70ad04bf177e3bf73da1ca7f9707cab738e78f7"
+    },
+    {
+      "mode": 436,
       "path": "templates/delivery-form.example.json",
       "sha256": "90d0af717f30ac63f89a7d5f756bf651b0c15af385e3a1a7dde76b3749d9ad2d"
     },
@@ -637,6 +697,11 @@
     },
     {
       "mode": 436,
+      "path": "templates/preflight-inputs.example.json",
+      "sha256": "3bd9c7625fa3f0fd2e8fb58a0345d7a04f0b4692442ec6ae15231c9a577acf2a"
+    },
+    {
+      "mode": 436,
       "path": "templates/research-notes.example.md",
       "sha256": "f58c6226aaa0a1fe3f5a42001d80b633653a5555a26abfcfc1432d1d571c38c6"
     },
@@ -651,8 +716,8 @@
       "sha256": "7764de20b77b1e9a2a3b25b1c1b096f95ac29dcdc9dafb17b669e7f0286b236d"
     }
   ],
-  "package_revision": "2.0.0",
+  "package_revision": "2.1.0",
   "schema_version": 2,
   "scope": "runtime allowlist and locked originals; excludes development tests/tools/pilots/maintenance records and local assets",
-  "version": "2.0.0"
+  "version": "2.1.0"
 }

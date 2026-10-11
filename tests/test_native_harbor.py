@@ -15,7 +15,7 @@ class NativeHarborTests(unittest.TestCase):
         self.addCleanup(self.tmp.cleanup)
         self.root = Path(self.tmp.name)
 
-    def fixture(self, mode="candidate"):
+    def fixture(self, mode="candidate", *, destination="workspace/solution", artifact_toml=None):
         from autoresearch_flow.harbor_native import CANDIDATE_AGENT, inventory
         trial = self.root / "trial"
         trial.mkdir()
@@ -24,7 +24,11 @@ class NativeHarborTests(unittest.TestCase):
         (candidate / "method.py").write_text("def predict(x): return x\n")
         (candidate / "model.bin").write_bytes(b"synthetic-model\x00")
         import shutil
-        shutil.copytree(candidate, trial / "artifacts/workspace/solution")
+        shutil.copytree(candidate, trial / "artifacts" / destination)
+        task = self.root / "task"
+        task.mkdir()
+        (task / "task.toml").write_text(artifact_toml if artifact_toml is not None else
+                                      'artifacts=["/workspace/solution"]\n')
         agent = {"name": "nop"} if mode == "nop" else {
             "import_path": CANDIDATE_AGENT, "kwargs": {"candidate_path": str(candidate)}}
         config = {"task": {"path": str(self.root / "task")}, "agent": agent}
@@ -83,6 +87,152 @@ class NativeHarborTests(unittest.TestCase):
         self.assertEqual(report["status"], "native_trial_verified")
         self.assertEqual(report["rewards"], {"reward": -0.5})
         self.assertIn("model.bin", report["candidate_files"])
+
+    def test_candidate_explicit_destination_preserves_full_inventory(self):
+        from autoresearch_flow.harbor_native import inspect_trial, inventory
+        trial, candidate, _ = self.fixture(destination="solution", artifact_toml=
+            '[[artifacts]]\nsource="/workspace/solution"\ndestination="solution"\nservice="main"\n')
+        report = inspect_trial(trial, mode="candidate", task_path=self.root / "task",
+                               expected_files=inventory(candidate))
+        self.assertEqual(report["status"], "native_trial_verified")
+        self.assertEqual(report["candidate_files"], inventory(candidate))
+        self.assertEqual(report["artifact_path"], "artifacts/solution")
+
+    def test_nop_nested_destination(self):
+        from autoresearch_flow.harbor_native import inspect_trial
+        trial, _, _ = self.fixture("nop", destination="collected/solution", artifact_toml=
+            '[[artifacts]]\nsource="/workspace/solution"\ndestination="collected/solution"\n')
+        report = inspect_trial(trial, mode="nop", task_path=self.root / "task")
+        self.assertEqual(report["artifact_path"], "artifacts/collected/solution")
+        self.assertEqual(report["coverage"], "nop_executed_branch_only")
+
+    def test_object_omitted_and_empty_destination_use_default(self):
+        from autoresearch_flow.harbor_native import inspect_trial, inventory
+        trial, candidate, _ = self.fixture()
+        for suffix in ('', 'destination=""\n'):
+            with self.subTest(suffix=suffix):
+                (self.root / "task/task.toml").write_text(
+                    '[[artifacts]]\nsource="/workspace/solution"\n' + suffix)
+                report = inspect_trial(trial, mode="candidate", task_path=self.root / "task",
+                                       expected_files=inventory(candidate))
+                self.assertEqual(report["artifact_path"], "artifacts/workspace/solution")
+
+    def test_explicit_missing_destination_never_falls_back(self):
+        from autoresearch_flow.harbor_native import inspect_trial, inventory
+        trial, candidate, _ = self.fixture(artifact_toml=
+            '[[artifacts]]\nsource="/workspace/solution"\ndestination="absent"\n')
+        with self.assertRaises(FlowError) as caught:
+            inspect_trial(trial, mode="candidate", task_path=self.root / "task",
+                          expected_files=inventory(candidate))
+        self.assertEqual(caught.exception.code, "HARBOR_INPUT")
+
+    def test_destination_declarations_reject_invalid_paths_and_types(self):
+        from autoresearch_flow.harbor_native import solution_artifact_destination
+        for value in (None, False, 42, [], {}, "/solution", "../solution", "x/../solution",
+                      "x\\solution", ".", "./", "manifest.json", "manifest.json/solution"):
+            with self.subTest(value=value), self.assertRaises(FlowError):
+                solution_artifact_destination({"artifacts": [
+                    {"source": "/workspace/solution", "destination": value}]})
+
+    def test_artifact_match_requires_unique_main_source(self):
+        from autoresearch_flow.harbor_native import solution_artifact_destination
+        entries = [[], ["/workspace"], [False], [{"source": 7}],
+                   [{"source": "/workspace/solution", "service": "other"}],
+                   [{"source": "/workspace/solution", "service": False}],
+                   ["/workspace/solution", {"source": "/workspace/solution"}],
+                   ["/workspace/solution", {"source": "/workspace/solution", "service": "main"}],
+                   ["/workspace/solution", {"source": "/workspace/solution/", "service": "main"}],
+                   ["/workspace/solution", {"source": "/workspace/solution/config", "destination": 12}]]
+        for value in entries + [None, "not-an-array", {}]:
+            with self.subTest(value=value), self.assertRaises(FlowError):
+                solution_artifact_destination({"artifacts": value})
+        for service in (None, "main", " main "):
+            self.assertEqual(solution_artifact_destination({"artifacts": [
+                {"source": "/workspace/solution", "service": service}]}), "workspace/solution")
+
+    def test_artifact_directory_symlinks_cannot_escape_trial(self):
+        from autoresearch_flow.harbor_native import inspect_trial, inventory
+        trial, candidate, _ = self.fixture(artifact_toml=
+            '[[artifacts]]\nsource="/workspace/solution"\ndestination="collected/solution"\n')
+        (trial / "artifacts/collected").symlink_to(candidate.parent, target_is_directory=True)
+        with self.assertRaises(FlowError) as caught:
+            inspect_trial(trial, mode="candidate", task_path=self.root / "task",
+                          expected_files=inventory(candidate))
+        self.assertEqual(caught.exception.code, "HARBOR_ARTIFACTS")
+        (trial / "artifacts/collected").unlink()
+        (trial / "artifacts/collected").symlink_to("collected", target_is_directory=True)
+        with self.assertRaises(FlowError) as caught:
+            inspect_trial(trial, mode="candidate", task_path=self.root / "task",
+                          expected_files=inventory(candidate))
+        self.assertIn(caught.exception.code, {"HARBOR_ARTIFACTS", "HARBOR_INPUT"})
+        (trial / "artifacts/collected").unlink()
+        (trial / "artifacts").rename(self.root / "external-artifacts")
+        (trial / "artifacts").symlink_to(self.root / "external-artifacts", target_is_directory=True)
+        with self.assertRaises(FlowError) as caught:
+            inspect_trial(trial, mode="candidate", task_path=self.root / "task",
+                          expected_files=inventory(candidate))
+        self.assertEqual(caught.exception.code, "HARBOR_ARTIFACTS")
+
+    def test_explicit_destination_keeps_model_transfer_and_original_checks(self):
+        from autoresearch_flow.harbor_native import inspect_trial, inventory
+        trial, candidate, _ = self.fixture(destination="solution", artifact_toml=
+            '[[artifacts]]\nsource="/workspace/solution"\ndestination="solution"\n')
+        expected = inventory(candidate)
+        model = trial / "artifacts/solution/model.bin"
+        model.write_bytes(b"changed-model")
+        with self.assertRaises(FlowError) as caught:
+            inspect_trial(trial, mode="candidate", task_path=self.root / "task", expected_files=expected)
+        self.assertEqual(caught.exception.code, "HARBOR_ARTIFACTS")
+        model.write_bytes((candidate / "model.bin").read_bytes())
+        transfer = trial / "agent/candidate_transfer.json"
+        original = transfer.read_text()
+        transfer.write_text(json.dumps({"files": {}}))
+        with self.assertRaises(FlowError) as caught:
+            inspect_trial(trial, mode="candidate", task_path=self.root / "task", expected_files=expected)
+        self.assertEqual(caught.exception.code, "HARBOR_ARTIFACTS")
+        transfer.write_text(original)
+        (trial / "trial.log").write_text("")
+        with self.assertRaises(FlowError) as caught:
+            inspect_trial(trial, mode="candidate", task_path=self.root / "task", expected_files=expected)
+        self.assertEqual(caught.exception.code, "HARBOR_ORIGINALS")
+
+    def test_task_toml_must_be_bound_parseable_original(self):
+        from autoresearch_flow.harbor_native import inspect_trial, inventory
+        trial, candidate, _ = self.fixture()
+        path = self.root / "task/task.toml"
+        path.write_text("malformed [")
+        with self.assertRaises(FlowError) as caught:
+            inspect_trial(trial, mode="candidate", task_path=self.root / "task",
+                          expected_files=inventory(candidate))
+        self.assertEqual(caught.exception.code, "HARBOR_ARTIFACTS")
+        path.unlink()
+        path.symlink_to(candidate / "method.py")
+        with self.assertRaises(FlowError) as caught:
+            inspect_trial(trial, mode="candidate", task_path=self.root / "task",
+                          expected_files=inventory(candidate))
+        self.assertEqual(caught.exception.code, "HARBOR_ARTIFACTS")
+
+    def test_explicit_destination_does_not_bypass_trial_integrity(self):
+        from autoresearch_flow.harbor_native import inspect_trial, inventory
+        trial, candidate, result = self.fixture(destination="solution", artifact_toml=
+            '[[artifacts]]\nsource="/workspace/solution"\ndestination="solution"\n')
+        mutations = [
+            ("HARBOR_SEPARATE", lambda r: r.update(verifier_environment_mode="shared")),
+            ("HARBOR_AGENT", lambda r: r["agent_info"].update(name="other")),
+            ("HARBOR_PROVIDER", lambda r: r["config"]["environment"].update(type="other")),
+            ("HARBOR_TIMING", lambda r: r["verifier"].update(started_at="2026-10-08T00:00:00Z")),
+            ("HARBOR_REWARD", lambda r: r["verifier_result"].update(rewards={"reward": 1.0})),
+            ("HARBOR_TASK_BINDING", lambda r: r["config"]["task"].update(path="/other-task")),
+        ]
+        for code, mutate in mutations:
+            with self.subTest(code=code):
+                changed = copy.deepcopy(result)
+                mutate(changed)
+                (trial / "result.json").write_text(json.dumps(changed))
+                with self.assertRaises(FlowError) as caught:
+                    inspect_trial(trial, mode="candidate", task_path=self.root / "task",
+                                  expected_files=inventory(candidate), expected_environment={"type": "docker"})
+                self.assertEqual(caught.exception.code, code)
 
     def test_json_reward_has_priority_and_zero_is_valid(self):
         from autoresearch_flow.harbor_native import inspect_trial
@@ -158,7 +308,7 @@ class NativeHarborTests(unittest.TestCase):
         output.mkdir()
         task = output / "task/task"
         task.mkdir(parents=True)
-        (task / "task.toml").write_text("artifacts=[]\n")
+        (task / "task.toml").write_text('artifacts=["/workspace/solution"]\n')
         impl = output / "implementation"
         impl.mkdir()
         (impl / "driver.py").write_text("frozen driver")
@@ -183,6 +333,13 @@ class NativeHarborTests(unittest.TestCase):
         (output / "report.json").write_text(json.dumps(report))
         with patch("subprocess.run", side_effect=AssertionError("must not run Harbor")):
             self.assertEqual(inspect_run(output, task=task, candidate=candidate)["rewards"], {"reward": -0.5})
+        original_toml = (task / "task.toml").read_text()
+        (task / "task.toml").write_text(
+            '[[artifacts]]\nsource="/workspace/solution"\ndestination="solution"\n')
+        with self.assertRaises(FlowError) as caught:
+            inspect_run(output)
+        self.assertEqual(caught.exception.code, "HARBOR_DRIFT")
+        (task / "task.toml").write_text(original_toml)
         (moved / "trial.log").write_text("modified original")
         with self.assertRaises(FlowError):
             inspect_run(output)
