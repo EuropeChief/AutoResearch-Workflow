@@ -1,7 +1,7 @@
 {
   "catalog": {
     "path": "rules/catalog.json",
-    "sha256": "f75918e89ec64dfbef888a28dbf5b177b327e3ecbc9e3ce9d1ad2a18cec9b7b4"
+    "sha256": "20144541c8c49ea85d0ef4f6394ce51c8c8e670dc0dea2a99c17303b94ae712e"
   },
   "flow_version": "2.1.0",
   "schema_version": 1,
@@ -118,7 +118,7 @@
     }
   ],
   "qa_revision": "v0.3.2@2026-10-03",
-  "package_revision": "2.1.0",
+  "package_revision": "2.1.0+portability.20261014",
   "bundled_files": [
     {
       "path": "skills/autoresearch-baseline-quality/agents/openai.yaml",

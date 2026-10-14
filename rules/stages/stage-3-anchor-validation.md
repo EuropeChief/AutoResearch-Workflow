@@ -29,7 +29,7 @@
 ### M03-S3 — 完成正式公平重复
 
 - 规则来源：`M03`（`rules/README.md#M03`）
-- 当前行动：按冻结协议完成 B/R 和候选的正式独立 seed 重复、聚合及成对记录。
+- 当前行动：按拟冻结的共同协议完成 B/R 和候选的正式独立 seed 重复、聚合及成对记录；冻结前核实际证据与声明部署条件、指标环境敏感性一致。
 - 所需证据：`formal_seed_results`, `formal_protocol`, `seed_manifest`, `aggregation`
 - 检查性质：`mixed`；严重性：`hard`
 - 阶段门前阻断：`anchor_freeze`, `dual_track_launch`
@@ -41,7 +41,7 @@
 ### M04-S3 — 校验锚点与评分公式
 
 - 规则来源：`M04`（`rules/README.md#M04`）
-- 当前行动：从全部有效结果复算均值、样本标准差、改善、U 和连续归一化分数，完成可分辨性复核。
+- 当前行动：从全部有效结果复算均值、样本标准差、改善、U 和连续归一化分数，完成可分辨性复核；anchor_freeze 前确认 B/R/U 及公式在声明环境中的适用依据，并复核 C05/C06 部署结论仍有效，缺证据不冻结。
 - 所需证据：`comparison_summary`, `score_contract`, `u_estimate`, `quality_gate`
 - 检查性质：`mixed`；严重性：`review`
 - 阶段门前阻断：`anchor_freeze`, `dual_track_launch`

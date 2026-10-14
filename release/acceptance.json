@@ -1,187 +1,18 @@
 {
-  "at": "2026-10-11T15:53:49+00:00",
-  "checked_links": 175,
-  "development_files": 266,
+  "at": "2026-10-14T09:07:27+00:00",
+  "checked_links": 192,
+  "development_files": 267,
   "fresh_cli_capabilities": true,
   "model_calls": 0,
   "native_tests": "557",
-  "package_revision": "2.1.0",
-  "pending": [],
+  "package_revision": "2.1.0+portability.20261014",
+  "pending": [
+    "离线合同已核；显式发布证据和正式归档尚未验收"
+  ],
   "python": "3.13.13",
   "qa_coverage_count": 38,
   "qa_revision": "v0.3.2@2026-10-03",
-  "release_evidence": {
-    "checks": [
-      {
-        "bound_source_count": 18,
-        "claims": {
-          "logs_and_timing": true,
-          "native_tui": true,
-          "observer_detach": true,
-          "same_thread_resume": true,
-          "short_run_not_final": true
-        },
-        "evidence": [
-          {
-            "path": "lp8-release-20261010/native.json",
-            "sha256": "e56aa10adae3ec37e6f52050b5b4c02f5b69be9e8cbe7bd4e4a534214e0aacab"
-          },
-          {
-            "path": "lp7t-tob24-20261009/codex-gpu4-r3/runtime/snapshot.json",
-            "sha256": "a54cbc177d69f78bc0cd75b81d60a39049b2e7b73a346baf655b82ec4ded49a4"
-          },
-          {
-            "path": "lp7t-tob24-20261009/README.md",
-            "sha256": "a859fb05ea0314f785d9f2130d1db3226b71c3319512c230bdf942c1cdc324a6"
-          }
-        ],
-        "id": "native_runtime",
-        "mechanical_result": "passed",
-        "metadata_only_changes": [
-          "autoresearch_flow/__init__.py:FLOW_VERSION"
-        ],
-        "mode": "reused",
-        "origin_at": "2026-10-09T14:57:39Z",
-        "origin_version": "8a3ef24",
-        "result": {
-          "path": "lp8-release-20261010/native.json",
-          "sha256": "e56aa10adae3ec37e6f52050b5b4c02f5b69be9e8cbe7bd4e4a534214e0aacab"
-        },
-        "review": {
-          "path": "p4-release-review-20261011.md",
-          "sha256": "b78debc5c4a779b2442f91b63916dc4e5122df601d0266c9f82319732ef2178e"
-        },
-        "reviewer": "Codex maintainer (P4, 2026-10-11)",
-        "sources": {
-          "kind": "runtime_snapshot",
-          "record": {
-            "path": "lp7t-tob24-20261009/codex-gpu4-r3/runtime/snapshot.json",
-            "sha256": "a54cbc177d69f78bc0cd75b81d60a39049b2e7b73a346baf655b82ec4ded49a4"
-          }
-        },
-        "status": "passed"
-      },
-      {
-        "bound_source_count": 5,
-        "claims": {
-          "candidate_transfer": true,
-          "independent_verifier": true,
-          "reward_retrieval": true
-        },
-        "evidence": [
-          {
-            "path": "p4-native-20261011/harbor-result.json",
-            "sha256": "59c7df1eeebe6195ba2aa057b390e0cf3fb1b1c78b24622b33ed7e34d5930eff"
-          },
-          {
-            "path": "p4-native-20261011/nop-default/report.json",
-            "sha256": "011d0b28ddb971b4dd6832a86f5523afb22157a1d2db0e761ebd6424ef30b2eb"
-          },
-          {
-            "path": "p4-native-20261011/candidate-explicit/report.json",
-            "sha256": "200c00c41b34e66361d110440447add432f1ca60215472b2ad19fa9a12fac8ef"
-          },
-          {
-            "path": "p4-cpu-approval-20261011.md",
-            "sha256": "cc19b7f288638dc32b52d1668679c163dabcdae64074e3616529d020729e36d1"
-          }
-        ],
-        "id": "harbor_transfer",
-        "mechanical_result": "passed",
-        "metadata_only_changes": [],
-        "mode": "fresh",
-        "origin_at": "2026-10-11T15:23:53.071510+00:00",
-        "origin_version": "2.1.0-draft@harbor_native:41e52881488da04b6aecafb376f1fa458868644282b76a41f62b975f1be0dfe3",
-        "result": {
-          "path": "p4-native-20261011/harbor-result.json",
-          "sha256": "59c7df1eeebe6195ba2aa057b390e0cf3fb1b1c78b24622b33ed7e34d5930eff"
-        },
-        "review": {
-          "path": "p4-release-review-20261011.md",
-          "sha256": "b78debc5c4a779b2442f91b63916dc4e5122df601d0266c9f82319732ef2178e"
-        },
-        "reviewer": "Codex maintainer (P4, 2026-10-11)",
-        "sources": {
-          "kind": "harbor_snapshot",
-          "record": {
-            "path": "p4-native-20261011/candidate-explicit/report.json",
-            "sha256": "200c00c41b34e66361d110440447add432f1ca60215472b2ad19fa9a12fac8ef"
-          }
-        },
-        "status": "passed"
-      },
-      {
-        "bound_source_count": 14,
-        "claims": {
-          "actual_gpu_execution": true,
-          "authorized_devices": true,
-          "no_duplicate_jobs": true
-        },
-        "evidence": [
-          {
-            "path": "lp8-release-20261010/gpu.json",
-            "sha256": "8d3faa6484871035ac6e70dfa47150d4d8b2c38d60bbde45eb6dcbcd8f7fdef1"
-          },
-          {
-            "path": "lp7t-tob24-20261009/codex-gpu4-r3/runtime/snapshot.json",
-            "sha256": "a54cbc177d69f78bc0cd75b81d60a39049b2e7b73a346baf655b82ec4ded49a4"
-          },
-          {
-            "path": "lp7t-tob24-20261009/README.md",
-            "sha256": "a859fb05ea0314f785d9f2130d1db3226b71c3319512c230bdf942c1cdc324a6"
-          }
-        ],
-        "id": "gpu_dispatch",
-        "mechanical_result": "passed",
-        "metadata_only_changes": [
-          "autoresearch_flow/__init__.py:FLOW_VERSION"
-        ],
-        "mode": "reused",
-        "origin_at": "2026-10-09T14:59:26Z",
-        "origin_version": "8a3ef24",
-        "result": {
-          "path": "lp8-release-20261010/gpu.json",
-          "sha256": "8d3faa6484871035ac6e70dfa47150d4d8b2c38d60bbde45eb6dcbcd8f7fdef1"
-        },
-        "review": {
-          "path": "p4-release-review-20261011.md",
-          "sha256": "b78debc5c4a779b2442f91b63916dc4e5122df601d0266c9f82319732ef2178e"
-        },
-        "reviewer": "Codex maintainer (P4, 2026-10-11)",
-        "sources": {
-          "kind": "runtime_snapshot",
-          "record": {
-            "path": "lp7t-tob24-20261009/codex-gpu4-r3/runtime/snapshot.json",
-            "sha256": "a54cbc177d69f78bc0cd75b81d60a39049b2e7b73a346baf655b82ec4ded49a4"
-          }
-        },
-        "status": "passed"
-      },
-      {
-        "approval": {
-          "path": "p4-independent-trial-waiver-2.1.0-20261011.json",
-          "sha256": "28dcb8fe05d96d98c8255bff326aa2edf7eec98d54da7f0d7e548184a755e0b5"
-        },
-        "id": "independent_trial",
-        "mechanical_result": "waived_by_user",
-        "mode": "explicit_user_authorization",
-        "origin_at": null,
-        "origin_version": null,
-        "status": "waived"
-      }
-    ],
-    "limitations": [
-      "Independent new-session full-workflow entry trial for 2.1.0 waived by explicit user authorization on 2026-10-11; not performed or passed.",
-      "Bounded CPU acceptance does not prove formal 7h/10h, real compaction, scientific anchors or task QA.",
-      "Current CPU Harbor separate trials plus reused GPU worker evidence; not a full real-task GPU Final Trial.",
-      "Native/GPU originals remain limited to their historical approved scope and reviewed observations; only FLOW_VERSION differs.",
-      "LiteLLM price-map fetch timeout used its local backup; no inference call occurred."
-    ],
-    "manifest_sha256": "a0a5861dcd5d04a38df6634d1f5a515f673f33cbea112ba97dca0e43629f8e61",
-    "schema_version": 2,
-    "validation_scope": "originals and current execution-source binding; TUI observation/authorization reviewed separately"
-  },
-  "release_ready": true,
+  "release_ready": false,
   "relocated_tests": "557",
   "relocation_without_design_or_pilot_runs": true,
   "relocation_without_host_config_or_auth": true,
@@ -300,7 +131,7 @@
   "runtime_without_development_files": true,
   "schema_version": 2,
   "scope": "tool contracts, not scientific or platform acceptance",
-  "source_manifest_sha256": "7d4cd65feb92f3e737dc5a3e205a1db14042caaf160fd16cfd0b7d8db69fd0bb",
-  "status": "released",
+  "source_manifest_sha256": "21fd873e7d953125a10024fd27617abca79ce5ca7e955fcb43c787690e890ae7",
+  "status": "contracts_passed",
   "version": "2.1.0"
 }
