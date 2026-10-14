@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "workflow_revision": "2.1.0+portability.20261014",
+  "workflow_revision": "2.1.1",
   "description": "M/C 规则到六阶段行动与证据的轻量映射；不是题目状态数据库。",
   "stages": [
     {

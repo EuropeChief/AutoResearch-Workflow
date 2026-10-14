@@ -45,3 +45,21 @@
 本次修改是制作规则与审查指引，程序测试验证记录、绑定和阶段选择机制，不证明 Agent 必然发现所有设备/环境耦合；真实判断仍须责任人阅读调用链和证据。没有新增语义自动检测器，也不以模拟结论冒充真实 QA。
 
 未运行 Docker/GPU/模型、迁移部署、真实题包 QA 或独立新会话试用；未制作正式发行、tag 或上传。本次完成范围为实施与离线验证，正式发布另按 RELEASE.md 的证据要求处理，历史豁免不继承。
+
+## 2.1.1 发布准备（2026-10-14 后续）
+
+用户随后授权“好的，可以发布该版本了，使用版本号2.1.1”。已同步程序、包和矩阵版本及当前入口；仅程序版本常量变化。三项组件原件通过当前源码复用校验，独立新会话试用仍待本版证据或明确例外，未沿用旧豁免。
+
+2.1.1 离线发行检查：原目录/迁移目录各 557 项通过、192 处链接通过，当前收据 `contracts_passed`。预览归档 `deliverables/2.1.1-preview-20261014/autoresearch-workflow-2.1.1-2.1.1-preview-migration.tar.gz` 共 145 文件、1,021,844 字节；解包哈希/权限/公开入口通过，SHA-256 `68daa7f5e50f126bcfc3667478ce014ec48de872f1ee14a070323b599b1cc723`。预览包不是正式发行。
+
+远端核对：正式仓库已有 v2.1.0，尚无 v2.1.1；main 已合并 2.1.0。GitHub CLI 无登录，现有 Git HTTPS 凭据不存在，SSH 443 经官方公开主机密钥验证后返回 publickey 未认证，不能据此声称同步成功。已请求明确本版独立试用处理，以及是否先完成本地正式发布；未创建正式标签或上传。
+
+## 2.1.1 本地正式发布（2026-10-14 后续）
+
+用户明确答复“跳过试用，记录 2.1.1 本版豁免并发布”和“先完成本地正式发布”。据此保存本版独立试用例外原件，并更新本版证据索引；不继承 2.1.0 的例外。`local/` 中的证据和许可原件不进入源码提交或发行物。
+
+- 执行 `python3 tools/release_check.py --release --evidence-manifest local/manifest-portability-2.1.1.json`：原目录及干净迁移目录各 557 项回归通过、192 处链接通过；当前收据 `status=released`、`release_ready=true`、version/package_revision 均为 2.1.1。native_runtime、harbor_transfer、gpu_dispatch 均为 reused/passed，independent_trial 为 explicit_user_authorization/waived，未记成试用通过。
+- 执行 `python3 tools/build_migration.py --evidence-manifest local/manifest-portability-2.1.1.json --output-dir deliverables/2.1.1`：正式迁移包 `autoresearch-workflow-2.1.1-migration.tar.gz`，1,022,969 字节、145 文件；完整解包文件集合、SHA-256、rwx 权限、相对链接和实际 CLI 验证通过。校验文件与 `migration-validation.json` 同目录。
+- 正式归档 SHA-256：`9fe780bb3451b7d3cc16d173ce428d4a41fc7a6fb004de000c380fa5bbcf88b7`。源码及当前收据与本记录一起独立提交，归档不进入源码仓；本地版本标签为 `v2.1.1`。GitHub 同步按用户决定留待登录后，不声称已上传。
+
+本次没有新 Docker/GPU/模型调用，历史授权只用于说明原始运行范围；新可迁移性审查仍是静态/语义审阅。独立新会话易用性、真实题包迁移与完整科研验证均未因此新增覆盖。

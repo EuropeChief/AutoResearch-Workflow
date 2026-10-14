@@ -23,12 +23,12 @@
     {
       "mode": 436,
       "path": "README.md",
-      "sha256": "2d3a8ff27afaf3cf9a3eb12ea4d6ea8864cdd6d21cbe92e650b926ef90c21ca1"
+      "sha256": "fbf488e4bfdb93440d267b9159b885c3c03c8b41ef25f0512b7f1860369cd842"
     },
     {
       "mode": 436,
       "path": "RELEASE.md",
-      "sha256": "6154073bfb35fe50217f6daa17823690143fdc8a20892a1ba4a075a8561052e3"
+      "sha256": "0766ce7af66df4e97acdaa30d9fd15bcad9d2001576d2ae7f6c9dbb3a0f0dede"
     },
     {
       "mode": 436,
@@ -38,7 +38,7 @@
     {
       "mode": 436,
       "path": "autoresearch_flow/__init__.py",
-      "sha256": "79e7fbf9ed1c3eda7f4fbeed80c365edbf02f9154d4a9639d5c790a518250f81"
+      "sha256": "f075da22b029eca333abb23ca2dfaa359e63205a587d893f93b7ca5a8c141ace"
     },
     {
       "mode": 436,
@@ -388,12 +388,12 @@
     {
       "mode": 436,
       "path": "rules/manifest.json",
-      "sha256": "54afcf86346f08d5e37052aaacf917c02230704511d38a460de16028c0827ffc"
+      "sha256": "239f7195e25c42791f2ae6314a938148995821ce5d2bff4d5ef072eed98fbe9a"
     },
     {
       "mode": 436,
       "path": "rules/stage_matrix.json",
-      "sha256": "18ef1ef2fc81ef519bd79333619ebe38f28ae583fbabb0ce0c289a3117d5b893"
+      "sha256": "f927d1e5918a20501744fc598a4668c1b67df91c28790db4b19c57bd9ebae36f"
     },
     {
       "mode": 436,
@@ -716,8 +716,8 @@
       "sha256": "7764de20b77b1e9a2a3b25b1c1b096f95ac29dcdc9dafb17b669e7f0286b236d"
     }
   ],
-  "package_revision": "2.1.0+portability.20261014",
+  "package_revision": "2.1.1",
   "schema_version": 2,
   "scope": "runtime allowlist and locked originals; excludes development tests/tools/pilots/maintenance records and local assets",
-  "version": "2.1.0"
+  "version": "2.1.1"
 }
