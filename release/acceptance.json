@@ -1,11 +1,11 @@
 {
-  "at": "2026-10-11T15:53:49+00:00",
-  "checked_links": 175,
-  "development_files": 266,
+  "at": "2026-10-14T09:26:23+00:00",
+  "checked_links": 192,
+  "development_files": 267,
   "fresh_cli_capabilities": true,
   "model_calls": 0,
   "native_tests": "557",
-  "package_revision": "2.1.0",
+  "package_revision": "2.1.1",
   "pending": [],
   "python": "3.13.13",
   "qa_coverage_count": 38,
@@ -48,10 +48,10 @@
           "sha256": "e56aa10adae3ec37e6f52050b5b4c02f5b69be9e8cbe7bd4e4a534214e0aacab"
         },
         "review": {
-          "path": "p4-release-review-20261011.md",
-          "sha256": "b78debc5c4a779b2442f91b63916dc4e5122df601d0266c9f82319732ef2178e"
+          "path": "portability-release-review-2.1.1-20261014.md",
+          "sha256": "255a729774e58b1eec88551670c32ce2dc0d8cd86acbe5b7913adde03c5dce75"
         },
-        "reviewer": "Codex maintainer (P4, 2026-10-11)",
+        "reviewer": "Codex maintainer (2.1.1, 2026-10-14)",
         "sources": {
           "kind": "runtime_snapshot",
           "record": {
@@ -88,8 +88,10 @@
         ],
         "id": "harbor_transfer",
         "mechanical_result": "passed",
-        "metadata_only_changes": [],
-        "mode": "fresh",
+        "metadata_only_changes": [
+          "autoresearch_flow/__init__.py:FLOW_VERSION"
+        ],
+        "mode": "reused",
         "origin_at": "2026-10-11T15:23:53.071510+00:00",
         "origin_version": "2.1.0-draft@harbor_native:41e52881488da04b6aecafb376f1fa458868644282b76a41f62b975f1be0dfe3",
         "result": {
@@ -97,10 +99,10 @@
           "sha256": "59c7df1eeebe6195ba2aa057b390e0cf3fb1b1c78b24622b33ed7e34d5930eff"
         },
         "review": {
-          "path": "p4-release-review-20261011.md",
-          "sha256": "b78debc5c4a779b2442f91b63916dc4e5122df601d0266c9f82319732ef2178e"
+          "path": "portability-release-review-2.1.1-20261014.md",
+          "sha256": "255a729774e58b1eec88551670c32ce2dc0d8cd86acbe5b7913adde03c5dce75"
         },
-        "reviewer": "Codex maintainer (P4, 2026-10-11)",
+        "reviewer": "Codex maintainer (2.1.1, 2026-10-14)",
         "sources": {
           "kind": "harbor_snapshot",
           "record": {
@@ -144,10 +146,10 @@
           "sha256": "8d3faa6484871035ac6e70dfa47150d4d8b2c38d60bbde45eb6dcbcd8f7fdef1"
         },
         "review": {
-          "path": "p4-release-review-20261011.md",
-          "sha256": "b78debc5c4a779b2442f91b63916dc4e5122df601d0266c9f82319732ef2178e"
+          "path": "portability-release-review-2.1.1-20261014.md",
+          "sha256": "255a729774e58b1eec88551670c32ce2dc0d8cd86acbe5b7913adde03c5dce75"
         },
-        "reviewer": "Codex maintainer (P4, 2026-10-11)",
+        "reviewer": "Codex maintainer (2.1.1, 2026-10-14)",
         "sources": {
           "kind": "runtime_snapshot",
           "record": {
@@ -159,8 +161,8 @@
       },
       {
         "approval": {
-          "path": "p4-independent-trial-waiver-2.1.0-20261011.json",
-          "sha256": "28dcb8fe05d96d98c8255bff326aa2edf7eec98d54da7f0d7e548184a755e0b5"
+          "path": "portability-independent-trial-waiver-2.1.1-20261014.json",
+          "sha256": "de562293df39190cff54dedbf78f2cfe793f13d2569899df974b81a055b9fec5"
         },
         "id": "independent_trial",
         "mechanical_result": "waived_by_user",
@@ -171,13 +173,12 @@
       }
     ],
     "limitations": [
-      "Independent new-session full-workflow entry trial for 2.1.0 waived by explicit user authorization on 2026-10-11; not performed or passed.",
-      "Bounded CPU acceptance does not prove formal 7h/10h, real compaction, scientific anchors or task QA.",
-      "Current CPU Harbor separate trials plus reused GPU worker evidence; not a full real-task GPU Final Trial.",
-      "Native/GPU originals remain limited to their historical approved scope and reviewed observations; only FLOW_VERSION differs.",
-      "LiteLLM price-map fetch timeout used its local backup; no inference call occurred."
+      "Independent new-session full-workflow trial for 2.1.1 waived by explicit user authorization on 2026-10-14; not performed or passed. Local formal release authorized; GitHub synchronization deferred until login.",
+      "Native runtime/GPU originals from 2026-10-09 and CPU Harbor originals from 2026-10-11 are reused only after current execution-source and original-evidence validation; only FLOW_VERSION differs.",
+      "No new Docker, GPU or model calls are performed for this rule/documentation release.",
+      "Static portability review and synthetic offline tests do not prove actual task migration, scientific anchors, formal 7h/10h, real compaction, a full GPU Final Trial or task QA."
     ],
-    "manifest_sha256": "a0a5861dcd5d04a38df6634d1f5a515f673f33cbea112ba97dca0e43629f8e61",
+    "manifest_sha256": "680e792fd51b3cf2f22fbc55e8b4423e81a077a2e3c2755f2844e828cb5e47b9",
     "schema_version": 2,
     "validation_scope": "originals and current execution-source binding; TUI observation/authorization reviewed separately"
   },
@@ -198,7 +199,7 @@
         "check"
       ],
       "exit_code": 0,
-      "output_tail": "{\"action\": \"rules.check\", \"coverage_count\": 38, \"flow_version\": \"2.1.0\", \"issues\": [], \"next_action\": \"规则正文、阶段矩阵和派生视图结构可读；这不是逐条语义复核或真实题目质检\", \"rule_count\": 50, \"stage_matrix\": {\"issues\": [], \"obligation_count\": 44, \"stage_count\": 6, \"status\": \"ok\"}, \"status\": \"ok\"}\n"
+      "output_tail": "{\"action\": \"rules.check\", \"coverage_count\": 38, \"flow_version\": \"2.1.1\", \"issues\": [], \"next_action\": \"规则正文、阶段矩阵和派生视图结构可读；这不是逐条语义复核或真实题目质检\", \"rule_count\": 50, \"stage_matrix\": {\"issues\": [], \"obligation_count\": 44, \"stage_count\": 6, \"status\": \"ok\"}, \"status\": \"ok\"}\n"
     },
     {
       "command": [
@@ -207,7 +208,7 @@
         "--help"
       ],
       "exit_code": 0,
-      "output_tail": "usage: cli.py [-h] [--format {text,json}]\n              {version,materials,package,harbor,rules,preflight,environment,experiment,runtime} ...\n\nAutoResearch 新流程统一入口（2.1.0）\n\npositional arguments:\n  {version,materials,package,harbor,rules,preflight,environment,experiment,runtime}\n    version             显示工具版本\n    preflight           只读阶段预检：已有证据、待审结论与显式例外；不初始化状态\n    materials           独立轨迹整理、按来源组包、包内只读格式检查\n    package             独立完整 QA 后直接生成三份 ZIP 与七项填表材料\n    harbor              原生双镜像 NOP/冻结候选评分；不启动轨迹或选择方法\n    rules               中央规则包\n    environment         PCA 双镜像结构/实跑证据检查（只读兼容诊断，不执行 Harbor 或 QA）\n    experiment          独立 run/summarize（旧账本动作仅兼容旧任务）\n    runtime             独立本轨运行（旧 task-root 参数仅兼容旧任务）\n\noptions:\n  -h, --help            show this help message and exit\n  --format {text,json}  输出格式；机器调用建议 json\n"
+      "output_tail": "usage: cli.py [-h] [--format {text,json}]\n              {version,materials,package,harbor,rules,preflight,environment,experiment,runtime} ...\n\nAutoResearch 新流程统一入口（2.1.1）\n\npositional arguments:\n  {version,materials,package,harbor,rules,preflight,environment,experiment,runtime}\n    version             显示工具版本\n    preflight           只读阶段预检：已有证据、待审结论与显式例外；不初始化状态\n    materials           独立轨迹整理、按来源组包、包内只读格式检查\n    package             独立完整 QA 后直接生成三份 ZIP 与七项填表材料\n    harbor              原生双镜像 NOP/冻结候选评分；不启动轨迹或选择方法\n    rules               中央规则包\n    environment         PCA 双镜像结构/实跑证据检查（只读兼容诊断，不执行 Harbor 或 QA）\n    experiment          独立 run/summarize（旧账本动作仅兼容旧任务）\n    runtime             独立本轨运行（旧 task-root 参数仅兼容旧任务）\n\noptions:\n  -h, --help            show this help message and exit\n  --format {text,json}  输出格式；机器调用建议 json\n"
     },
     {
       "command": [
@@ -300,7 +301,7 @@
   "runtime_without_development_files": true,
   "schema_version": 2,
   "scope": "tool contracts, not scientific or platform acceptance",
-  "source_manifest_sha256": "7d4cd65feb92f3e737dc5a3e205a1db14042caaf160fd16cfd0b7d8db69fd0bb",
+  "source_manifest_sha256": "c7e6c016008e7d4035a6fe77fe60c7fe7e146df5922656551a6204605a3b6284",
   "status": "released",
-  "version": "2.1.0"
+  "version": "2.1.1"
 }

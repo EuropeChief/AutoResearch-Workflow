@@ -39,7 +39,7 @@
 ### M03-S1 — 拟定公平实验协议
 
 - 规则来源：`M03`（`rules/README.md#M03`）
-- 当前行动：先写明数据、切分、指标、预算、正式 seed、重复/聚合和选择规则。
+- 当前行动：先写明数据、切分、指标、预算、正式 seed、重复/聚合和选择规则；在草案中明确目标部署条件、资产交付方式、指标环境敏感性及待核实事项。
 - 所需证据：`protocol_draft`, `data_split_fingerprint`
 - 检查性质：`mixed`；严重性：`hard`
 - 阶段门前阻断：`research_contract`, `task_ready`
