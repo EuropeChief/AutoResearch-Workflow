@@ -23,22 +23,22 @@
     {
       "mode": 436,
       "path": "README.md",
-      "sha256": "f7a6ba3b26b3b23b50a564ab693c858b4c01ff834f56bfd963a65f7ad3042933"
+      "sha256": "2474b264f82d119f3c593d1082082fd0e5593bb18ca5f807b709392e4e7682a5"
     },
     {
       "mode": 436,
       "path": "RELEASE.md",
-      "sha256": "0766ce7af66df4e97acdaa30d9fd15bcad9d2001576d2ae7f6c9dbb3a0f0dede"
+      "sha256": "16bf01c68aa093fbe5bb69d410b798e590cc974a359150a1e00721299e7adf52"
     },
     {
       "mode": 436,
       "path": "START_HERE.md",
-      "sha256": "db5bfcf0893e54d2160d1215452ef5fef5dc18886c0c5bb3c4ab9b180c953507"
+      "sha256": "6449a76c4efef4826fa4e3894fd3248b8cae7b3a2d5803631b4387ccd33d0932"
     },
     {
       "mode": 436,
       "path": "autoresearch_flow/__init__.py",
-      "sha256": "f075da22b029eca333abb23ca2dfaa359e63205a587d893f93b7ca5a8c141ace"
+      "sha256": "5ef04a140b06c43e18deca1bc322802cbf0196ab98b51ff6b9251532a33b1ebb"
     },
     {
       "mode": 436,
@@ -388,7 +388,7 @@
     {
       "mode": 436,
       "path": "rules/README.md",
-      "sha256": "9e6c1916d42d89b7800fc19f845caeaba0f19728ae89042c6c50dd7968a3caf4"
+      "sha256": "90441995ecd2d5a9e5b880827ba747562a8a8c6ae3bc6f4ff3c4342774578a30"
     },
     {
       "mode": 436,
@@ -398,7 +398,7 @@
     {
       "mode": 436,
       "path": "rules/manifest.json",
-      "sha256": "e4847a23f2bbdfbb4851c34dbe9ba22555445b0a67b9862905f7274a5c9bbcad"
+      "sha256": "05cb65949f90b25b6f80977facac205d317a83433dc78fe68bf9659f14232e29"
     },
     {
       "mode": 436,
@@ -458,7 +458,7 @@
     {
       "mode": 436,
       "path": "skills/autoresearch-delivery/SKILL.md",
-      "sha256": "93c42f203f9796a4f5e19d445b0f475708d368ae392e1fe619576dab647dad01"
+      "sha256": "fffa0c8610e01d0b9ec95275a1ad3c7abaf56f7510b0edcc82b620796fb5c391"
     },
     {
       "mode": 436,
@@ -876,8 +876,8 @@
       "sha256": "7764de20b77b1e9a2a3b25b1c1b096f95ac29dcdc9dafb17b669e7f0286b236d"
     }
   ],
-  "package_revision": "2.1.1-v4.20261021.dev",
+  "package_revision": "2.1.2",
   "schema_version": 2,
   "scope": "runtime allowlist and locked originals; excludes development tests/tools/pilots/maintenance records and local assets",
-  "version": "2.1.1"
+  "version": "2.1.2"
 }

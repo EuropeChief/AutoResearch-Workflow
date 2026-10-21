@@ -3,7 +3,7 @@
     "path": "rules/catalog.json",
     "sha256": "fb719441ce4e645349057b886862c55a2eb168796a2ad8d043df3146bcb23755"
   },
-  "flow_version": "2.1.1",
+  "flow_version": "2.1.2",
   "schema_version": 1,
   "qa_checks": [
     "B01",
@@ -157,7 +157,7 @@
     }
   ],
   "qa_revision": "v0.3.10+project-notices.20261021",
-  "package_revision": "2.1.1-v4.20261021.dev",
+  "package_revision": "2.1.2",
   "bundled_files": [
     {
       "path": "skills/autoresearch-baseline-quality/SKILL.md",
