@@ -43,6 +43,7 @@ tmp/
 *.tgz
 *.zip
 !sources/tutorial/图片和附件/*.zip
+!sources/originals/*.zip
 
 # User-maintained configuration and release outputs are not source artifacts.
 local/

@@ -13,7 +13,7 @@ JSON 指定镜像 ID/digest、Codex 版本、候选目录、公开映射、Promp
 默认 `purpose=formal` 用于正式轨迹；`preflight` 仅用于不训练的合成验收，`acceptance` 用于按当次授权执行的真实题适配（可以包含题目原协议训练）。两类验收都不承诺正式 7h/10h，不能通过 `runtime finalize` 冒充正式轨迹。资源与费用范围由验收 Prompt 和本次授权限定，不降低正式题目要求。
 
 - `direct`：Agent 在真实 Codex 沙箱直接运行题目的公开程序；不启用跨权限作业通道。
-- `worker`：需要合法沙箱外 CUDA/受保护执行的题目，用 `python /workspace/evaluate.py submit` 获得 job_id，再用 `status`、`logs`、`result --job-id 原ID` 查询。请求不能指定宿主命令、路径、资源。候选快照、日志、真实退出码与有限 score/raw_metric 绑定；独立作业监督进程不因模型暂停而退出。
+- `worker`：固定程序以独立 UID 在本轨 Agent 的同一个容器内执行 CUDA/受保护计算，位于 Codex CLI 内层沙箱之外；不创建额外 GPU 容器或远程计算环境。用 `python /workspace/evaluate.py submit` 获得 job_id，再用 `status`、`logs`、`result --job-id 原ID` 查询。请求不能指定宿主命令、路径、资源。候选快照、日志、真实退出码与有限 score/raw_metric 绑定；独立作业监督进程不因模型暂停而退出。
 
 快照不提交 Codex 临时创建的顶层空保护目录（`.git/.agents/.codex/.aws`），并记录实际忽略项；非空同名目录和其他内容仍保留，由题目检查。严格限制候选文件数的 CPU 检查可先复制合法候选原字节到临时目录；这不替代正式 worker 的实际文件检查。
 

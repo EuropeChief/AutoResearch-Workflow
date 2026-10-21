@@ -13,7 +13,7 @@
 ### M09-S6 — 整理最终八字段轨迹
 
 - 规则来源：`M09`（`rules/README.md#M09`）
-- 当前行动：只对 Agent 生成的真实轮次做允许的格式/摘要修正，输出根 rounds 与八字段完整轨迹。
+- 当前行动：只对 Agent 生成的真实轮次做允许的格式/摘要修正，输出根 rounds 与八字段完整轨迹。 缺sessions不单独退回；已交记录须审，版本问题归QA21。
 - 所需证据：`trajectory_codex.json`, `trajectory_seed.json`, `trajectory_review`
 - 检查性质：`mixed`；严重性：`hard`
 - 阶段门前阻断：`independent_qa`
@@ -49,7 +49,7 @@
 ### M12-S6 — 按最小充分结构组包
 
 - 规则来源：`M12`（`rules/README.md#M12`）
-- 当前行动：组装 workspace、expert_evidence、optimization_evidence 三目录及题面八部分，移除无证明作用的流程文件。
+- 当前行动：组装 workspace、expert_evidence、optimization_evidence 三目录及题面八部分，移除无证明作用的流程文件。独立 QA 后压缩时，对实际完整归档运行格式前检并绑定 SHA-256，不以启动前时点解释排除最终材料。
 - 所需证据：`package_root`, `package_manifest`, `submission_structure_check`
 - 检查性质：`mixed`；严重性：`hard`
 - 阶段门前阻断：`independent_qa`

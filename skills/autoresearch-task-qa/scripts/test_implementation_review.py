@@ -6,6 +6,8 @@ import tempfile
 import unittest
 
 import implementation_review as qa
+import task_fingerprint
+from test_runtime_integrity import complete_integrity_fixture, complete_resources_fixture
 
 
 class ImplementationReviewTests(unittest.TestCase):
@@ -46,7 +48,7 @@ class ImplementationReviewTests(unittest.TestCase):
 
     def review(self):
         rows = [qa.item(i, "pass", "测试夹具中的对应内容已人工复核。", ["instruction.md"]) for i in qa.IDS]
-        rows[14] = qa.item("QA15", "not_applicable", "跳过。")
+        rows[14] = qa.item("QA15", "pass", "已复核合成资源证据。", ["instruction.md"])
         # QA16 is always recalculated from runtime records.
         from test_harbor_review import valid_review
         overview = {
@@ -76,11 +78,11 @@ class ImplementationReviewTests(unittest.TestCase):
             "trajectories": [
                 {"name": "Agent A", "status": "complete", "source_path": "trajectory_a.json",
                  "packaged_rounds": None, "reported_effective_rounds": None,
-                 "duration_hours": 12, "summary": "第一条合成轨迹。",
+                 "duration_hours": 10, "summary": "第一条合成轨迹。",
                  "final_result": "夹具结果。", "evidence": ["trajectory_a.json"]},
                 {"name": "Agent B", "status": "complete", "source_path": "trajectory_b.json",
                  "packaged_rounds": None, "reported_effective_rounds": None,
-                 "duration_hours": 12, "summary": "第二条合成轨迹。",
+                 "duration_hours": 10, "summary": "第二条合成轨迹。",
                  "final_result": "夹具结果。", "evidence": ["trajectory_b.json"]},
             ],
         }
@@ -104,11 +106,64 @@ class ImplementationReviewTests(unittest.TestCase):
         harbor_review["checks"][4] = {"id": "H05", "status": "pass", "summary": "已复核 NOP Trial 配置。", "evidence": ["run-a/config.json"]}
         harbor_review["checks"][5] = {"id": "H06", "status": "pass", "summary": "NOP Trial 在独立 Verifier 环境中结束。",
                                       "evidence": ["run-a/config.json", "run-a/result.json", "run-a/verifier/reward.txt", "run-a/trial.log"]}
+        config_path = self.root / "run-a/config.json"
+        if config_path.is_file():
+            config = json.loads(config_path.read_text())
+            config["task"].update(hash_profile=task_fingerprint.PROFILE,
+                task_content_sha256=task_fingerprint.fingerprint(self.root)["task_content_sha256"])
+            config_path.write_text(json.dumps(config))
+        integrity = complete_integrity_fixture(self.root, overview["trajectories"])
+        resources = complete_resources_fixture()
+        for index, trajectory in enumerate(overview["trajectories"]):
+            try:
+                rounds = json.loads((self.root / trajectory["source_path"]).read_text()).get("rounds", [])
+            except json.JSONDecodeError:
+                rounds = []  # Deliberately corrupt evidence must reach the report validator.
+            resources["runs"].append({**resources["runs"][0], "run_id": f"synthetic-agent-score-{index}",
+                "source_path": trajectory["source_path"], "evidence": [trajectory["source_path"]],
+                "covered_rounds": [row["round"] for row in rounds if isinstance(row.get("score"), (int, float))]})
         return {"checks": rows, "harbor": harbor_review, "overview": overview, "format_review": format_review,
-                "content_gates": {"schema_version": 1, "checks": gates}, "runtime_review": runtime}
+                "content_gates": {"schema_version": 1, "checks": gates}, "runtime_review": runtime,
+                "trajectory_review": integrity, "resource_review": resources}
 
     def test_initial_report_never_passes(self):
         self.assertEqual(self.report()["summary"]["decision"], "INCOMPLETE")
+
+    def test_unreviewed_collection_does_not_claim_nop_or_trajectories_missing(self):
+        report = self.report()  # Fixture actually contains both trajectories and a NOP.
+        self.assertEqual(report["review"]["stage"], "collection")
+        self.assertEqual(report["harbor"]["runtime_status"], "not_reviewed")
+        self.assertNotIn("缺少必交 NOP", qa.compact_markdown(report))
+        self.assertNotIn("待补充核验", qa.return_to_expert(report))
+
+    def test_reviewed_equivalent_evidence_resolves_raw_format_observation(self):
+        report = self.report()
+        review = self.review()
+        review["format_review"] = {"status": "aligned_with_extras", "summary": "空 stdout 的重载由独立进程结果及退出状态证明。", "additional_suggestions": []}
+        report["format_alignment"]["issues"] = [{"message": "model/reload.log 为空。"}]
+        report["format_alignment"]["alignment_issues"] = [{"path": "model/reload.log", "message": "model/reload.log 为空。"}]
+        reviewed = qa.apply_review(report, review, self.root)
+        self.assertIn("空 stdout 的重载", qa.compact_markdown(reviewed))
+        self.assertNotIn("格式缺口：model/reload.log", qa.compact_markdown(reviewed))
+        self.assertNotIn("model/reload.log", qa.return_to_expert(reviewed))
+        self.assertEqual(len(reviewed["format_alignment"]["alignment_issues"]), 1)
+
+    def test_unresolved_format_observation_stays_visible(self):
+        report = qa.apply_review(self.report(), self.review(), self.root)
+        report["format_alignment"]["issues"] = [{"message": "真实缺口"}]
+        report["format_alignment"]["alignment_issues"] = [{"path": "missing", "message": "真实缺口"}]
+        self.assertIn("格式缺口：真实缺口", qa.compact_markdown(report))
+        self.assertIn("真实缺口", qa.return_to_expert(report))
+
+    def test_findings_follow_both_trajectory_table_rows(self):
+        report = qa.apply_review(self.report(), self.review(), self.root)
+        report["trajectory_review"]["trajectories"][0]["findings"] = [{
+            "classification": "infra_bug", "certainty": "confirmed", "stage": "grader",
+            "summary": "已修复的合成故障", "affected_rounds": [1], "evidence": ["task.toml"]}]
+        markdown = qa.compact_markdown(report)
+        block = markdown.split("# 轨迹可信性与题包绑定", 1)[1]
+        self.assertLess(block.index("| Agent B |"), block.index("已修复的合成故障"))
+        self.assertIn("- Agent A：", block)
 
     def test_collected_wall_runtime_is_not_effective_runtime(self):
         self.write("trajectory.json", {"run_duration_seconds": 21600})
@@ -153,6 +208,15 @@ class ImplementationReviewTests(unittest.TestCase):
         self.assertEqual(report["checks"][15]["status"], "fail")
         self.assertEqual(report["summary"]["decision"], "FAIL")
 
+    def test_summary_hash_missing_does_not_repeat_in_qa17_or_qa18(self):
+        review = self.review()
+        (self.root / "expert_evidence/run_summary.json").write_text('{"agent_execution": []}')
+        actual = qa.apply_review(self.report(), review, self.root)
+        statuses = {row["id"]: row["status"] for row in actual["checks"]}
+        self.assertEqual(statuses["QA17"], "pass")
+        self.assertEqual(statuses["QA18"], "pass")
+        self.assertEqual(statuses["QA21"], "warn")
+
     def test_effective_runtime_uses_ten_hours_for_each_trajectory(self):
         for seconds, expected in ((25199, "fail"), (25200, "manual"), (35999, "manual"), (36000, "pass")):
             review = self.review()
@@ -170,6 +234,8 @@ class ImplementationReviewTests(unittest.TestCase):
         for row in review["runtime_review"]["trajectories"]:
             row.update(effective_seconds=7*3600, effective_method_cycles=3, next_direction="检验特征变换的非线性扩展。",
                        best_method_revalidated=True, best_method_evidence=[row["source_path"]])
+        for row in review["overview"]["trajectories"]:
+            row["duration_hours"] = 7
         self.assertEqual(qa.apply_review(self.report(), review, self.root)["checks"][15]["status"], "pass")
         del review["runtime_review"]["trajectories"][1]["next_direction"]
         self.assertEqual(qa.apply_review(self.report(), review, self.root)["checks"][15]["status"], "manual")
@@ -185,6 +251,8 @@ class ImplementationReviewTests(unittest.TestCase):
         for row in runtime["trajectories"]:
             row.update(effective_seconds=8*3600, effective_method_cycles=3, next_direction="继续验证尚未尝试的策略结构。",
                        best_method_revalidated=True, best_method_evidence=[row["source_path"]])
+        for row in review["overview"]["trajectories"]:
+            row["duration_hours"] = 8
         return review
 
     def test_nontraining_short_iterations_can_use_eight_hour_exception(self):
@@ -248,11 +316,39 @@ class ImplementationReviewTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "only instruction"):
                 qa.apply_review(self.report(), review, self.root)
 
-    def test_qa15_cannot_be_checked(self):
+    def test_qa15_cannot_be_skipped(self):
         review = self.review()
-        review["checks"][14] = qa.item("QA15", "fail", "超过资源限制。")
-        with self.assertRaisesRegex(ValueError, "must be skipped"):
+        review["checks"][14] = qa.item("QA15", "not_applicable", "跳过。")
+        with self.assertRaisesRegex(ValueError, "cannot skip"):
             qa.apply_review(self.report(), review, self.root)
+
+    def test_qa15_handwritten_pass_cannot_hide_missing_resource_evidence(self):
+        review = self.review()
+        del review["resource_review"]
+        self.assertEqual(qa.apply_review(self.report(), review, self.root)["checks"][14]["status"], "manual")
+
+    def test_qa21_missing_binding_does_not_duplicate_qa18_failure(self):
+        review = self.review()
+        data = json.loads((self.root / "expert_evidence/run_summary.json").read_text())
+        del data["agent_execution"][0]["task_binding"]
+        self.write("expert_evidence/run_summary.json", data)
+        result = qa.apply_review(self.report(), review, self.root)
+        self.assertEqual(result["checks"][17]["status"], "pass")
+        self.assertEqual(result["checks"][20]["status"], "warn")
+
+    def test_invalid_formal_score_cannot_prove_reference_improvement(self):
+        review = self.review()
+        ref = "optimization_evidence/reference_runs/seed_1/result.json"
+        (self.root / ref).parent.mkdir(parents=True)
+        self.write(ref, {"role": "reference", "seed": 1})
+        review["trajectory_review"]["trajectories"][0]["findings"] = [{
+            "classification": "cheating", "certainty": "confirmed", "summary": "Synthetic invalid formal score.",
+            "evidence": [ref], "affected_formal_runs": [ref], "affected_rounds": [1], "score_effect": "invalid",
+            "remediation": "Repair scoring and rerun.", "acceptance_evidence": "Valid formal execution."}]
+        result = qa.apply_review(self.report(), review, self.root)
+        self.assertEqual(result["checks"][2]["status"], "fail")
+        self.assertEqual(result["checks"][12]["status"], "fail")
+        self.assertEqual(result["content_gates"]["checks"][2]["status"], "fail")
 
     def test_complete_report_and_concise_markdown(self):
         self.write("trajectory.json", {"duration_seconds": 21600})
@@ -265,7 +361,7 @@ class ImplementationReviewTests(unittest.TestCase):
         self.assertLess(md.index("# 格式对齐建议"), md.index("# 质检结论：通过"))
         self.assertEqual(sum(line.startswith("| QA") for line in md.splitlines()), 21)
         self.assertTrue(report["review"]["completed"])
-        self.assertIn("Harbor 格式/接口：通过；已有 Trial 证据经人工关联后相互一致", md)
+        self.assertIn("Harbor 格式/接口：通过；已有 NOP 自检记录", md)
         self.assertEqual(report["harbor"]["runtime_status"], "evidence_consistent")
 
     def test_write_report_creates_identical_txt_and_markdown(self):
@@ -329,7 +425,7 @@ class ImplementationReviewTests(unittest.TestCase):
         self.assertEqual(qa.apply_review(self.report(), review, self.root)["checks"][15]["status"], "manual")
         review = self.review()
         review["runtime_review"]["trajectories"][0]["effective_seconds"] = 13 * 3600
-        self.assertEqual(qa.apply_review(self.report(), review, self.root)["checks"][15]["status"], "fail")
+        self.assertEqual(qa.apply_review(self.report(), review, self.root)["checks"][15]["status"], "manual")
 
     def test_reviewed_failure_must_keep_action_and_acceptance_text(self):
         review = self.review()
@@ -348,8 +444,8 @@ class ImplementationReviewTests(unittest.TestCase):
         md = qa.compact_markdown(result)
         self.assertLess(md.index("# Baseline 与 Reference 跑分"), md.index("# 前置内容门槛"))
         self.assertLess(md.index("# 前置内容门槛"), md.index("| QA01"))
-        self.assertEqual(result["schema_version"], 4)
-        self.assertEqual(result["policy"]["revision"], "research-quality-v3")
+        self.assertEqual(result["schema_version"], 6)
+        self.assertEqual(result["policy"]["revision"], "innerfield-deployment-v6")
         self.assertIn("G03 复算：Δ=2", md)
         self.assertIn("U=5", md)
         self.assertIn("归一化分数=0.4", md)
@@ -406,6 +502,15 @@ class ImplementationReviewTests(unittest.TestCase):
         self.assertEqual(result["checks"][20]["status"], "pass")
         self.assertEqual(result["checks"][17]["status"], "pass")
 
+    def test_explicit_unverified_score_cannot_produce_a_passing_report(self):
+        review = self.review()
+        review["trajectory_review"]["trajectories"][0]["score_status"] = "unverified"
+        result = qa.apply_review(self.report(), review, self.root)
+        self.assertEqual(result["checks"][17]["status"], "manual")
+        self.assertEqual(result["checks"][20]["status"], "pass")
+        self.assertEqual(result["summary"]["decision"], "INCOMPLETE")
+        self.assertIn("分数有效性待确认", result["checks"][17]["summary"])
+
     def test_unknown_trajectory_state_requires_review(self):
         value = json.loads((self.root / "trajectory_b.json").read_text())
         value["rounds"][0].update(status="custom-state", score=None, failure_reason="Needs interpretation", retained_best=False)
@@ -418,19 +523,20 @@ class ImplementationReviewTests(unittest.TestCase):
         review = self.review()
         review["overview"]["trajectories"][1].update(status="missing", source_path=None, evidence=[])
         review["runtime_review"]["trajectories"][1]["source_path"] = None
+        review["trajectory_review"]["trajectories"].pop()
         result = qa.apply_review(self.report(), review, self.root)
         self.assertEqual(result["checks"][17]["status"], "fail")
         self.assertEqual(result["checks"][20]["status"], "fail")
 
-    def test_no_nop_blocks_qa17(self):
+    def test_no_nop_is_an_advisory_without_claiming_execution(self):
         import shutil
         shutil.rmtree(self.root / "run-a")
         review = self.review()
         from test_harbor_review import valid_review
         review["harbor"] = valid_review()
         result = qa.apply_review(self.report(), review, self.root)
-        self.assertEqual(result["checks"][16]["status"], "fail")
-        self.assertEqual(result["summary"]["decision"], "FAIL")
+        self.assertEqual(result["checks"][16]["status"], "warn")
+        self.assertEqual(result["summary"]["decision"], "PASS")
         self.assertEqual(result["harbor"]["runtime_status"], "not_run")
         self.assertIn("动态运行未验证", qa.compact_markdown(result))
 

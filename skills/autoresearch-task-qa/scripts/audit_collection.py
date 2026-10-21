@@ -79,8 +79,8 @@ def validate_report(report: dict) -> list[str]:
     if decision in SUCCESS_DECISIONS and any(item.get("status") == "fail" for item in checks):
         issues.append(f"success decision {decision} contains failed checklist items")
     if report.get("policy", {}).get("name") == "implementation" or decision == "PASS":
-        if report.get("schema_version") != 4:
-            issues.append("implementation report requires schema_version 4")
+        if report.get("schema_version") != 6:
+            issues.append("implementation report requires schema_version 6")
         gates = report.get("content_gates", {}).get("checks", [])
         if (not isinstance(gates, list) or len(gates) != 3
                 or not all(isinstance(row, dict) for row in gates)
@@ -88,6 +88,30 @@ def validate_report(report: dict) -> list[str]:
             issues.append("implementation report requires G01–G03 exactly once")
             gates = []
         if decision == "PASS":
+            resources = report.get("resource_review", {})
+            hardware = resources.get("hardware_review", {}) if isinstance(resources, dict) else {}
+            if not isinstance(hardware, dict) or hardware.get("status") != "pass" or hardware.get("score_status") != "pass":
+                issues.append("PASS requires reviewed task hardware and score comparability")
+            conflicts = resources.get("observation_conflicts", []) if isinstance(resources, dict) else []
+            if not isinstance(conflicts, list) or not all(isinstance(value, str) and value.strip() for value in conflicts):
+                issues.append("PASS has malformed resource observation conflicts")
+            elif conflicts:
+                reconciliation = resources.get("observation_reconciliation")
+                reconciled = (isinstance(reconciliation, dict)
+                    and isinstance(reconciliation.get("summary"), str) and bool(reconciliation["summary"].strip())
+                    and isinstance(reconciliation.get("evidence"), list) and bool(reconciliation["evidence"])
+                    and all(isinstance(ref, str) and ref.strip() for ref in reconciliation["evidence"]))
+                if not reconciled:
+                    issues.append("PASS contains unreconciled resource observation conflicts")
+            for field in ("trajectory_review", "resource_review"):
+                if not isinstance(report.get(field), dict) or report[field].get("status") != "pass":
+                    issues.append(f"PASS requires completed {field}")
+            integrity = report.get("trajectory_review", {})
+            integrity_rows = integrity.get("trajectories", [])
+            if len(integrity_rows) != 2 or any(row.get("score_status") != "valid" or row.get("task_binding", {}).get("status") != "pass" for row in integrity_rows):
+                issues.append("PASS requires two valid scores and reviewed four-input task bindings")
+            if next((row.get("status") for row in checks if row.get("id") == "QA15"), None) != "pass":
+                issues.append("PASS requires QA15 resource review; it cannot be skipped")
             if any(row.get("status") != "pass" for row in gates):
                 issues.append("PASS contains unpassed content gates")
             if any(row.get("status") in ("manual", "warn") for row in checks):
@@ -103,6 +127,15 @@ def validate_report(report: dict) -> list[str]:
             if not isinstance(harbor, dict):
                 issues.append("PASS requires reviewed Harbor and Docker path contract")
             else:
+                deployment = harbor.get("deployment_contract")
+                deployment_findings = deployment.get("findings") if isinstance(deployment, dict) else None
+                if (not isinstance(deployment, dict) or deployment.get("status") != "pass"
+                        or deployment.get("profile") not in ("innerfield-maso-v1", "generic-harbor")
+                        or not isinstance(deployment_findings, list)
+                        or any(not isinstance(row, dict) or row.get("status") != "pass" for row in deployment_findings)):
+                    issues.append("PASS requires completed deployment capability review")
+                elif deployment["profile"] == "generic-harbor" and (not deployment.get("basis") or deployment.get("innerfield_compliant")):
+                    issues.append("generic Harbor needs a cited basis and cannot claim innerfield compliance")
                 harbor_checks = harbor.get("checks")
                 valid_harbor = (isinstance(harbor_checks, list) and len(harbor_checks) == 6
                                 and all(isinstance(row, dict) for row in harbor_checks)

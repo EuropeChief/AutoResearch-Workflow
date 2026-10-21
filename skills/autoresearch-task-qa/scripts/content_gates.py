@@ -6,7 +6,7 @@ import statistics
 
 IDS = ("G01", "G02", "G03")
 TITLES = {"G01": "方法级优化空间", "G02": "Baseline 合理性", "G03": "Reference 提升充分性"}
-STATUSES = {"pass", "fail", "manual"}
+STATUSES = {"pass", "fail", "manual", "warn"}
 
 
 def text(value):
@@ -156,6 +156,9 @@ def apply_review(review, overview, root, validate_evidence):
         key, status = row["id"], row.get("status")
         if status not in STATUSES or not text(row.get("summary")) or not text(row.get("reason_code")):
             raise ValueError(f"{key}: status, summary and reason_code are required")
+        from project_policy import allowed
+        if status == "warn" and not allowed(row):
+            raise ValueError(f"{key}: warning must be within the confirmed project notice")
         validate_evidence(root, row.get("evidence"), key, required=status == "pass")
         for field in ("remediation", "acceptance_evidence"):
             if field not in row or not isinstance(row[field], str) or (status in ("fail", "manual") and not text(row[field])):
@@ -175,7 +178,7 @@ def apply_review(review, overview, root, validate_evidence):
     return {"schema_version": 1, "checks": final}
 
 
-def assess_runtime(review, trajectories, root, validate_evidence):
+def assess_runtime(review, trajectories, root, validate_evidence, duration_observations=None):
     if not isinstance(review, dict):
         raise ValueError("review.runtime_review is required for two effective-duration reviews")
     rows = review.get("trajectories")
@@ -202,9 +205,28 @@ def assess_runtime(review, trajectories, root, validate_evidence):
         if seconds is None or not row.get("evidence") or not text(row.get("time_accounting")) or row.get("source_path") is None:
             missing.append(name + "缺少有效时长或排除排队/安装/故障的核算证据")
         if seconds is not None:
-            wall_hours = overview.get("duration_hours")
-            if finite(wall_hours) and seconds > wall_hours * 3600 + 1e-6:
-                failures.append(name + "有效时长大于已声明总运行时长")
+            effective_hours = overview.get("duration_hours")
+            # Both review fields describe effective time. Allow display rounding
+            # to a minute, but never quietly treat overview as wall-clock time.
+            if finite(effective_hours) and abs(seconds - effective_hours * 3600) > 60:
+                missing.append(name + "概览与时长核验的有效时长不一致，须按同一扣除口径核对")
+            for observation in duration_observations or []:
+                prefix = str(row.get("source_path")) + "#"
+                evidence = observation.get("evidence", "")
+                field = evidence[len(prefix):] if evidence.startswith(prefix) else None
+                # Only unambiguous top-level timings from this exact trajectory;
+                # never infer whole-run bounds from nested trials or budgets.
+                if field not in (".run_duration_seconds", ".wall_time_seconds", ".duration_seconds",
+                                 ".elapsed_seconds", ".duration_hours", ":start/end"):
+                    continue
+                observed = observation.get("seconds")
+                if finite(observed) and seconds > observed + 60:
+                    refs.append(evidence)
+                    message = name + "声明有效时长超过原轨迹记录的时长，需核对记录范围与扣除口径"
+                    if field in (".run_duration_seconds", ".wall_time_seconds", ":start/end"):
+                        failures.append(message)
+                    else:
+                        missing.append(message)
             if seconds < 7 * 3600:
                 failures.append(name + f"有效时长 {seconds / 3600:.2f}h，低于例外最低 7h")
         cycles = row.get("effective_method_cycles")
@@ -253,11 +275,13 @@ def assess_runtime(review, trajectories, root, validate_evidence):
             refs.extend(row.get("best_method_evidence", []))
     status = "fail" if failures else "manual" if missing else "pass"
     summary = "；".join(failures + missing) if status != "pass" else (
-        "两条轨迹均有至少 10h 有效迭代证据，已说明扣除排队、安装和故障时段。" if standard else
+        "、".join(f"{row['name']} {row['effective_seconds'] / 3600:.2f}h" for row in rows) + "，均达到每轨至少 10h；已核对起止、扣除区间及健康训练重叠。" if standard else
         "已确认任务完全不涉及训练或微调且单轮迭代很短；两条轨迹均至少 7h，资格依据、例外理由、各 3 个方法闭环、继续方向和最优方法复验证据齐全。")
-    remediation = ("该任务不符合 7h 例外资格；请使两条轨迹分别达到至少 10h 有效迭代，并补齐扣除排队、安装和故障时段的核算。" if ineligible else
-                   "针对上述轨迹补齐有效时段核算，每条达到 10h；仅在完全不涉及训练或微调且单轮迭代很短时，才可凭资格依据采用至少 7h 的例外，并提交具体理由、每条至少 3 个有效方法闭环、后续方向及最优方法复验。")
+    unknown_names = [row["name"] for row in rows if row.get("effective_seconds") is None]
+    remediation = ("该任务涉及训练/微调或迭代不短，不适用7h例外；不足10h的轨迹需继续研究，使两轨分别达到至少 10h，保留旧记录。" if ineligible else
+                   "为" + "、".join(unknown_names) + "补一张时长表：研究起止、排队/安装/API失联/故障区间、仍正常运行的训练重叠及有效秒数。可引用已交轨迹和日志片段；不强制提交完整timer或sessions。" if unknown_names else
+                   "针对上述不足或矛盾修正时长表；实际不足10h需继续研究。仅无训练且迭代很短时补7h例外依据、3个方法闭环和最优方法复验。")
     return {"exception_reason": review.get("exception_reason", ""), "exception_eligibility": eligibility, "trajectories": normalized,
             "status": status, "summary": summary, "evidence": list(dict.fromkeys(refs)),
-            "remediation": "" if status == "pass" else remediation,
-            "acceptance_evidence": "" if status == "pass" else "两条轨迹各自的起止/有效时段日志、被排除时段及理由；如申请 7h 例外，附无训练/微调的实现证据、典型单轮耗时及原始日志、方法闭环与最优方法复验记录。"}
+            "remediation": "" if status == "pass" else review.get("remediation") or remediation,
+            "acceptance_evidence": "" if status == "pass" else review.get("acceptance_evidence") or "可复算的两轨起止/扣除表，与轨迹时间相符；默认每轨≥36000有效秒。最终复验、收集和明确故障不计，健康训练并发只计一次。"}

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import shutil
 import tempfile
 import uuid
 from datetime import datetime, timezone
@@ -19,6 +20,7 @@ from .archive_io import (
 from .common import _require, _sha256
 from .package_form import render
 from .package_qa import accepted
+from .package_precheck import check as format_precheck
 
 
 def _name(root, explicit):
@@ -123,6 +125,14 @@ def package(
             target = staging / (archive_prefix + ".zip")
             _write_zip(source, target, archive_prefix, snapshot=rows)
             entry = _verify_zip(source, target, archive_prefix, snapshot=rows)
+            if role == "submission":
+                checked = format_precheck(target, staging / "format-precheck")
+                if checked['status'] != 'format_checked_not_qa':
+                    failure = output.parent / (prefix + '-format-precheck-failed-' + uuid.uuid4().hex[:8])
+                    shutil.copytree(staging / 'format-precheck', failure)
+                    _require(False, "PACKAGE_FORMAT",
+                             "最终完整归档格式检查未完成或存在ERROR；原判定="
+                             + str(checked['original_decision']) + "；报告保留于 " + str(failure))
             _split_zip(target, part_bytes, upload_limit_bytes)
             archives[role] = _verify_upload(
                 target, entry, part_bytes, upload_limit_bytes
@@ -148,6 +158,9 @@ def package(
         "status": "packaged",
         "output_directory": str(output),
         "archives": archives,
+        "format_precheck": {**checked, "source": str(output / Path(checked['source']).name),
+                            "original_report": str(output / 'format-precheck/report.json'),
+                            "note": "原报告保留检查时临时路径；输入身份按source_identity核对，报告随附件迁移"},
         "qa": qa,
         "form": {**form, "path": str(output / "填表信息.md")},
         "upload_limit_bytes": upload_limit_bytes,

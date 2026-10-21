@@ -68,7 +68,7 @@ def protocol(value):
 
 
 def minimum_repeats(p):
-    return 5 if p.get("high_variance") else 3 if p["training"] or p["evaluation_mode"] == "random" else 1
+    return 1 if p['evaluation_mode'] == 'deterministic' else 5 if p.get('high_variance') else 3
 
 
 def raw_value(record, metric):

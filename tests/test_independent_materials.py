@@ -122,6 +122,17 @@ class IndependentMaterialTests(unittest.TestCase):
         self.assertEqual(before,{p:_sha256(p) for p in self.root.rglob("*") if p.is_file()})
         self.assertFalse((self.root/".autoresearch-flow").exists())
 
+    def test_custom_models_and_explicit_equivalent_trajectory_names_are_accepted(self):
+        path = self.root / 'expert_evidence/run_summary.json'
+        data = json.loads(path.read_text())
+        for i, track in enumerate(('codex', 'seed')):
+            target = f'expert_evidence/method-history-{i}.json'
+            (self.root / f'expert_evidence/trajectory_{track}.json').rename(self.root / target)
+            data['agent_execution'][i].update(model=f'custom-model-{i}', track=track, trajectory_path=target)
+        path.write_text(json.dumps(data))
+        result = check(self.root)
+        self.assertEqual(result['status'], 'format_checked_not_qa', result['issues'])
+
     def test_native_jsonl_conversion_preserves_source_and_history_best(self):
         source=self.root.parent/"agent.jsonl";source.write_text("\n".join(json.dumps(x) for x in self.rows)+"\n")
         before=source.read_bytes()
@@ -206,7 +217,16 @@ class IndependentMaterialTests(unittest.TestCase):
         self.assertIn("FIELD_ERROR",self.codes(check(self.root)))
         fixture(self.root)
         (self.root/"expert_evidence/nop_trial/config.json").unlink()
-        self.assertIn("FIELD_ERROR",self.codes(check(self.root)))
+        result = check(self.root)
+        self.assertEqual(result['status'], 'format_checked_not_qa')
+        self.assertTrue(any(r['code'] == 'NOP_INCOMPLETE' and r['level'] == 'warning' for r in result['issues']))
+
+    def test_absent_nop_does_not_block_materials(self):
+        import shutil
+        shutil.rmtree(self.root/'expert_evidence/nop_trial')
+        result = check(self.root)
+        self.assertEqual(result['status'], 'format_checked_not_qa')
+        self.assertTrue(any(r['code'] == 'NOP_MISSING' and r['level'] == 'warning' for r in result['issues']))
 
     def test_best_retest_source_or_seed_drift(self):
         (self.root/"expert_evidence/best_method/main.py").write_text("# different method\n")

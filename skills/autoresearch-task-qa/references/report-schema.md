@@ -1,5 +1,7 @@
 # Report schema
 
+This is the historical `--policy strict` report schema. The default `implementation` flow and current `precheck` alias use [implementation-report.md](implementation-report.md), schema 6. The historical precheck behavior below is retained only to explain old reports; the current CLI does not select it.
+
 `scripts/audit_task.py` writes `report.json` and `report.md`.
 
 The JSON top level is:

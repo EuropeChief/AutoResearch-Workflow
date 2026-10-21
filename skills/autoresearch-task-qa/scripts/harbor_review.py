@@ -10,6 +10,9 @@ from pathlib import Path, PurePosixPath
 import re
 
 import docker_paths
+import evidence_refs
+import task_fingerprint
+import deployment_review
 
 try:
     import tomllib
@@ -17,7 +20,7 @@ except ImportError:
     tomllib = None
 
 LIMIT = 4 * 1024 * 1024
-RULESET = "harbor-compatibility-2026-10-03-v0.3.2"
+RULESET = "harbor-compatibility-2026-10-15-v0.3.10"
 INTERNAL_SOURCE = "https://bytedance.larkoffice.com/wiki/A7FUwJBALici6Gku3rWc4EsinLf"
 OFFICIAL_SOURCE = "https://docs.harborframework.com/core-concepts/tasks/separate-verifier"
 H_IDS = [f"H{i:02d}" for i in range(1, 7)]
@@ -62,17 +65,11 @@ def collect(root, files):
     return {"ruleset": RULESET, "sources": [INTERNAL_SOURCE, OFFICIAL_SOURCE],
             "target_version": None, "provider": None, "observations": observations,
             "path_contract": docker_paths.inspect(root, selected, cfg, require_separate=True),
-            "checks": [], "static_status": "manual", "runtime_status": "not_run"}
+            "checks": [], "static_status": "manual", "runtime_status": "not_reviewed"}
 
 
 def resolve_ref(root, ref):
-    if not isinstance(ref, str):
-        raise ValueError("Harbor evidence must be a string")
-    name = re.sub(r":\d+$", "", ref.split("#", 1)[0])
-    path = (root / name).resolve()
-    if not path.is_relative_to(root.resolve()) or not path.is_file():
-        raise ValueError(f"Harbor evidence is not a file inside the inspected bundle: {ref}")
-    return path
+    return evidence_refs.resolve_ref(root, ref)
 
 
 def numeric_reward(value):
@@ -145,10 +142,27 @@ def trial_task_identity(root, task_root, config, result, binding=None):
 
 
 def validate_trial_evidence(root, refs, task_root=None, binding=None):
-    """Cross-check one NOP or candidate Trial, with separate identity/version review."""
+    """Prefer a supplied NOP Trial, with separate identity/version review."""
     paths = [resolve_ref(root, ref) for ref in refs]
     results = [p for p in paths if p.name == "result.json"]
+    nop_results = []
     for result_path in results:
+        # Probe both same-Trial headers so inconsistent identities or a malformed
+        # NOP file still reach the strict checks below. Supplemental candidates
+        # must not determine H06 merely because their references appear first.
+        for path, field in ((result_path.parent / "config.json", "agent"),
+                            (result_path, "agent_info")):
+            if path not in paths:
+                continue
+            try:
+                document = json.loads(bounded_text(path))
+            except (OSError, ValueError, UnicodeError):
+                continue  # Selection only; selected Trial files are read strictly below.
+            agent = document.get(field) if isinstance(document, dict) else None
+            if isinstance(agent, dict) and agent.get("name") == "nop":
+                nop_results.append(result_path)
+                break
+    for result_path in nop_results or results:
         trial = result_path.parent
         config = trial / "config.json"
         json_reward = trial / "verifier" / "reward.json"
@@ -169,6 +183,9 @@ def validate_trial_evidence(root, refs, task_root=None, binding=None):
             raise ValueError("H06 requires consistent config/result Agent names")
         if result.get("verifier_environment_mode") != "separate":
             raise ValueError("H06 requires result.json verifier_environment_mode = separate")
+        solver_id, verifier_id = result.get("agent_sandbox_id"), result.get("verifier_sandbox_id")
+        if solver_id and verifier_id and solver_id == verifier_id:
+            raise ValueError("Solver and Verifier evidence identifies the same sandbox")
         if result.get("exception_info"):
             raise ValueError("Harbor trial has exception_info; cannot claim successful run evidence")
         if not result.get("finished_at"):
@@ -189,8 +206,8 @@ def validate_trial_evidence(root, refs, task_root=None, binding=None):
 
 
 def aggregate(rows):
-    statuses = {row["status"] for row in rows}
-    return "fail" if "fail" in statuses else "manual" if "manual" in statuses else "pass"
+    from project_policy import aggregate as aggregate_status
+    return aggregate_status(rows)
 
 
 def hidden_contract(root, declaration):
@@ -286,9 +303,17 @@ def apply_review(current, review, root):
             cfg = tomllib.loads(bounded_text(task_root / "task.toml"))
         except (OSError, ValueError, UnicodeError):
             pass  # H02 owns TOML syntax; never infer config fields from malformed text.
+    config_shape_errors = []
+    if isinstance(cfg, dict):
+        for section in ("environment", "agent", "verifier"):
+            if section in cfg and not isinstance(cfg[section], dict):
+                config_shape_errors.append(f"task.toml 的 {section} 必须是 table，不能是标量或列表。")
+        if isinstance(cfg.get("verifier"), dict) and "environment" in cfg["verifier"] and not isinstance(cfg["verifier"]["environment"], dict):
+            config_shape_errors.append("task.toml 的 verifier.environment 必须是 table，不能是标量或列表。")
     path_contract = docker_paths.inspect(root, selected, cfg, declaration, require_separate=True)
     hidden = hidden_contract(root, review.get("hidden_review"))
     artifacts = artifact_contract(root, cfg, review)
+    deployment = deployment_review.assess(root, task_root, cfg, review, resolve_ref)
     trial_evidence = None
     manual_resolution = declaration.get("manual_resolution")
     if manual_resolution is not None:
@@ -304,7 +329,8 @@ def apply_review(current, review, root):
     final = []
     for row in sorted(rows, key=lambda r: r["id"]):
         check_id, status = row["id"], row.get("status")
-        if status not in ("pass", "fail", "manual", "not_applicable"):
+        from project_policy import advisory, allowed
+        if status not in ("pass", "fail", "manual", "not_applicable", "warn") or (status == "warn" and not allowed(row)):
             raise ValueError(f"{check_id}: invalid Harbor status")
         if status == "not_applicable" and check_id not in ("H05", "H06"):
             raise ValueError(f"{check_id}: required Harbor check cannot be skipped")
@@ -313,8 +339,8 @@ def apply_review(current, review, root):
             raise ValueError(f"{check_id}: concise summary and evidence array required")
         paths = [resolve_ref(root, ref) for ref in refs]
         if check_id == "H06" and not refs:
-            status = "fail"
-            reason = "缺少必交的当前题包版本 NOP 自检记录；请提交一次成功运行的记录，确认题包能构建并跑通独立 Verifier。"
+            status = "warn"
+            reason = "未提供当前题包版本的 NOP 自检记录；按项目通知仅提示，不单独阻断或强制补跑，未证明运行通过。"
         if status == "pass" and not refs:
             raise ValueError(f"{check_id}: passing requires evidence")
         if check_id in ("H01", "H02") and status == "pass":
@@ -333,8 +359,13 @@ def apply_review(current, review, root):
             verifier_env = verifier_cfg.get("environment") if isinstance(verifier_cfg, dict) else None
             os_name = (verifier_env or environment or {}).get("os") if isinstance(verifier_env or environment or {}, dict) else None
             test_name = "test.bat" if os_name == "windows" else "test.sh"
-            required = [task_root / "environment" / "Dockerfile", task_root / "tests" / "Dockerfile",
-                        task_root / "tests" / test_name]
+            selection = path_contract.get("image_selection", {})
+            required = [task_root / "instruction.md", task_root / "task.toml"]
+            if not isinstance(environment, dict) or not environment.get("docker_image"):
+                if not docker_paths.compose_files(task_root / "environment"):
+                    required.append(task_root / "environment/Dockerfile")
+            if selection.get("source") in ("agent_build", "agent_image", "tests_dockerfile"):
+                required.append(task_root / "tests" / test_name)
             missing = [p.relative_to(task_root).as_posix() for p in required if not p.is_file() or p.is_symlink()]
             if missing:
                 status = "fail"
@@ -351,6 +382,9 @@ def apply_review(current, review, root):
             status, reason = "fail", artifacts["summary"]
         elif check_id == "H02" and status == "pass" and artifacts["status"] == "manual":
             status, reason = "manual", artifacts["summary"]
+        if check_id == "H02" and config_shape_errors:
+            status, reason = "fail", "；".join(config_shape_errors)[:220]
+            refs = list(dict.fromkeys(refs + [(task_root / "task.toml").relative_to(root.resolve()).as_posix()]))
         if check_id == "H03" and status == "pass" and review["provider"] == "unknown":
             raise ValueError("H03: unknown provider cannot pass")
         if check_id == "H03":
@@ -362,22 +396,50 @@ def apply_review(current, review, root):
             elif path_contract["status"] == "manual" and status == "pass" and (not manual_resolution or (declaration["profile"] == "custom" and not adapter_refs)):
                 status = "manual"
                 reason = "路径存在静态无法解析项；需提供 path_contract.manual_resolution 的真实证据后才能通过。"
-            elif status == "pass" and not {task_root / "environment" / "Dockerfile", task_root / "tests" / "Dockerfile"} <= set(paths):
-                status = "manual"
-                reason = "H03 需同时引用 Agent 与 Verifier 的 Dockerfile 并复核双镜像构建路径。"
-        if check_id == "H06" and status == "pass":
-            trial_evidence = validate_trial_evidence(root, refs, task_root, review.get("trial_task_binding"))
-            if trial_evidence["agent"] != "nop":
-                status = "fail"
-                reason = "必交一次 NOP 自检记录；当前提供的是其他 Agent 的 Trial，请补交当前题包版本的 NOP 记录。"
-            elif trial_evidence["task_binding"]["status"] != "pass":
-                status = "manual"
-                reason = "NOP 运行记录一致，当前题包版本尚待确认；可引用已有配置、日志或专家说明完成关联。"
+            elif status == "pass":
+                environment = cfg.get("environment", {}) if isinstance(cfg, dict) else {}
+                environment = environment if isinstance(environment, dict) else {}
+                agent_build = task_root / "environment/Dockerfile"
+                if not agent_build.is_file() and docker_paths.compose_files(task_root / "environment"):
+                    agent_build = docker_paths.compose_files(task_root / "environment")[0]
+                required_refs = {task_root / "task.toml"} if environment.get("docker_image") else {agent_build}
+                if path_contract.get("image_selection", {}).get("source") == "tests_dockerfile":
+                    required_refs.add(task_root / "tests/Dockerfile")
+                elif path_contract.get("image_selection", {}).get("source") == "verifier_image":
+                    required_refs.add(task_root / "task.toml")
+                elif path_contract.get("image_selection", {}).get("source") == "tests_compose":
+                    required_refs.update(docker_paths.compose_files(task_root / "tests"))
+                else:
+                    required_refs.add(task_root / "tests" / ("test.bat" if environment.get("os") == "windows" else "test.sh"))
+                if not required_refs <= set(paths):
+                    status = "manual"
+                    reason = "H03 须引用实际选中的镜像/构建配置和 tests 供给入口，复核独立依赖、上传或预置路径。"
+        if check_id == "H06" and status in ("pass", "warn") and refs:
+            names = {path.name for path in paths}
+            complete = {"config.json", "result.json"} <= names and bool(names & {"reward.txt", "reward.json"}) and bool(names & {"trial.log", "test-stdout.txt"})
+            if not complete:
+                status = "warn"
+                reason = "NOP 原件不完整；保留已交记录，仅提示缺证，不单独要求补跑。"
+            else:
+                # Complete supplied records must still expose real execution errors.
+                trial_evidence = validate_trial_evidence(root, refs, task_root, review.get("trial_task_binding"))
+                if trial_evidence["agent"] != "nop":
+                    status = "warn"
+                    reason = "已交其他Agent的Trial，未提供NOP记录；按通知保留提示，不冒称NOP已执行。"
+                elif trial_evidence["task_binding"]["status"] != "pass":
+                    status = "warn"
+                    reason = "NOP记录存在，当前版本对应尚未确认；仅提示，不单独阻断或强制补跑。"
         if check_id == "H06" and status == "not_applicable" and refs:
             raise ValueError("H06: supplied runtime evidence must be reviewed, not skipped")
-        final.append({"id": check_id, "title": H_TITLES[H_IDS.index(check_id)], "status": status,
-                      "summary": reason, "evidence": refs})
-    if final[4]["status"] == "not_applicable" and any(Path(re.sub(r":\d+$", "", ref.split("#", 1)[0])).name == "config.json" for ref in final[5]["evidence"]):
+        platform_status = deployment["config_status"] if check_id == "H02" else deployment["compose_status"] if check_id == "H03" else "pass"
+        if platform_status != "pass":
+            status = deployment_review.aggregate([status, platform_status])
+            reason = (reason + "；" + deployment["summary"])[:220]
+            refs = list(dict.fromkeys(refs + deployment["evidence"]))
+        result = {"id": check_id, "title": H_TITLES[H_IDS.index(check_id)], "status": status,
+                  "summary": reason, "evidence": refs}
+        final.append(advisory(result, "NOP_EVIDENCE") if check_id == "H06" and status == "warn" else result)
+    if final[4]["status"] == "not_applicable" and any(resolve_ref(root, ref).name == "config.json" for ref in final[5]["evidence"]):
         final[4]["status"] = "manual"
         final[4]["summary"] = "已有 Trial config.json，须复核实际调用配置与任务选择。"
     current = dict(current)
@@ -386,12 +448,14 @@ def apply_review(current, review, root):
     current["path_contract"] = path_contract
     current["hidden_review"] = hidden
     current["artifact_contract"] = artifacts
+    current["deployment_contract"] = deployment
+    current["config_shape_errors"] = config_shape_errors
     current["trial_evidence"] = trial_evidence
     current["checks"] = final
     current["static_status"] = aggregate(final[:5])
     runtime = final[5]["status"]
     current["runtime_status"] = "not_run" if not final[5]["evidence"] else {
-        "pass": "evidence_consistent", "fail": "failed", "manual": "unverified", "not_applicable": "not_run"
+        "pass": "evidence_consistent", "fail": "failed", "manual": "unverified", "warn": "unverified", "not_applicable": "not_run"
     }[runtime]
     current["qa17_status"] = aggregate(final)
     return current
@@ -399,7 +463,8 @@ def apply_review(current, review, root):
 
 def summary(harbor):
     static = {"pass": "通过", "fail": "不通过", "manual": "未完成"}[harbor["static_status"]]
-    runtime = {"not_run": "缺少必交 NOP 自检记录，动态运行未验证，QA17 不通过",
+    runtime = {"not_reviewed": "运行材料尚未语义复核；本收集初稿不判定是否缺少 NOP",
+               "not_run": "缺少必交 NOP 自检记录，动态运行未验证，QA17 不通过",
                "evidence_consistent": "已有 NOP 自检记录支持当前版本构建与运行可用，未独立复跑或鉴定真伪",
                "failed": "已提交自检记录不满足 NOP 运行要求", "unverified": "已提交 NOP 的运行或任务版本关联待核实"}[harbor["runtime_status"]]
     return f"Harbor 格式/接口：{static}；{runtime}。"

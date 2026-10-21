@@ -60,16 +60,16 @@
 - 产生证据：`constraint_implementation`, `hard_gate_tests`
 - 影响性变更后复核：`是`
 
-### M07-S2 — 接通评分与 NOP 链路
+### M07-S2 — 接通评分链路
 
 - 规则来源：`M07`（`rules/README.md#M07`）
-- 当前行动：实现公开反馈、候选移交、独立 Verifier/reward 和当前题包版本的 NOP 入口。
-- 所需证据：`scoring_entry`, `verifier_source`, `nop_plan`
+- 当前行动：实现公开反馈、候选移交和独立 Verifier/reward；已有 NOP 可作补充，不因缺证阻断。
+- 所需证据：`scoring_entry`, `verifier_source`
 - 检查性质：`mixed`；严重性：`hard`
 - 阶段门前阻断：`task_ready`, `anchor_freeze`, `dual_track_launch`
 - 读取前置：`M03-S2`, `M05-S2`, `M06-S2`
 - 消费证据：`run_protocol`, `exposure_manifest`, `constraint_implementation`
-- 产生证据：`scoring_entry`, `nop_plan`
+- 产生证据：`scoring_entry`
 - 影响性变更后复核：`是`
 
 ### C01-S2 — 清理并可信写入结果
@@ -99,7 +99,7 @@
 ### C05-S2 — 落实双镜像和产物路径
 
 - 规则来源：`C05`（`rules/README.md#C05`）
-- 当前行动：配置 Agent/Verifier 双镜像、COPY/WORKDIR/入口和候选移交；区分容器 source、宿主 artifacts/destination 与 Verifier 内原源路径。
+- 当前行动：配置 Agent/Verifier 双镜像、COPY/WORKDIR/入口和候选移交；区分容器 source、宿主 artifacts/destination 与 Verifier 内原源路径。静态审阅镜像源构建到实际运行的接入、随包/外置资产的取得与身份校验、可配置宿主路径，结论并入已有实现材料。
 - 所需证据：`docker_path_contract`, `artifact_config`, `artifact_transfer_probe`
 - 检查性质：`mixed`；严重性：`hard`
 - 阶段门前阻断：`task_ready`, `anchor_freeze`, `dual_track_launch`
@@ -111,7 +111,7 @@
 ### C06-S2 — 固定目标版本配置
 
 - 规则来源：`C06`（`rules/README.md#C06`）
-- 当前行动：让 task/provider/agent、Verifier 和启动条件使用目标 Harbor schema 与实际适配入口。
+- 当前行动：让 task/provider/agent、Verifier 和启动条件使用目标 Harbor schema 与实际适配入口。沿部署入口至评分 worker 静态审阅可信设备分配是否一致、组件版本是否可取得并按说明调用；不只检查入口可配置。
 - 所需证据：`task_toml`, `provider_config`, `version_probe`
 - 检查性质：`mixed`；严重性：`hard`
 - 阶段门前阻断：`task_ready`, `anchor_freeze`, `dual_track_launch`

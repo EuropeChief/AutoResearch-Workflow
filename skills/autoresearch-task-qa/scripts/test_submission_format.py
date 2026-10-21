@@ -309,13 +309,22 @@ class SubmissionFormatTests(unittest.TestCase):
         (hidden / "cases.json").unlink()
         self.assertEqual(fmt.collect(root)["status"], "aligned")
 
-    def test_optional_source_oracle_and_required_two_dockerfiles(self):
+    def test_optional_source_oracle_and_branch_specific_dockerfiles(self):
         root = self.make_package(seeds=(101,))
         harbor = root / "workspace" / "harbor_task"
         (harbor / "solution").rmdir()
         self.assertEqual(fmt.collect(root)["status"], "aligned")
         (harbor / "tests" / "Dockerfile").unlink()
-        self.assertIn("MISSING_HARBOR_DOCKERFILE", self.issue_codes(fmt.collect(root)))
+        self.assertEqual(fmt.collect(root)["status"], "aligned")
+
+    def test_trajectory_source_indexes_are_not_final_rounds(self):
+        root = self.make_package(seeds=(101,))
+        self.write_trajectory(root, [self.trajectory_round()])
+        metadata = root / "expert_evidence/trajectory_source_map.json"
+        metadata.write_text('{"transformation":"index","groups":[]}')
+        report = fmt.collect(root)
+        self.assertNotIn("INVALID_TRAJECTORY_ROUNDS", self.issue_codes(report))
+        self.assertNotIn(metadata.name, report["expert_evidence"]["trajectories"])
 
     def test_complete_eight_field_trajectories_are_valid_without_extra_fields(self):
         root = self.make_package(seeds=(101,))

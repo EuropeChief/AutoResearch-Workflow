@@ -1,4 +1,4 @@
-"""v0.3.2 contract regressions using explicitly synthetic reports."""
+"""Current contract regressions using explicitly synthetic reports."""
 import copy
 import unittest
 
@@ -10,20 +10,24 @@ def synthetic_report(package=None):
     def row(key, status="pass"):
         return {"id": key, "status": status, "summary": "Synthetic contract fixture only",
                 "evidence": [] if status == "not_applicable" else ["fixture.txt"]}
-    checks = [row(f"QA{i:02d}", "not_applicable" if i == 15 else "pass") for i in range(1, 22)]
+    checks = [row(f"QA{i:02d}") for i in range(1, 22)]
     return {
-        "schema_version": 4,
+        "schema_version": 6,
         "source": {"path": str(package) if package else "/synthetic", "kind": "directory", "sha256": None},
-        "policy": {"name": "implementation", "revision": "research-quality-v3"},
+        "policy": {"name": "implementation", "revision": "innerfield-deployment-v6"},
         "checks": checks,
         "content_gates": {"schema_version": 1, "checks": [row(f"G{i:02d}") for i in range(1, 4)]},
         "overview": {},
         "runtime_review": {"status": "pass"},
+        "trajectory_review": {"content_status": "pass", "status": "pass", "binding_errors": []},
+        "resource_review": {"status": "pass"},
+        "task_fingerprint": {"status": "pass"},
         "format_alignment": {"review": {"status": "aligned_with_extras"}},
-        "review": {"completed": True},
+        "review": {"completed": True, "stage": "semantic_review"},
         "summary": {"decision": "PASS"},
         "harbor": {
-            "ruleset": "harbor-compatibility-2026-10-03-v0.3.2",
+            "ruleset": "harbor-compatibility-2026-10-15-v0.3.10",
+            "deployment_contract": {"status": "pass"},
             "checks": [row(f"H{i:02d}", "not_applicable" if i == 5 else "pass") for i in range(1, 7)],
             "runtime_status": "evidence_consistent", "static_status": "pass", "qa17_status": "pass",
             "trial_evidence": {"agent": "nop", "trial_dir": "expert_evidence/nop_trial/t1",
@@ -35,6 +39,34 @@ def synthetic_report(package=None):
 
 
 class QaContractTests(unittest.TestCase):
+    def test_only_confirmed_advisories_can_close_delivery(self):
+        from autoresearch_flow.materials_io import bundled
+        notice = bundled('project_policy')
+        report = synthetic_report()
+        report['policy']['execution_revision'] = notice.REVISION
+        rows = {r['id']: r for r in report['checks'] + report['content_gates']['checks'] + report['harbor']['checks']}
+        for key in ('G02', 'G03', 'QA03', 'QA13', 'QA15'):
+            rows[key].update(notice.advisory(rows[key], 'HARDWARE_RECHECK'))
+        rows['G03']['automatic_status'] = 'pass'
+        rows['QA21'].update(notice.advisory(rows['QA21'], 'TASK_FINGERPRINT'))
+        for key in ('QA17', 'H06'):
+            rows[key].update(notice.advisory(rows[key], 'NOP_EVIDENCE'))
+        rows['H06']['evidence'] = []
+        report['harbor'].update(runtime_status='not_run', qa17_status='warn', trial_evidence=None)
+        report['resource_review']['status'] = 'warn'
+        report['trajectory_review']['status'] = 'warn'
+        validate_qa_report(report, require_pass=True)
+        for mutation in ('revision', 'wrong_scope', 'core_quality', 'resource_overrun', 'broken_json', 'wrong_task'):
+            changed = copy.deepcopy(report)
+            if mutation == 'revision': changed['policy'].pop('execution_revision')
+            if mutation == 'wrong_scope': changed['checks'][0].update(notice.advisory(changed['checks'][0], 'HARDWARE_RECHECK'))
+            if mutation == 'core_quality': changed['content_gates']['checks'][2]['automatic_status'] = 'fail'
+            if mutation == 'resource_overrun': changed['resource_review']['problems'] = ['actual overrun']
+            if mutation == 'broken_json': changed['trajectory_review']['binding_errors'] = ['invalid JSON']
+            if mutation == 'wrong_task': changed['trajectory_review']['trajectories'] = [{'task_binding': {'status': 'fail'}}]
+            with self.subTest(mutation=mutation), self.assertRaises(FlowError):
+                validate_qa_report(changed, require_pass=True)
+
     def test_pass_requires_nop_evidence(self):
         result = validate_qa_report(synthetic_report(), require_pass=True)
         self.assertEqual(result["runtime_status"], "evidence_consistent")
@@ -71,7 +103,7 @@ class QaContractTests(unittest.TestCase):
                 validate_qa_report(r)
 
     def test_old_qa_exemptions_are_not_allowed(self):
-        for key in ("QA06", "QA09", "QA10", "QA17"):
+        for key in ("QA06", "QA09", "QA10", "QA15", "QA17"):
             r = synthetic_report()
             next(x for x in r["checks"] if x["id"] == key)["status"] = "not_applicable"
             with self.subTest(key=key), self.assertRaises(FlowError):
@@ -101,3 +133,16 @@ class QaContractTests(unittest.TestCase):
         r = synthetic_report()
         r["review"]["completed"] = False
         with self.assertRaises(FlowError): validate_qa_report(r)
+
+    def test_collection_and_unresolved_new_gates_cannot_claim_pass(self):
+        for field in ("stage", "trajectory", "resources", "deployment", "binding", "fingerprint", "inspection"):
+            report = synthetic_report()
+            if field == "stage": report["review"]["stage"] = "collection"
+            if field == "trajectory": report["trajectory_review"]["content_status"] = "manual"
+            if field == "resources": report["resource_review"]["status"] = "manual"
+            if field == "deployment": report["harbor"]["deployment_contract"]["status"] = "fail"
+            if field == "binding": report["trajectory_review"]["binding_errors"] = ["task_hash_mismatch"]
+            if field == "fingerprint": report["task_fingerprint"]["status"] = "manual"
+            if field == "inspection": report["inspection_error"] = "could not inspect"
+            with self.subTest(field=field), self.assertRaises(FlowError):
+                validate_qa_report(report, require_pass=True)

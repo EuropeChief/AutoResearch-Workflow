@@ -1,0 +1,21 @@
+# 仅示例配置，不是完整题包。将镜像名替换为你的平台可用镜像。
+artifacts = ["/workspace/solution"]
+
+[environment]
+docker_image = "hub.byted.org/team/task-solver:v1"
+cpus = 16
+memory_mb = 65536
+gpus = 0
+
+[agent]
+timeout_sec = 43200
+
+[verifier]
+environment_mode = "separate"
+timeout_sec = 3600
+
+[verifier.environment]
+docker_image = "hub.byted.org/team/task-verifier:v1"
+cpus = 8
+memory_mb = 32768
+gpus = 0

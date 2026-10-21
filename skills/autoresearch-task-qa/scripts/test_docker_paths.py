@@ -193,6 +193,71 @@ class SeparateDockerPathTests(unittest.TestCase):
         self.assertNotIn("/tests/test.sh", result["mapped_files"])
         self.assertNotIn("private_copy_source", self.codes(result))
 
+    def test_reusing_solver_build_uploads_tests_without_tests_dockerfile(self):
+        (self.task / "tests/Dockerfile").unlink()
+        result = self.inspect()
+        self.assertEqual(result["status"], "pass")
+        self.assertEqual(result["image_selection"]["tests_delivery"], "runtime_upload")
+        self.assertEqual(result["verifier_build_context"], "task/environment")
+        self.assertNotIn("verifier_dockerfile_missing", self.codes(result))
+
+    def test_solver_prebuilt_image_does_not_require_dockerfiles(self):
+        (self.task / "environment/Dockerfile").unlink()
+        (self.task / "tests/Dockerfile").unlink()
+        self.config["environment"] = {"docker_image": "example@sha256:abc"}
+        result = self.inspect()
+        self.assertEqual(result["status"], "manual")
+        self.assertEqual(result["image_selection"]["source"], "agent_image")
+        self.assertNotIn("agent_dockerfile_missing", self.codes(result))
+
+    def test_explicit_same_verifier_image_does_not_upload_tests(self):
+        (self.task / "tests/Dockerfile").unlink()
+        self.config["environment"] = {"docker_image": "example@sha256:abc"}
+        self.config["verifier"]["environment"] = {"docker_image": "example@sha256:abc"}
+        result = self.inspect()
+        self.assertEqual(result["image_selection"]["source"], "verifier_image")
+        self.assertEqual(result["image_selection"]["tests_delivery"], "baked")
+        self.assertEqual(result["status"], "manual")
+
+    def test_all_compose_names_are_discovered_for_both_roles(self):
+        for name in paths.COMPOSE_NAMES:
+            with self.subTest(name=name):
+                for directory in ("environment", "tests"):
+                    compose = self.task / directory / name
+                    self.write(f"{directory}/{name}", "services: {}\n")
+                    self.assertEqual(paths.compose_files(self.task / directory), [compose])
+                    compose.unlink()
+                dockerfile = self.task / "tests/Dockerfile"
+                original = dockerfile.read_text()
+                dockerfile.unlink()
+                self.write(f"tests/{name}", "services: {}\n")
+                self.assertEqual(paths.image_selection(self.task, self.config)["source"], "tests_compose")
+                (self.task / "tests" / name).unlink()
+                dockerfile.write_text(original)
+
+    def test_solver_compose_requires_review_instead_of_missing_dockerfile(self):
+        (self.task / "environment/Dockerfile").unlink()
+        (self.task / "tests/Dockerfile").unlink()
+        self.write("environment/docker-compose.yaml", "services:\n  main:\n    image: example:local\n")
+        for profile in (paths.NATIVE, paths.TEACHING):
+            with self.subTest(profile=profile):
+                result = paths.inspect(self.root, "task", self.config,
+                                       declaration={"profile": profile}, require_separate=True)
+                self.assertEqual(result["status"], "manual")
+                self.assertIn("agent_compose_unverified", self.codes(result))
+                self.assertNotIn("agent_dockerfile_missing", self.codes(result))
+                self.assertNotIn("dockerfile_missing", self.codes(result))
+                self.assertEqual(result["image_selection"]["tests_delivery"], "runtime_upload")
+
+    def test_tests_build_takes_precedence_over_solver_image(self):
+        self.config["environment"] = {"docker_image": "example@sha256:abc"}
+        self.assertEqual(self.inspect()["image_selection"]["source"], "tests_dockerfile")
+
+    def test_missing_uploaded_tests_entry_is_a_failure(self):
+        (self.task / "tests/Dockerfile").unlink()
+        (self.task / "tests/test.sh").unlink()
+        self.assertEqual(self.inspect()["status"], "fail")
+
     def test_teaching_separate_does_not_require_oracle_hook(self):
         self.write("environment/Dockerfile", "FROM python:3.11-slim\nWORKDIR /workspace\nCOPY environment/public_eval/ /workspace/public_eval/\n")
         result = paths.inspect(self.root, "task", self.config,

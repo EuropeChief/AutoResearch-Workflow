@@ -29,19 +29,19 @@
 ### M07-S4 — 双轨评分入口预检
 
 - 规则来源：`M07`（`rules/README.md#M07`）
-- 当前行动：确认两轨均可通过同一可信入口得到公开分数，NOP/候选路径无异常。
-- 所需证据：`track_scoring_probe`, `nop_result`
+- 当前行动：确认两轨均可通过同一可信入口得到公开分数，有效候选评分路径无异常；已有 NOP 按实际覆盖范围参考，缺证不阻断。
+- 所需证据：`track_scoring_probe`
 - 检查性质：`mechanical`；严重性：`hard`
 - 阶段门前阻断：`dual_track_launch`
 - 读取前置：`M07-S3`, `C04-S2`
-- 消费证据：`nop_result`, `entry_probe`
+- 消费证据：`entry_probe`
 - 产生证据：`track_scoring_probe`
 - 影响性变更后复核：`是`
 
 ### M08-S4 — 冻结双轨运行与净时长口径
 
 - 规则来源：`M08`（`rules/README.md#M08`）
-- 当前行动：为两轨分别固定模型/Prompt/资源、10h 或有依据的 7h 资格、净时长计时和中断续接规则。
+- 当前行动：为两轨分别固定模型/Prompt/资源、10h 或有依据的 7h 资格、净时长计时和中断续接规则。 在既有双轨启动前检查中保留格式脚本原结果和时点解释，保存真实起始题包快照及四项指纹。
 - 所需证据：`track_configs`, `duration_assessment`, `timing_ledger`, `session_identity`
 - 检查性质：`mixed`；严重性：`hard`
 - 阶段门前阻断：`dual_track_launch`
@@ -50,7 +50,7 @@
 - 产生证据：`track_configs`, `duration_assessment`, `timing_ledger`
 - 影响性变更后复核：`是`
 
-- `dual_track_launch` 前先核准备证据：`track_configs`, `duration_assessment`, `timing_plan`, `session_policy`
+- `dual_track_launch` 前先核准备证据：`track_configs`, `duration_assessment`, `timing_plan`, `session_policy`, `format_precheck`, `task_binding`
 
 ### M09-S4 — 保存 Agent 原生轨迹
 

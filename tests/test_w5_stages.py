@@ -228,6 +228,19 @@ class StageTests(unittest.TestCase):
                                         {"id": "QA16", "status": "pass"},
                                         {"id": "QA15", "status": "skip"}])
 
+    def test_qa_dispositions_preserve_only_scoped_report_warnings(self):
+        from autoresearch_flow.materials_io import bundled
+        policy = bundled("project_policy")
+        row = policy.advisory({"id": "QA21"}, "TASK_FINGERPRINT")
+        report = {"policy": {"execution_revision": policy.REVISION}, "checks": [row]}
+        self.flow._qa_coverage(report, [{"id": "QA21", "status": "warn"}])
+        with self.assertRaises(FlowError):
+            self.flow._qa_coverage(report, [{"id": "QA21", "status": "pass"}])
+        for key in ("QA01", "QA16"):
+            row["id"] = key
+            with self.subTest(key=key), self.assertRaises(FlowError):
+                self.flow._qa_coverage(report, [{"id": key, "status": "warn"}])
+
     def test_unapproved_confirmation_is_rejected(self):
         spec = self.finish_spec("1")
         path = self.root / spec["approval"]["path"]
@@ -257,6 +270,22 @@ class StageTests(unittest.TestCase):
             self.assertEqual(result["nop_execution"]["agent"], "nop")
             with self.assertRaises(FlowError):
                 self.flow._gate("6.2", {"nop_execution": self.nop_ref})
+
+    def test_nop_absence_is_advisory_but_supplied_execution_error_still_blocks(self):
+        task = self.root / "workspace/harbor_task"
+        result = self.flow._nop_record({}, self.root, task)
+        self.assertEqual((result["status"], result["runtime_status"]), ("warn", "not_run"))
+        self.assertEqual(result["advisory_code"], "NOP_EVIDENCE")
+        record = json.loads((self.root / self.nop_ref["path"]).read_text())
+        raw_result = self.root / record["trial_files"]["result"]["path"]
+        data = json.loads(raw_result.read_text())
+        data["exception_info"] = {"error": "synthetic verifier crash"}
+        raw_result.write_text(json.dumps(data))
+        record["trial_files"]["result"]["sha256"] = _sha256(raw_result)
+        ref = self.fx.ref("nop-execution.json", json.dumps(record))
+        with self.assertRaises(FlowError) as caught:
+            self.flow._nop_record({"nop_execution": ref}, self.root, task)
+        self.assertEqual(caught.exception.code, "NOP_EVIDENCE_INVALID")
 
     def test_partial_work_can_resume_without_completion_claim(self):
         self.record("1.1", status="in_progress")

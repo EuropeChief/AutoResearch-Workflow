@@ -15,8 +15,7 @@ from .materials_trajectory import check_rounds
 from .runtime_events import effective_seconds
 
 TRACKS = ("codex", "seed")
-EXPERT_FILES = ("专家作业说明文档.md", "expert_annotation.json", "run_summary.json",
-                "trajectory_codex.json", "trajectory_seed.json")
+EXPERT_FILES = ("专家作业说明文档.md", "expert_annotation.json", "run_summary.json")
 HEADINGS = ("Goal", "Task Setting", "Objective and Metrics", "Allowed Scope", "Hard Boundaries",
             "Submission Instructions", "Workflow & Iteration", "Completion Criteria")
 VALID_RESULTS = {"COMPLETE", "COMPLETED", "SUCCESS", "SUCCEEDED", "VALID", "OK"}
@@ -134,9 +133,11 @@ def summary(c, a, trajectories):
             if not isinstance(row, dict):
                 c.problem("SUMMARY_FIELD", loc, "须为对象")
                 continue
-            model = str(row.get("model", "")).casefold()
-            track = "codex" if "gpt-5.6" in model else "seed" if "seed" in model and "2.1" in model else None
-            c.required(track is not None and track not in seen and row.get("runtime") == "Codex", "SUMMARY_MODEL", loc, "须为教程的两种不同 Codex 模型组合")
+            track = row.get('track', TRACKS[i] if i < len(TRACKS) else None)
+            c.required(track in TRACKS and track not in seen
+                       and isinstance(row.get('model'), str) and bool(row['model'].strip())
+                       and isinstance(row.get('runtime'), str) and bool(row['runtime'].strip()),
+                       "SUMMARY_MODEL", loc, "须如实记录两轨模型/runtime；不限制示例型号")
             seen.add(track)
             c.required(finite(row.get("duration_hours")) and row["duration_hours"] >= (7 if used else 10), "DURATION_SHORT", loc + ".duration_hours", "各轨净有效时长不足适用下限")
             count = row.get("effective_rounds")
@@ -159,7 +160,7 @@ def task(c, a):
         return None
     v = t.get("verifier", {})
     c.required(isinstance(v, dict) and v.get("environment_mode") == "separate", "VERIFIER_MODE", base + "/task.toml", "显式 separate 缺失/类型错误")
-    for owner, env in (("environment", t.get("environment")), ("verifier.environment", v.get("environment") if isinstance(v, dict) else None)):
+    for owner, env in (("environment", t.get("environment")), ("verifier.environment", v.get("environment", t.get("environment")) if isinstance(v, dict) else None)):
         c.required(isinstance(env, dict), "TASK_ENVIRONMENT", base + "/task.toml." + owner, "须提供独立环境对象")
         if isinstance(env, dict):
             for key in ("cpus", "memory_mb", "storage_mb", "gpus"):
@@ -399,7 +400,7 @@ def duration(c, s):
         c.problem("DURATION_EVIDENCE", name, "tracks 须为对象")
         return
     identities = []
-    declared = {"codex" if "gpt" in str(x.get("model", "")).casefold() else "seed": x for x in s.get("agent_execution", []) if isinstance(x, dict)}
+    declared = {x.get('track', TRACKS[i]): x for i, x in enumerate(s.get('agent_execution', [])[:2]) if isinstance(x, dict)}
     for track in TRACKS:
         row = d["tracks"].get(track)
         if not isinstance(row, dict):
@@ -441,7 +442,7 @@ def nop(c):
         if value and isinstance(value.get("agent_info"), dict) and value["agent_info"].get("name")=="nop":
             results.append(path)
     if not results:
-        c.problem("NOP_MISSING", "expert_evidence", "缺当前题包同次 NOP Trial 原件")
+        issue(c.issues, "NOP_MISSING", "expert_evidence", "未提供NOP原件；按项目通知仅提示，不单独阻断或强制补跑。", level="warning")
         return
     for path in results:
         trial = path.parent
@@ -452,6 +453,9 @@ def nop(c):
         if not log.exists():
             log = trial/"verifier/test-stdout.txt"
         refs = [str(x.relative_to(c.root)) for x in (trial/"config.json", path, reward, log)]
+        if not all((c.root / ref).is_file() for ref in refs):
+            issue(c.issues, "NOP_INCOMPLETE", str(trial.relative_to(c.root)), "NOP原件不完整；保留缺口提示，不冒称已经验证。", level="warning")
+            continue
         actual = c.guard(str(path.relative_to(c.root)), lambda: bundled("harbor_review").validate_trial_evidence(c.root, refs, c.root/"workspace/harbor_task"))
         if actual:
             config = c.json(refs[0]) or {}
@@ -460,7 +464,7 @@ def nop(c):
             if recorded==digest:
                 c.notes.append("同次 NOP 原件一致，task.toml 哈希对应；镜像/实现版本及所覆盖分支仍须语义复核")
             else:
-                c.pending.append("NOP 同次原件可解析；当前完整题包版本关联须核包内既有版本说明")
+                c.notes.append("NOP同次原件可解析，版本关联未确认；按项目通知保留提示，不单独阻断。")
 
 
 def best_retest(c, comp):
@@ -535,12 +539,29 @@ def check(package_root):
     trajectories = {}
     contract = (a or {}).get("score_contract")
     metric = {"direction": contract.get("direction"), "split": contract.get("split")} if isinstance(contract, dict) else None
-    for track in TRACKS:
-        name = "expert_evidence/trajectory_"+track+".json"
+    summary_input = c.json('expert_evidence/run_summary.json') or {}
+    executions = summary_input.get('agent_execution', [])
+    names = {}
+    if isinstance(executions, list):
+        for i, row in enumerate(executions[:2]):
+            if isinstance(row, dict):
+                track = row.get('track', TRACKS[i])
+                if track in TRACKS:
+                    names[track] = row.get('trajectory_path', row.get('source_path'))
+    excluded = {'trajectory_source_map.json', 'trajectory_source_index.json', 'trajectory_time_provenance.json'}
+    discovered = sorted(p for p in (c.root / 'expert_evidence').glob('trajectory*.json') if p.name not in excluded)
+    for i, track in enumerate(TRACKS):
+        default = 'expert_evidence/trajectory_' + track + '.json'
+        name = names.get(track) or (default if (c.root / default).is_file() else
+                discovered[i].relative_to(c.root).as_posix() if len(discovered) == 2 else default)
+        if not names.get(track) and name != default:
+            c.pending.append('等价轨迹命名与模型/时长的对应需结合现有说明核对：' + name)
+        c.required(name not in [v.get('_source_path') for v in trajectories.values()],
+                   'TRAJECTORY_DUPLICATE', str(name), '两轨不能指向同一份轨迹')
         value = c.json(name)
         if value:
-            trajectories[track] = value
             c.issues.extend(check_rounds(value, name, metric=metric))
+            trajectories[track] = {**value, '_source_path': name}
     s = c.guard("expert_evidence/run_summary.json", lambda: summary(c, a, trajectories))
     c.guard("workspace/harbor_task", lambda: task(c, a))
     comp = c.guard("optimization_evidence/comparison_summary.json", lambda: comparison(c, a))

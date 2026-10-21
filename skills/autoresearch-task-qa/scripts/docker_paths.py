@@ -62,6 +62,37 @@ def copy_args(raw):
     return flags, parts[:-1], parts[-1]
 
 
+COMPOSE_NAMES = ("docker-compose.yaml", "docker-compose.yml", "compose.yaml", "compose.yml")
+
+
+def compose_files(directory):
+    """Inspect only the supplied runtime directory, never docs/history below it.
+
+    The caller chooses environment/ or tests/ at the selected task root. Custom
+    runtime entrypoints still require semantic review; filenames alone do not
+    establish which image a provider selected.
+    """
+    return [directory / name for name in COMPOSE_NAMES
+            if (directory / name).is_file() or (directory / name).is_symlink()]
+
+
+def image_selection(task, config):
+    """Harbor precedence, independent of whether two image digests are equal."""
+    cfg = config if isinstance(config, dict) else {}
+    environment = cfg.get("environment", {})
+    verifier = cfg.get("verifier", {})
+    venv = verifier.get("environment", {}) if isinstance(verifier, dict) else {}
+    if isinstance(venv, dict) and venv.get("docker_image"):
+        return {"source": "verifier_image", "tests_delivery": "baked", "image": venv["docker_image"]}
+    if task and (task / "tests/Dockerfile").is_file():
+        return {"source": "tests_dockerfile", "tests_delivery": "baked"}
+    if task and compose_files(task / "tests"):
+        return {"source": "tests_compose", "tests_delivery": "baked"}
+    if isinstance(environment, dict) and environment.get("docker_image"):
+        return {"source": "agent_image", "tests_delivery": "runtime_upload", "image": environment["docker_image"]}
+    return {"source": "agent_build", "tests_delivery": "runtime_upload"}
+
+
 def inspect(root, task_root, config=None, declaration=None, require_separate=False):
     """Inspect each image against its own context; never execute build instructions.
 
@@ -71,8 +102,34 @@ def inspect(root, task_root, config=None, declaration=None, require_separate=Fal
     """
     out = _inspect_image(root, task_root, config, declaration, require_separate)
     if require_separate:
-        verifier = _inspect_image(root, task_root, config, {"profile": NATIVE}, True,
-                                  image_role="verifier")
+        task = (root / task_root).resolve() if isinstance(task_root, str) else None
+        selection = image_selection(task, config)
+        out["image_selection"] = selection
+        if selection["source"] in ("verifier_image", "tests_compose"):
+            verifier = {"dockerfile": None, "build_context": None, "findings": [{
+                "code": "prebuilt_or_compose_verifier", "status": "manual",
+                "message": "专用 Verifier 镜像/Compose 须用镜像清单或已有运行记录核对 /tests、Hidden 和评分依赖；不自动上传 tests。",
+                "evidence": [str(Path(task_root) / "task.toml")] if task_root else []}], "status": "manual"}
+        elif selection["tests_delivery"] == "runtime_upload":
+            verifier = {"dockerfile": out.get("dockerfile"), "build_context": out.get("build_context"),
+                        "findings": [], "status": "pass", "test_entry": "/tests/test.sh"}
+            environment = (config or {}).get("environment", {})
+            test_name = "test.bat" if isinstance(environment, dict) and environment.get("os") == "windows" else "test.sh"
+            verifier["test_entry"] = f"/tests/{test_name}"
+            entry = task / "tests" / test_name if task else None
+            if not entry or not entry.is_file() or entry.is_symlink():
+                verifier["status"] = "fail"
+                verifier["findings"].append({"code": "uploaded_test_entry_missing", "status": "fail",
+                    "message": f"复用 Solver 镜像时须提供可上传的 tests/{test_name}。",
+                    "evidence": [str(Path(task_root) / "task.toml")] if task_root else []})
+            else:
+                verifier["findings"].append({"code": "runtime_tests_upload", "status": "pass",
+                    "message": "复用 Solver 环境启动新的 Verifier sandbox，tests 上传至 /tests；实际上传及评分依赖另需语义核对。",
+                    "evidence": [entry.relative_to(root).as_posix()]})
+        else:
+            verifier = _inspect_image(root, task_root, config, {"profile": NATIVE}, True,
+                                      image_role="verifier")
+        verifier["image_selection"] = selection
         out["verifier"] = verifier
         out["verifier_dockerfile"] = verifier["dockerfile"]
         out["verifier_build_context"] = verifier["build_context"]
@@ -145,8 +202,21 @@ def _inspect_image(root, task_root, config=None, declaration=None,
     for key in ("dockerfile", "build_context", "runtime_task_root"):
         if key in declaration and profile != "custom" and declaration[key] != out[key]:
             finding("profile_path_mismatch", "fail", f"声明 {key}={declaration[key]} 与 {profile} 规定的 {out[key]} 不一致。")
+    if not is_verifier and profile == NATIVE and isinstance(environment, dict) and environment.get("docker_image"):
+        if not require_separate and not dockerfile.is_file():
+            finding("prebuilt_image", "not_applicable", "原生 profile 使用预构建镜像；内容与路径仍需语义复核。", relative(task / "task.toml"))
+            out["status"] = "not_applicable"
+            return out
+        finding("prebuilt_image", "manual", "Solver 选择预构建镜像；须核对镜像内容、公开 Dev、依赖与私有材料隔离。", relative(task / "task.toml"))
+        return finish()
     if not dockerfile.is_file() or dockerfile.is_symlink():
-        if require_separate:
+        composes = compose_files(task / "environment")
+        if not is_verifier and not dockerfile.exists() and composes:
+            compose = composes[0]
+            finding("agent_compose_unverified", "manual",
+                    "Solver 使用 Compose；须复核服务构建/镜像、挂载、公开 Dev 与私有材料隔离。", relative(compose))
+            return finish()
+        if require_separate and (is_verifier or not compose_files(context)):
             finding("dockerfile_missing" if is_verifier else "agent_dockerfile_missing", "fail",
                     "独立 Verifier 缺少常规文件 tests/Dockerfile。" if is_verifier else "独立 Agent 构建缺少常规文件 environment/Dockerfile。",
                     relative(task / "task.toml"))

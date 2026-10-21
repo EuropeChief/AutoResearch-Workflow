@@ -1,5 +1,7 @@
 # Exposure manifest
 
+This reference belongs to the historical `--policy strict` audit. The current implementation flow does not require this manifest; its Dev/Hidden and path checks are defined in [harbor-harness.md](harbor-harness.md) and [docker-path-contract.md](docker-path-contract.md).
+
 Place `qa_exposure_manifest.json` at the workspace root when the actual Agent
 view is narrower than the authoring bundle. Example:
 

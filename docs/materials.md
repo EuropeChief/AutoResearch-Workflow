@@ -1,6 +1,18 @@
 # 独立材料整理与格式检查
 
-按需要选择三个动作；已有提交包可直接检查。输入是实际文件、已选最佳方法和输出位置，无需初始化题目、阶段登记、选优审批或重新训练。
+按需要选择材料动作；已有提交包可直接检查。输入是实际文件、已选最佳方法和输出位置，无需初始化题目、阶段登记、选优审批或重新训练。
+
+## 项目方格式前检与题包指纹
+
+```bash
+python cli.py --format json materials precheck --package-root /题目根/submission \
+  --output-dir /题目根/precheck-before --phase before_research
+python cli.py --format json materials fingerprint --harbor-task /题目根/submission/workspace/harbor_task
+```
+
+前检执行随包的项目方 v1.2.1 脚本，不运行提交代码。报告放包外新目录，report.json/md 等原件保持脚本真实判定，scope.json 说明时点和输入身份；`before_research` 仅允许 expert_evidence/、optimization_evidence/ 尚未产生的目录缺项延期，任何题目结构/配置 ERROR 不延期，不造空结果。未完成不能算通过，WARN 不阻断。最终完整包用 `--phase final` 检查所有适用项，打包器会自动检查实际完整 ZIP 并绑定哈希；不要求中间每步重跑。
+
+fingerprint 复用官方四项输入算法，包含其范围内的所有隐藏文件及空目录，拒绝链接/特殊文件；输出摘要不包含私有文件名。正式研究前同时保留对应 Git/快照，将真实哈希用于 run_summary 的 task_binding。此计算本身不证明历史运行的版本，最终 ZIP 哈希也不能替代题包指纹。
 
 ## 整理 Agent 自写轨迹
 
@@ -52,7 +64,7 @@ python3 /流程根/cli.py --format json materials check \
 
 只读取这个目录；缺引用不会到制作目录补证，不执行候选、Docker、模型重载或 QA Skill。官方随包的只读格式/Docker/NOP 解析器被直接复用。
 
-检查覆盖三目录及必要入口、两轨八字段、annotation/run_summary 核心字段、B/R 十二字段及嵌套类型、seed/role/协议/单位、相对路径与哈希、模型元信息和重载记录、逐 seed 配对统计与评分锚点、题面 seed/提升阈值、同次 NOP 原件。可机械发现的旧题 ID 矛盾、模板来源线索和私有材料混入 Agent 上下文会定位。
+检查覆盖三目录及必要入口、两轨八字段、annotation/run_summary 核心字段、B/R 十二字段及嵌套类型、seed/role/协议/单位、相对路径与哈希、模型元信息和重载记录、逐 seed 配对统计与评分锚点、题面 seed/提升阈值、已有同次 NOP 原件。NOP 缺证/版本待核仅警告，已交原件的实际执行错误仍阻断；QA21 哈希和换卡补证口径见 [QA 放宽通知](../sources/notices/2026-10-21-qa-relaxation.md)。工具自身引用完整性校验不属于 QA21 放宽范围。可机械发现的旧题 ID 矛盾、模板来源线索和私有材料混入 Agent 上下文会定位。
 
 最终复验优先识别 expert_evidence 下 role=best_method 的逐次 result.json，核完整同协议 seed 与实际源码。文件清单可直接核绑定；旧哈希算法或只绑定单文件时列出审阅范围，不要求为此改写历史原件。等价的其他证据布局需要明确解释，工具不会假称覆盖。
 

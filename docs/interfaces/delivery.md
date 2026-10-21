@@ -29,7 +29,7 @@
 
 6.5 的进度为 `qa_verified → archives_verified → form_ready`。`stage check` 可报告中间进度，但只有三者闭合才能登记 6.5 `passed` 并 `finish 6`，压缩本身不依赖先完成阶段 6。任何加删文件、内容或权限变化使旧 QA/归档绑定失效。对不影响方法的说明修订不要求重跑训练，但修订后的最终包仍须新会话 QA。重打包生成新的外部版本绑定，不向被 QA 接受的源包加文件。
 
-6.2 与 6.5 的 `checks.nop_execution` 指向最终包 `expert_evidence/` 内的 NOP 原件索引 JSON；2.1、3.5、4.1 指向题目制作目录中的同一记录。索引中 `trial_files` 和 `trial_task_binding.evidence` 的路径分别相对于当时的 `--task-root`。建议制作期将原件和索引放在题目根的 `expert_evidence/` 下，再以 `support_files` 原相对路径复制进最终包；若源路径不同，应据实际目标路径生成包内索引，不可直接复用失效引用。最终包核验只读包内原件，不从制作目录补读。
+可选的 `checks.nop_execution` 引用已有 NOP 原件索引 JSON；6.2/6.5 指向最终包 `expert_evidence/`，2.1/3.5/4.1 指向制作目录。缺证按 [QA 放宽通知](../../sources/notices/2026-10-21-qa-relaxation.md) 提示，不单独阻断。已交索引中 `trial_files` 和 `trial_task_binding.evidence` 相对于当时的 `--task-root`；建议原件放在题目根 `expert_evidence/`，以 `support_files` 原相对路径复制进最终包。实际路径改变应更新引用，最终包只读包内原件，不从制作目录补读。
 
 ## 输入 JSON 的最小形状
 
@@ -71,20 +71,20 @@
 {"protocol_id":"<实验工具 正式协议 ID>","workspace_directory":"<任务内待交 workspace 相对目录>","optimization_directory":"<任务内待交 optimization_evidence 相对目录>","expert_document":{"path":"<专家作业说明文档>","sha256":"<SHA-256>"},"expert_annotation":{"path":"<expert_annotation.json>","sha256":"<SHA-256>"},"run_summary":{"path":"<run_summary.json>","sha256":"<SHA-256>"}}
 ```
 
-上述制作期引用使用**任务根内相对路径和 SHA-256**；`FORM.json` 各段 `sources` 特别使用**最终包根内**相对路径，其 `checks` 仍用任务根。训练型任务的模型、日志、checkpoint 按教程保留。构建时从实验工具补入 `comparison_summary.evaluation_protocol` 和 `formal_aggregates`（正式 B/R 均值、次数、seeds 及评分口径），供包内填表取证；不以包外报告补缺。非训练任务不强制模型，确定性非训练任务可按冻结协议单次评估，其他重复数保持实验工具要求。专家文件仍按当期教程填写；工具只核机械可判断的字段与台账一致性。
+上述制作期引用使用**任务根内相对路径和 SHA-256**；`FORM.json` 各段 `sources` 特别使用**最终包根内**相对路径，其 `checks` 仍用任务根。训练型任务的模型、日志、checkpoint 按教程保留。构建时从实验工具补入 `comparison_summary.evaluation_protocol` 和 `formal_aggregates`（正式 B/R 均值、次数、seeds 及评分口径），供包内填表取证；不以包外报告补缺。非训练任务不强制模型；确定性单次评估、固定模型随机评估和逐seed训练按[当前实验口径](../experiments.md)及冻结协议处理。专家文件仍按当期教程填写；工具只核机械可判断的字段与台账一致性。
 
 ## 验收边界
 
-PCA 包要求两个 Dockerfile、独立 context、非空 starter、separate/artifacts 和真实 test.sh；不强制等价 grader 的内部文件名。best_method 不放模型，但实际 /workspace/solution artifacts 必须有评分所需模型/配置。
+环境按[当前 Harbor 接口](../harbor.md)核实际镜像复用或独立构建分支，不强制每题两个 Dockerfile；保留 separate/artifacts、真实评分入口及独立 Verifier。best_method 不放模型，但实际 /workspace/solution artifacts 必须有评分所需模型/配置。
 
 `run_summary.fast_iteration_exception` 默认 used=false，non_training/short_iterations为null。仅启动前冻结7h且全部闭环/干净重跑条件已满足时，used/non_training/short_iterations/rollable_proved才填写true；evidence写依据及duration_evidence.json引用。组包会核摘要与启动前政策相符，为例外任务收集必要的包内证据，并追加与证据一致的中文专家说明；八字段轨迹和run_summary的正式字段不增加。image仍仅指Agent镜像，Verifier及实跑材料写专家说明。候选移交、权限及可选12h诊断见 [PCA环境说明](environment.md)。
 
-需要支撑结论的包内日志/reward/移交清单可在 PACKAGE.json 加 `support_files:[{"source":{"path":"任务内原始文件","sha256":"真实哈希"},"destination":"runtime/文件名"}]`，目标相对包内 expert_evidence。当前题包版本的 NOP 同次配置、结果、reward、非空日志及版本依据属于必需支撑材料，也通过该接口定点收录；例如 `destination:"nop_trial/<trial-id>/config.json"`。路径须规范、不重复，不得覆盖必交文件；其余制作材料不要求全量提交。
+需要支撑结论的包内日志/reward/移交清单可在 PACKAGE.json 加 `support_files:[{"source":{"path":"任务内原始文件","sha256":"真实哈希"},"destination":"runtime/文件名"}]`，目标相对包内 expert_evidence。已有 NOP 原件也可定点收录，例如 `destination:"nop_trial/<trial-id>/config.json"`；缺证仅提示，不强制补跑。路径须规范、不重复，不得覆盖必交文件；其余制作材料不要求全量提交。
 
 完成后按 [状态登记](state.md) 关闭对应步骤；程序检查不认证 Baseline 代表性、优化收益或平台 Hidden 结果。
 
 ## 当前 QA 报告合同
 
-独立会话使用 v0.3.2；只读最终包，报告保存在包外。`qa-bind` 接受 schema_version=4、policy.name=implementation、policy.revision=research-quality-v3 且 QA/G/H 全部唯一的当前 Harbor ruleset 报告；缺 NOP 的 FAIL/not_run 可绑定供返修。6.4/6.5 收口另要求独立报告 PASS、review.completed=true、H06 通过且 `trial_evidence.agent=nop`，禁止借 exception/platform_only 手动关闭 fail/manual；QA15 固定 not_applicable，QA04/19、H05 按 Skill 的适用条件处理，H06 不能标不适用。
+当前源码的 `qa-bind` 复用[当前 QA/打包合同](../packaging.md)：QA 0.3.10 执行副本、schema 6 / innerfield-deployment-v6，QA15 必查。可绑定失败报告安排返修；收口须完成独立语义审阅，无fail/manual，仅通知范围内的warn不单独阻断。旧报告保留身份，由原冻结版本处理，不能转换为当前PASS。独立会话只读最终包，报告保存在包外。
 
 PCA 的完整作者包比 Agent 可见面更宽，待交 workspace 中提供 `qa_exposure_manifest.json`，参考 [模板](../../templates/qa-exposure.example.json)。路径相对 workspace；运行时可写路径用绝对路径。双镜像摘要、UID 和实际视图文件据真实环境填写，工具不会从源码猜造镜像视图。声明和引用检查不等于物理隔离认证。

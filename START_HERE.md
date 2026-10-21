@@ -20,6 +20,8 @@
 
 不知道从哪里继续时看[六阶段导航](docs/stages.md)。能力可以跨阶段使用；局部返修、现成材料整理或 QA 后打包直接进入相应能力，不补办前面阶段的手续。
 
+指定旧题返修时，先保留原包、原版本和报告，按当前规则列差异；优先进入[材料与交付](skills/autoresearch-delivery/SKILL.md#独立-qa-与返修)，按 [M13](rules/README.md#m13) 完成格式修正与自查，再处理其余受影响能力的修复与复验。文案/格式不自动重跑研究，方法、评分、部署改变则核实际影响；旧 PASS 不直接沿用，历史缺指纹只在原快照与运行对应可证明时补算。按 [QA 放宽通知](sources/notices/2026-10-21-qa-relaxation.md)，哈希不符、NOP 缺证及所列换卡补证仅提示，不据此单独强制补跑；实际错误仍处理。记录复用已有短工作记录，不新增返修账本。
+
 进入某一阶段时，先打开 `rules/stages/stage-<阶段>-*.md` 获取当前行动、证据和阶段门提示；阶段 1 先运行 `python -m autoresearch_flow.task_workspace --task-root <题目根> status`，确认 Git 范围，再按需执行 `init-git`、`preview` 和显式检查点。关键决定追加到题目 `.autoresearch/decision-log.md`，格式参考 `templates/decision-log.example.md`。流程维护者用 `python tools/build_stage_views.py --check` 做包内一致性检查。视图只是规则正文的导航，不是题目状态账本。
 
 进入阶段、阶段门/高成本动作前及影响性修改后，用 `python cli.py --format json preflight --task-root <题目根> --stage <1..6>`；动作前加 `--before`，退出加 `--phase exit`。引用已有检查/审查，不新建逐条 PASS 账本；具体输入、到期与例外口径见[阶段预检](docs/preflight.md)。

@@ -53,6 +53,10 @@ class IndependentPackagingTests(unittest.TestCase):
         ):
             (self.root / name).mkdir(parents=True)
         self.put("workspace/harbor_task/run.sh", "#!/bin/sh\nexit 0\n")
+        self.put("workspace/harbor_task/instruction.md", "# Synthetic task\nNo execution is authorized.\n")
+        self.put("workspace/harbor_task/task.toml", 'version="1.0"\n[environment]\ndocker_image="synthetic/solver:1"\ngpus=0\n[verifier]\nenvironment_mode="separate"\n[verifier.environment]\ndocker_image="synthetic/verifier:1"\ngpus=0\n')
+        (self.root / 'workspace/harbor_task/environment').mkdir()
+        self.put("workspace/harbor_task/tests/test.sh", "#!/bin/sh\nexit 0\n")
         (self.root / "workspace/harbor_task/run.sh").chmod(0o755)
         self.put(
             "workspace/harbor_task/禁止执行.py",
@@ -114,6 +118,16 @@ class IndependentPackagingTests(unittest.TestCase):
 
     def run_package(self, output="attachments", **kwargs):
         return package(self.root, self.report_path, self.base / output, **kwargs)
+
+    def test_final_format_failure_preserves_original_reports_without_success_attachments(self):
+        self.put('workspace/harbor_task/task.toml', '')
+        self.freeze_report()
+        with self.assertRaisesRegex(FlowError, '报告保留于'):
+            self.run_package()
+        self.assertFalse((self.base / 'attachments').exists())
+        reports = list(self.base.glob('*-format-precheck-failed-*/report.json'))
+        self.assertEqual(len(reports), 1)
+        self.assertEqual(json.loads(reports[0].read_text())['decision'], 'FAIL')
 
     def test_three_zips_form_and_readonly_without_state(self):
         before = package_snapshot(self.root)

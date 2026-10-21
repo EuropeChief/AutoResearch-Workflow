@@ -2,6 +2,14 @@
 
 输入是实际 `harbor_task/`、明确选定的候选目录和全新输出目录，不需要阶段账本。目标为已有 Harbor **0.23.0**、Docker/Compose 和题目两张镜像；Agent 镜像需有 Python。工具不安装宿主环境，不调用模型或选择方法。
 
+## 部署调用链的静态审阅
+
+制作期按 [C05](../rules/README.md#c05)、[C06](../rules/README.md#c06) 审阅最终交付的部署入口与真实评分调用链。先从 task/Job/Trial 的镜像、provider 和覆盖配置定位实际入口，再追到容器内 grader/worker 及资产消费位置，核对配置来源、可信传递、默认值和失败分支；结合已有构建/版本/Trial 材料确认实际生效范围。不能只读 README 或看到 GPU 参数便判定整链可迁移，也不按 UUID、绝对路径等关键词直接判失败。
+
+在已有实现说明中引用关键源码位置、实际快照/版本和检查结论，按[预检引用方式](preflight.md#部署与评分适用性审查)记录责任人与证据。解析不确定的分支由 Agent 语义复核，未解疑点如实待补；源文件或部署条件变化时定向复查。冻结前的科学适用性另按 [M03/M04](../rules/README.md#m03) 审阅。
+
+该审查不触发新的 Docker/GPU/换机验收，不将静态结论写成动态成功。下面的 run/inspect 仍用于原有 NOP 和候选链路验证，当前版本 NOP 要求见 [M07](../rules/README.md#m07)。
+
 ## NOP 与候选各跑一条实际链路
 
 在流程根使用已安装 Harbor 的 Python；若 Docker Compose 插件使用专门配置目录，先按本机设置 `DOCKER_CONFIG`。

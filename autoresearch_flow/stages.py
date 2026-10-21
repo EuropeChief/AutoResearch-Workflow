@@ -107,11 +107,14 @@ class StageFlow:
     @staticmethod
     def _qa_coverage(report, dispositions):
         reported = {}
+        warnings = {}
         def collect(value):
             if isinstance(value, dict):
                 identifier = value.get("id", value.get("check_id"))
                 if isinstance(identifier, str) and re.fullmatch(r"(?:QA|B|G|H)\d{2}", identifier):
                     reported.setdefault(identifier, set()).add(value.get("status"))
+                    if value.get("status") == "warn":
+                        warnings.setdefault(identifier, []).append(value)
                 for child in value.values():
                     collect(child)
             elif isinstance(value, list):
@@ -123,6 +126,13 @@ class StageFlow:
         _require(len(actual) == len(set(actual)) and set(reported) <= set(actual),
                  "QA_REVIEW_INCOMPLETE", "逐项处置遗漏独立报告检查项或存在重复")
         for item in dispositions:
+            if item.get("status") == "warn":
+                from .materials_io import bundled
+                policy = bundled("project_policy")
+                _require(reported.get(item["id"]) == {"warn"}
+                         and report.get("policy", {}).get("execution_revision") == policy.REVISION
+                         and all(policy.allowed(row) for row in warnings[item["id"]]),
+                         "QA_UNRESOLVED", "仅可原样保留当前通知范围内的报告提示，不能改写其他未通过项")
             if item.get("status") == "pass":
                 _require(item["id"] in reported
                          and reported[item["id"]] <= {"pass", "passed", "通过"},
@@ -132,7 +142,7 @@ class StageFlow:
                 _require(item["id"] in allowed and item["id"] in reported
                          and reported[item["id"]] == {"not_applicable"},
                          "QA_UNRESOLVED", "不适用须与当前 Skill 及独立报告一致")
-            _require(item.get("status") in {"pass", "skip", "not_applicable"},
+            _require(item.get("status") in {"pass", "skip", "not_applicable", "warn"},
                      "QA_UNRESOLVED", "旧口头例外或 platform_only 不能关闭适用 QA 项")
 
     def _statistical_review(self, book, protocol, checks):
@@ -276,8 +286,8 @@ class StageFlow:
                     _require(isinstance(review.get("dispositions"), list) and review["dispositions"],
                              "QA_UNRESOLVED", "须逐项记录独立报告的结论/处置")
                     for item in review["dispositions"]:
-                        _require(isinstance(item, dict) and item.get("status") in {"pass", "not_applicable", "skip"},
-                                 "QA_UNRESOLVED", "每项处置须与新版 Skill 报告的通过或不适用一致")
+                        _require(isinstance(item, dict) and item.get("status") in {"pass", "not_applicable", "skip", "warn"},
+                                 "QA_UNRESOLVED", "每项处置须保留新版报告的通过、不适用或通知范围内提示")
                         _text(item.get("id"), "QA 检查项编号")
                         _text(item.get("rationale"), "QA 处置理由")
                     self._qa_coverage(_read_json(report), review["dispositions"])
@@ -369,11 +379,20 @@ class StageFlow:
         return self.root / path
 
     def _nop_record(self, checks, root, task_root, *, package_only=False):
+        from .materials_io import bundled
+        policy = bundled("project_policy")
+        if not checks.get("nop_execution"):
+            return policy.advisory({"summary": "未提供NOP自检原件；按项目通知仅提示，不单独阻断。", "runtime_status": "not_run"}, "NOP_EVIDENCE")
         path = evidence(self.root, checks.get("nop_execution"))
         if package_only:
             _require(path.is_relative_to(root / "expert_evidence"), "PACKAGE_EVIDENCE_BOUNDARY",
                      "NOP 记录须位于最终包 expert_evidence 内")
-        return check_nop_record(root, _read_json(path), task_root)
+        try:
+            return check_nop_record(root, _read_json(path), task_root)
+        except FlowError as exc:
+            if exc.code not in {"NOP_VERSION_STALE", "NOP_VERSION_UNVERIFIED", "NOP_AGENT_INVALID"}:
+                raise
+            return policy.advisory({"summary": str(exc), "runtime_status": "unverified", "source": str(path)}, "NOP_EVIDENCE")
 
     def template(self, step):
         state = self.store._load()
@@ -384,8 +403,6 @@ class StageFlow:
             checks["harbor_task"] = "workspace/harbor_task"
         if step in {"2.1", "3.5", "4.1", "6.5"}:
             checks["harbor_execution"] = {"path": "<任务内真实 Harbor 记录 JSON；6.5 须位于最终包内>", "sha256": "<SHA-256>"}
-        if step in {"2.1", "3.5", "4.1", "6.2", "6.5"}:
-            checks["nop_execution"] = {"path": "<expert_evidence 内 NOP 原件引用 JSON；6.2/6.5 须位于最终包内>", "sha256": "<SHA-256>"}
         if step == "6.5" and effective_policy(state)["require_stability_receipt"]:
             checks["stability"] = {"path": "<任务内最终包中的 12h 稳定性记录 JSON>", "sha256": "<SHA-256>"}
         if step in {"2.3", "2.4", "2.5", "3.2", "3.3", "3.4", "3.5", "5.2"}:
