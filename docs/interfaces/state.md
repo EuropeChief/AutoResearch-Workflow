@@ -36,7 +36,7 @@ Baseline 复用 B01–B08 入口，不另写一套报告。阶段 2 冻结前，
 | 步骤 | 自动重核的事实 |
 |---|---|
 | 1.1（当前政策的新任务） | Git 范围已确认且存在真实、可追溯的初始检查点 |
-| 2.1 | 双镜像结构及真实 Harbor 最小移交/独立评分记录；结构检查不替代实跑 |
+| 2.1 | 声明的镜像复用/独立构建分支及真实 Harbor 最小移交/独立评分记录；结构检查不替代实跑 |
 | 2.3 |实验工具正式协议已锁定 |
 | 2.4 / 3.2 / 5.2 | 对应角色正式 seed 完整性及实验工具统计报告 |
 | 2.5 / 3.3 / 3.5 | B01–B08 完整专家审查、证据和方法/协议绑定；阶段 3 不可遗留 deferred |
@@ -74,4 +74,4 @@ python3 "$FLOW_ROOT/cli.py" stage reopen --task-root "$TASK_ROOT" --step 6.1 --f
 
 题目类型与适配入口在环境验收前通过 `task configure --file ...` 登记，见 [配置模板](../../templates/task-config.example.json)。`task check` 只查流程状态/来源；恢复任务应再运行 `stage status` 检查已登记证据。
 
-QA v0.3.2：6.3 可绑定缺 NOP 的 FAIL/not_run 报告以安排返修；6.4/6.5 须当前独立报告已完成且 PASS。适用项不得使用旧 exception/platform_only 关闭。仅 QA15 固定跳过；QA04/19、H05 可按原文及报告一致地 not_applicable，H06 必查。Harbor 动态门禁来源为教程；缺 NOP 的 not_run 与 H06/QA17 失败，不能用于收口。
+当前源码复用[当前 QA/打包合同](../packaging.md)：schema 6、QA15 必查；6.3 可绑定当前失败报告安排返修，6.4/6.5 须当前独立报告完成且 PASS，不得用旧例外关闭失败。旧报告和旧状态由原冻结版本处理，不自动迁移或改写。

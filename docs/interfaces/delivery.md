@@ -71,11 +71,11 @@
 {"protocol_id":"<实验工具 正式协议 ID>","workspace_directory":"<任务内待交 workspace 相对目录>","optimization_directory":"<任务内待交 optimization_evidence 相对目录>","expert_document":{"path":"<专家作业说明文档>","sha256":"<SHA-256>"},"expert_annotation":{"path":"<expert_annotation.json>","sha256":"<SHA-256>"},"run_summary":{"path":"<run_summary.json>","sha256":"<SHA-256>"}}
 ```
 
-上述制作期引用使用**任务根内相对路径和 SHA-256**；`FORM.json` 各段 `sources` 特别使用**最终包根内**相对路径，其 `checks` 仍用任务根。训练型任务的模型、日志、checkpoint 按教程保留。构建时从实验工具补入 `comparison_summary.evaluation_protocol` 和 `formal_aggregates`（正式 B/R 均值、次数、seeds 及评分口径），供包内填表取证；不以包外报告补缺。非训练任务不强制模型，确定性非训练任务可按冻结协议单次评估，其他重复数保持实验工具要求。专家文件仍按当期教程填写；工具只核机械可判断的字段与台账一致性。
+上述制作期引用使用**任务根内相对路径和 SHA-256**；`FORM.json` 各段 `sources` 特别使用**最终包根内**相对路径，其 `checks` 仍用任务根。训练型任务的模型、日志、checkpoint 按教程保留。构建时从实验工具补入 `comparison_summary.evaluation_protocol` 和 `formal_aggregates`（正式 B/R 均值、次数、seeds 及评分口径），供包内填表取证；不以包外报告补缺。非训练任务不强制模型；确定性单次评估、固定模型随机评估和逐seed训练按[当前实验口径](../experiments.md)及冻结协议处理。专家文件仍按当期教程填写；工具只核机械可判断的字段与台账一致性。
 
 ## 验收边界
 
-PCA 包要求两个 Dockerfile、独立 context、非空 starter、separate/artifacts 和真实 test.sh；不强制等价 grader 的内部文件名。best_method 不放模型，但实际 /workspace/solution artifacts 必须有评分所需模型/配置。
+环境按[当前 Harbor 接口](../harbor.md)核实际镜像复用或独立构建分支，不强制每题两个 Dockerfile；保留 separate/artifacts、真实评分入口及独立 Verifier。best_method 不放模型，但实际 /workspace/solution artifacts 必须有评分所需模型/配置。
 
 `run_summary.fast_iteration_exception` 默认 used=false，non_training/short_iterations为null。仅启动前冻结7h且全部闭环/干净重跑条件已满足时，used/non_training/short_iterations/rollable_proved才填写true；evidence写依据及duration_evidence.json引用。组包会核摘要与启动前政策相符，为例外任务收集必要的包内证据，并追加与证据一致的中文专家说明；八字段轨迹和run_summary的正式字段不增加。image仍仅指Agent镜像，Verifier及实跑材料写专家说明。候选移交、权限及可选12h诊断见 [PCA环境说明](environment.md)。
 
@@ -85,6 +85,6 @@ PCA 包要求两个 Dockerfile、独立 context、非空 starter、separate/arti
 
 ## 当前 QA 报告合同
 
-独立会话使用 v0.3.2；只读最终包，报告保存在包外。`qa-bind` 接受 schema_version=4、policy.name=implementation、policy.revision=research-quality-v3 且 QA/G/H 全部唯一的当前 Harbor ruleset 报告；缺 NOP 的 FAIL/not_run 可绑定供返修。6.4/6.5 收口另要求独立报告 PASS、review.completed=true、H06 通过且 `trial_evidence.agent=nop`，禁止借 exception/platform_only 手动关闭 fail/manual；QA15 固定 not_applicable，QA04/19、H05 按 Skill 的适用条件处理，H06 不能标不适用。
+当前源码的 `qa-bind` 复用[当前 QA/打包合同](../packaging.md)：QA 0.3.10 执行副本、schema 6 / innerfield-deployment-v6，QA15 必查。可绑定当前失败报告安排返修，收口须完成独立语义审阅且全部适用项通过；旧报告保留身份，由原冻结版本处理，不能转换为当前 PASS。独立会话只读最终包，报告保存在包外。
 
 PCA 的完整作者包比 Agent 可见面更宽，待交 workspace 中提供 `qa_exposure_manifest.json`，参考 [模板](../../templates/qa-exposure.example.json)。路径相对 workspace；运行时可写路径用绝对路径。双镜像摘要、UID 和实际视图文件据真实环境填写，工具不会从源码猜造镜像视图。声明和引用检查不等于物理隔离认证。
