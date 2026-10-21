@@ -217,7 +217,16 @@ class IndependentMaterialTests(unittest.TestCase):
         self.assertIn("FIELD_ERROR",self.codes(check(self.root)))
         fixture(self.root)
         (self.root/"expert_evidence/nop_trial/config.json").unlink()
-        self.assertIn("FIELD_ERROR",self.codes(check(self.root)))
+        result = check(self.root)
+        self.assertEqual(result['status'], 'format_checked_not_qa')
+        self.assertTrue(any(r['code'] == 'NOP_INCOMPLETE' and r['level'] == 'warning' for r in result['issues']))
+
+    def test_absent_nop_does_not_block_materials(self):
+        import shutil
+        shutil.rmtree(self.root/'expert_evidence/nop_trial')
+        result = check(self.root)
+        self.assertEqual(result['status'], 'format_checked_not_qa')
+        self.assertTrue(any(r['code'] == 'NOP_MISSING' and r['level'] == 'warning' for r in result['issues']))
 
     def test_best_retest_source_or_seed_drift(self):
         (self.root/"expert_evidence/best_method/main.py").write_text("# different method\n")

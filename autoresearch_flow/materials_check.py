@@ -442,7 +442,7 @@ def nop(c):
         if value and isinstance(value.get("agent_info"), dict) and value["agent_info"].get("name")=="nop":
             results.append(path)
     if not results:
-        c.problem("NOP_MISSING", "expert_evidence", "缺当前题包同次 NOP Trial 原件")
+        issue(c.issues, "NOP_MISSING", "expert_evidence", "未提供NOP原件；按项目通知仅提示，不单独阻断或强制补跑。", level="warning")
         return
     for path in results:
         trial = path.parent
@@ -453,6 +453,9 @@ def nop(c):
         if not log.exists():
             log = trial/"verifier/test-stdout.txt"
         refs = [str(x.relative_to(c.root)) for x in (trial/"config.json", path, reward, log)]
+        if not all((c.root / ref).is_file() for ref in refs):
+            issue(c.issues, "NOP_INCOMPLETE", str(trial.relative_to(c.root)), "NOP原件不完整；保留缺口提示，不冒称已经验证。", level="warning")
+            continue
         actual = c.guard(str(path.relative_to(c.root)), lambda: bundled("harbor_review").validate_trial_evidence(c.root, refs, c.root/"workspace/harbor_task"))
         if actual:
             config = c.json(refs[0]) or {}
@@ -461,7 +464,7 @@ def nop(c):
             if recorded==digest:
                 c.notes.append("同次 NOP 原件一致，task.toml 哈希对应；镜像/实现版本及所覆盖分支仍须语义复核")
             else:
-                c.pending.append("NOP 同次原件可解析；当前完整题包版本关联须核包内既有版本说明")
+                c.notes.append("NOP同次原件可解析，版本关联未确认；按项目通知保留提示，不单独阻断。")
 
 
 def best_retest(c, comp):

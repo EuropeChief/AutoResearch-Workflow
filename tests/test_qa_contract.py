@@ -39,6 +39,34 @@ def synthetic_report(package=None):
 
 
 class QaContractTests(unittest.TestCase):
+    def test_only_confirmed_advisories_can_close_delivery(self):
+        from autoresearch_flow.materials_io import bundled
+        notice = bundled('project_policy')
+        report = synthetic_report()
+        report['policy']['execution_revision'] = notice.REVISION
+        rows = {r['id']: r for r in report['checks'] + report['content_gates']['checks'] + report['harbor']['checks']}
+        for key in ('G02', 'G03', 'QA03', 'QA13', 'QA15'):
+            rows[key].update(notice.advisory(rows[key], 'HARDWARE_RECHECK'))
+        rows['G03']['automatic_status'] = 'pass'
+        rows['QA21'].update(notice.advisory(rows['QA21'], 'TASK_FINGERPRINT'))
+        for key in ('QA17', 'H06'):
+            rows[key].update(notice.advisory(rows[key], 'NOP_EVIDENCE'))
+        rows['H06']['evidence'] = []
+        report['harbor'].update(runtime_status='not_run', qa17_status='warn', trial_evidence=None)
+        report['resource_review']['status'] = 'warn'
+        report['trajectory_review']['status'] = 'warn'
+        validate_qa_report(report, require_pass=True)
+        for mutation in ('revision', 'wrong_scope', 'core_quality', 'resource_overrun', 'broken_json', 'wrong_task'):
+            changed = copy.deepcopy(report)
+            if mutation == 'revision': changed['policy'].pop('execution_revision')
+            if mutation == 'wrong_scope': changed['checks'][0].update(notice.advisory(changed['checks'][0], 'HARDWARE_RECHECK'))
+            if mutation == 'core_quality': changed['content_gates']['checks'][2]['automatic_status'] = 'fail'
+            if mutation == 'resource_overrun': changed['resource_review']['problems'] = ['actual overrun']
+            if mutation == 'broken_json': changed['trajectory_review']['binding_errors'] = ['invalid JSON']
+            if mutation == 'wrong_task': changed['trajectory_review']['trajectories'] = [{'task_binding': {'status': 'fail'}}]
+            with self.subTest(mutation=mutation), self.assertRaises(FlowError):
+                validate_qa_report(changed, require_pass=True)
+
     def test_pass_requires_nop_evidence(self):
         result = validate_qa_report(synthetic_report(), require_pass=True)
         self.assertEqual(result["runtime_status"], "evidence_consistent")

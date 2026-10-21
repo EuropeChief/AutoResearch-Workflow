@@ -60,16 +60,16 @@
 - 产生证据：`constraint_implementation`, `hard_gate_tests`
 - 影响性变更后复核：`是`
 
-### M07-S2 — 接通评分与 NOP 链路
+### M07-S2 — 接通评分链路
 
 - 规则来源：`M07`（`rules/README.md#M07`）
-- 当前行动：实现公开反馈、候选移交、独立 Verifier/reward 和当前题包版本的 NOP 入口。
-- 所需证据：`scoring_entry`, `verifier_source`, `nop_plan`
+- 当前行动：实现公开反馈、候选移交和独立 Verifier/reward；已有 NOP 可作补充，不因缺证阻断。
+- 所需证据：`scoring_entry`, `verifier_source`
 - 检查性质：`mixed`；严重性：`hard`
 - 阶段门前阻断：`task_ready`, `anchor_freeze`, `dual_track_launch`
 - 读取前置：`M03-S2`, `M05-S2`, `M06-S2`
 - 消费证据：`run_protocol`, `exposure_manifest`, `constraint_implementation`
-- 产生证据：`scoring_entry`, `nop_plan`
+- 产生证据：`scoring_entry`
 - 影响性变更后复核：`是`
 
 ### C01-S2 — 清理并可信写入结果

@@ -21,7 +21,8 @@ def bundled(name):
         return _PARSERS[name]
     base = Path(__file__).resolve().parents[1] / "skills/autoresearch-task-qa/scripts"
     dependencies = {
-        "harbor_review": ("docker_paths", "evidence_refs", "task_fingerprint", "deployment_review"),
+        "harbor_review": ("docker_paths", "evidence_refs", "task_fingerprint", "deployment_review", "project_policy"),
+        "task_fingerprint": ("project_policy",),
         "deployment_review": ("docker_paths",),
     }.get(name, ())
     loaded = {key: bundled(key) for key in dependencies}

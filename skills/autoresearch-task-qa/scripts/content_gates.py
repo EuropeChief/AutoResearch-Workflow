@@ -6,7 +6,7 @@ import statistics
 
 IDS = ("G01", "G02", "G03")
 TITLES = {"G01": "方法级优化空间", "G02": "Baseline 合理性", "G03": "Reference 提升充分性"}
-STATUSES = {"pass", "fail", "manual"}
+STATUSES = {"pass", "fail", "manual", "warn"}
 
 
 def text(value):
@@ -156,6 +156,9 @@ def apply_review(review, overview, root, validate_evidence):
         key, status = row["id"], row.get("status")
         if status not in STATUSES or not text(row.get("summary")) or not text(row.get("reason_code")):
             raise ValueError(f"{key}: status, summary and reason_code are required")
+        from project_policy import allowed
+        if status == "warn" and not allowed(row):
+            raise ValueError(f"{key}: warning must be within the confirmed project notice")
         validate_evidence(root, row.get("evidence"), key, required=status == "pass")
         for field in ("remediation", "acceptance_evidence"):
             if field not in row or not isinstance(row[field], str) or (status in ("fail", "manual") and not text(row[field])):

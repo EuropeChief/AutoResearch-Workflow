@@ -64,7 +64,7 @@ python3 /流程根/cli.py --format json materials check \
 
 只读取这个目录；缺引用不会到制作目录补证，不执行候选、Docker、模型重载或 QA Skill。官方随包的只读格式/Docker/NOP 解析器被直接复用。
 
-检查覆盖三目录及必要入口、两轨八字段、annotation/run_summary 核心字段、B/R 十二字段及嵌套类型、seed/role/协议/单位、相对路径与哈希、模型元信息和重载记录、逐 seed 配对统计与评分锚点、题面 seed/提升阈值、同次 NOP 原件。可机械发现的旧题 ID 矛盾、模板来源线索和私有材料混入 Agent 上下文会定位。
+检查覆盖三目录及必要入口、两轨八字段、annotation/run_summary 核心字段、B/R 十二字段及嵌套类型、seed/role/协议/单位、相对路径与哈希、模型元信息和重载记录、逐 seed 配对统计与评分锚点、题面 seed/提升阈值、已有同次 NOP 原件。NOP 缺证/版本待核仅警告，已交原件的实际执行错误仍阻断；QA21 哈希和换卡补证口径见 [QA 放宽通知](../sources/notices/2026-10-21-qa-relaxation.md)。工具自身引用完整性校验不属于 QA21 放宽范围。可机械发现的旧题 ID 矛盾、模板来源线索和私有材料混入 Agent 上下文会定位。
 
 最终复验优先识别 expert_evidence 下 role=best_method 的逐次 result.json，核完整同协议 seed 与实际源码。文件清单可直接核绑定；旧哈希算法或只绑定单文件时列出审阅范围，不要求为此改写历史原件。等价的其他证据布局需要明确解释，工具不会假称覆盖。
 

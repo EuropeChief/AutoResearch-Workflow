@@ -132,7 +132,7 @@ class RuntimeIntegrityTests(unittest.TestCase):
                    "trajectory_path": "trajectory_0.json", "trajectory_sha256": fp.sha256_file(self.root / "trajectory_0.json")}
         self.assertEqual(fp.check_binding(self.root, current, "trajectory_0.json", binding)["status"], "pass")
         binding["task_content_sha256"] = "0" * 64
-        self.assertEqual(fp.check_binding(self.root, current, "trajectory_0.json", binding)["status"], "fail")
+        self.assertEqual(fp.check_binding(self.root, current, "trajectory_0.json", binding)["status"], "warn")
 
     def test_full_evidence_passes_but_summary_alone_does_not(self):
         review = complete_integrity_fixture(self.root, self.overview)
@@ -145,7 +145,7 @@ class RuntimeIntegrityTests(unittest.TestCase):
         review = complete_integrity_fixture(self.root, self.overview)
         (self.root / "expert_evidence/run_summary.json").write_text('{"agent_execution": []}')
         actual = self.assess(review)
-        self.assertEqual(actual["status"], "manual")
+        self.assertEqual(actual["status"], "warn")
         self.assertIn("run_summary 题包哈希缺失", actual["summary"])
         self.assertNotIn("工具行为未确认", actual["summary"])
         self.assertNotIn("评分来源未确认", actual["summary"])
@@ -164,7 +164,7 @@ class RuntimeIntegrityTests(unittest.TestCase):
         (self.root / "expert_evidence/run_summary.json").write_text(json.dumps({"task_binding": binding,
             "agent_execution": [{"task_binding": {**binding, "task_content_sha256": "0" * 64}}, {}]}))
         actual = self.assess(review)
-        self.assertEqual(actual["trajectories"][0]["task_binding"]["status"], "fail")
+        self.assertEqual(actual["trajectories"][0]["task_binding"]["status"], "warn")
         self.assertEqual(actual["trajectories"][1]["task_binding"]["status"], "pass")
 
     def test_rounds_only_review_does_not_require_new_sessions(self):
@@ -253,10 +253,10 @@ class RuntimeIntegrityTests(unittest.TestCase):
             "score_effect": "none", "affected_rounds": [2], "evidence": ["trajectory_0.json"]}]
         self.assertEqual(self.assess(review)["content_status"], "pass")
 
-    def test_task_or_trajectory_change_cannot_be_overridden_by_pass(self):
+    def test_task_hash_change_remains_visible_as_advisory(self):
         review = complete_integrity_fixture(self.root, self.overview)
         (self.root / "tests/test.sh").write_text("changed grader")
-        self.assertEqual(self.assess(review)["status"], "fail")
+        self.assertEqual(self.assess(review)["status"], "warn")
 
     def resources(self, review, config=None):
         return resource_review.apply_review(resource_review.collect(self.root, self.files(), config=config), review, self.root, qa.review_evidence)

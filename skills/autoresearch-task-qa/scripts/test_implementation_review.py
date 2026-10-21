@@ -215,7 +215,7 @@ class ImplementationReviewTests(unittest.TestCase):
         statuses = {row["id"]: row["status"] for row in actual["checks"]}
         self.assertEqual(statuses["QA17"], "pass")
         self.assertEqual(statuses["QA18"], "pass")
-        self.assertEqual(statuses["QA21"], "manual")
+        self.assertEqual(statuses["QA21"], "warn")
 
     def test_effective_runtime_uses_ten_hours_for_each_trajectory(self):
         for seconds, expected in ((25199, "fail"), (25200, "manual"), (35999, "manual"), (36000, "pass")):
@@ -334,7 +334,7 @@ class ImplementationReviewTests(unittest.TestCase):
         self.write("expert_evidence/run_summary.json", data)
         result = qa.apply_review(self.report(), review, self.root)
         self.assertEqual(result["checks"][17]["status"], "pass")
-        self.assertEqual(result["checks"][20]["status"], "manual")
+        self.assertEqual(result["checks"][20]["status"], "warn")
 
     def test_invalid_formal_score_cannot_prove_reference_improvement(self):
         review = self.review()
@@ -528,15 +528,15 @@ class ImplementationReviewTests(unittest.TestCase):
         self.assertEqual(result["checks"][17]["status"], "fail")
         self.assertEqual(result["checks"][20]["status"], "fail")
 
-    def test_no_nop_blocks_qa17(self):
+    def test_no_nop_is_an_advisory_without_claiming_execution(self):
         import shutil
         shutil.rmtree(self.root / "run-a")
         review = self.review()
         from test_harbor_review import valid_review
         review["harbor"] = valid_review()
         result = qa.apply_review(self.report(), review, self.root)
-        self.assertEqual(result["checks"][16]["status"], "fail")
-        self.assertEqual(result["summary"]["decision"], "FAIL")
+        self.assertEqual(result["checks"][16]["status"], "warn")
+        self.assertEqual(result["summary"]["decision"], "PASS")
         self.assertEqual(result["harbor"]["runtime_status"], "not_run")
         self.assertIn("动态运行未验证", qa.compact_markdown(result))
 

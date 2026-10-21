@@ -50,13 +50,13 @@
 - 产生证据：`score_contract`, `anchor_statistics`
 - 影响性变更后复核：`是`
 
-### M07-S3 — 用同版本 Trial 验证 NOP
+### M07-S3 — 核对已有 NOP 记录
 
 - 规则来源：`M07`（`rules/README.md#M07`）
-- 当前行动：完成当前题包版本的一次正常 NOP，绑定同一评分入口、结果、reward 和日志。
+- 当前行动：已有 NOP 核同次评分入口、结果、reward、日志和版本；缺证仅提示，不单独阻断或强制补跑，真实执行异常仍处理。
 - 所需证据：`nop_trial`, `nop_result`, `nop_reward`, `nop_log`
-- 检查性质：`mechanical`；严重性：`hard`
-- 阶段门前阻断：`anchor_freeze`, `dual_track_launch`
+- 检查性质：`mechanical`；严重性：`advisory`
+- 阶段门前阻断：无
 - 读取前置：`M07-S2`, `C05-S2`, `C06-S2`
 - 消费证据：`scoring_entry`, `artifact_config`, `task_toml`
 - 产生证据：`nop_trial`, `nop_result`, `nop_reward`

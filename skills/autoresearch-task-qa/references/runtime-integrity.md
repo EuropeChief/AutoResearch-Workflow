@@ -15,7 +15,7 @@
 }
 ```
 
-默认适用于本摘要的两条研究轨迹；各轨可在 agent_execution 条目中分别记录这两个 task_binding 字段。若提供agent_execution，它必须是对象数组；损坏的结构不能丢弃后仅凭公共task_binding通过。版本发生变化时保留对应题包并说明受影响运行，另行复核；当前自动检查只与本次选定题包比较，分别记录不代表不同版本已通过验收。旧版较详细绑定仍可读取；run_id、start_record、trajectory_path、trajectory_sha256 均非必填，显式提供的轨迹路径/哈希有冲突时不能忽略。QA重算四项指纹：一致通过，缺字段待补，不一致失败。不要替专家修改题包或伪造历史版本；有版本变化则说明并交相应题包/重做受影响研究。
+默认适用于本摘要的两条研究轨迹；各轨可在 agent_execution 条目中分别记录这两个 task_binding 字段。若提供agent_execution，它必须是对象数组；损坏的结构不能丢弃后仅凭公共task_binding通过。版本发生变化时保留实际依据并说明，当前自动检查只与本次选定题包比较。旧版较详细绑定仍可读取；run_id、start_record、trajectory_path、trajectory_sha256 均非必填。按[QA放宽通知](../../../sources/notices/2026-10-21-qa-relaxation.md)，哈希缺失/不符保留warn，不单独阻断或强制补跑，也不称版本已确认；真实轨迹路径错配、坏JSON、越界及不实记录仍阻断。不要修改题包或伪造历史哈希；实际方法、评分或任务变化按影响处理。
 
 H06使用已有配置、日志或专家版本说明关联NOP，不强制这两个新字段；QA18审查轨迹内容。不要因run_summary缺哈希重复降级QA17/QA18。
 
@@ -83,7 +83,7 @@ finding分类 leakage/cheating/infra_bug/suspicious/allowed；certainty=confirme
 
 区分实测与推断：完整一轮涵盖协议要求的训练/重载/评分阶段；整条10h研究、排队/安装不作为单轮。可用已有记录和方法规模估算，保留余量；旧日志缺单项不阻断有依据的估算。实际卡型与提交目标分开，不把原卡成绩改称H20实测，也不因缺H20实测要求专家重跑。专家侧比较不公平、明确超限或与日志矛盾仍须处理；通知不豁免这些问题。
 
-review.resource_review使用status/summary/evidence、estimate与hardware_review；后者由质检员从已有配置、日志和说明归纳task_type、score_comparability、summary、evidence，枚举及判定见[内场部署口径](innerfield-deployment.md)。发现硬件变化影响正式B/R时，以affected_formal_runs或affects_formal_scores明确指向；仅校准机不同而未冒充目标成绩，不自动使正式分数无效。原runs及enforcement_review可作附加材料，不强制逐轮覆盖。
+review.resource_review使用status/summary/evidence、estimate与hardware_review；后者由质检员从已有配置、日志和说明归纳task_type、score_comparability、summary、evidence，枚举及判定见[内场部署口径](innerfield-deployment.md)。仅换卡引出的成绩/耗时待核用advisory_code=HARDWARE_RECHECK标记，score_comparability仍如实记unverified，结果为warn。关联正式B/R时以affected_formal_runs或affects_formal_scores明确指向；不覆盖其他缺证或真实失败。原runs及enforcement_review可作附加材料，不强制逐轮覆盖。
 
 若已提供的完整评分runs与estimate在GPU、CPU或耗时上矛盾，不能用较小估算覆盖实测记录。质检员仅在需要解释差异时，可填`estimate.observation_reconciliation={summary,evidence}`，引用已有材料说明哪些是历史校准、哪些是当前完整单轮需求及换算依据；这不是新增专家必交文件。无法解释的矛盾至少manual，明确当前超限仍fail；历史校准机不同且有充分关联依据时，不因此要求全部研究重跑。
 
@@ -104,7 +104,7 @@ review.resource_review使用status/summary/evidence、estimate与hardware_review
 }
 ```
 
-上例仅示范estimate结构；完整review还须据真实材料填写hardware_review。示例数值不套用到实际题包。未知的原始测量仍用null；估算字段与来源放estimate，不改原测量。没有足够依据时才manual，并具体指出缺耗时、GPU数、CPU数还是阶段范围。专家可在已有说明补一段资源估算并引用现有日志；仅确实无法推断时补一轮代表性运行摘要，不要求所有历史作业重跑。
+上例仅示范estimate结构；完整review还须据真实材料填写hardware_review。示例数值不套用到实际题包。未知的原始测量仍用null；估算字段与来源放estimate，不改原测量。仅换卡补证保留warn，不强制补跑；其他依据不足仍manual，具体指出缺GPU数、CPU数或阶段范围等。明确资源超限或旧结果冒充新卡实测仍fail。
 
 ## QA16：时长反馈写清具体缺口
 

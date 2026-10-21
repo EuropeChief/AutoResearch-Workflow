@@ -23,6 +23,7 @@ import resource_review
 import evidence_refs
 import trajectory_review
 import task_fingerprint
+import project_policy
 try:
     import tomllib
 except ImportError:
@@ -143,7 +144,7 @@ def trajectory_durations(root, files):
 
 def item(check_id, status="manual", reason="等待逐项阅读并复核实现内容。", evidence=None):
     return {"id": check_id, "title": TITLES[IDS.index(check_id)], "status": status,
-            "severity": "info" if status in ("pass", "not_applicable") else "medium",
+            "severity": "info" if status in ("pass", "warn", "not_applicable") else "medium",
             "summary": reason, "evidence": evidence or [], "remediation": "", "acceptance_evidence": ""}
 
 
@@ -151,7 +152,10 @@ def finish(report):
     counts = {s: sum(c["status"] == s for c in report["checks"])
               for s in ("pass", "fail", "manual", "warn", "not_applicable")}
     gates = report.get("content_gates", empty_content_gates())["checks"]
-    gate_counts = {s: sum(c["status"] == s for c in gates) for s in ("pass", "fail", "manual")}
+    gate_counts = {s: sum(c["status"] == s for c in gates) for s in ("pass", "fail", "manual", "warn")}
+    warnings = [r for r in report["checks"] + gates + report.get("harbor", {}).get("checks", []) if r["status"] == "warn"]
+    if any(not project_policy.allowed(r) for r in warnings):
+        raise ValueError("warning outside the confirmed project notice")
     # Format collection includes heuristic observations and equivalent layouts.
     # Confirmed material gaps enter G03/QA03/QA13/H01/H03 through semantic review.
     harbor_status = report.get("harbor", {}).get("qa17_status")
@@ -160,7 +164,7 @@ def finish(report):
     incomplete = bool(report.get("inspection_error") or counts["manual"] or gate_counts["manual"])
     decision = "FAIL" if blockers else "INCOMPLETE" if incomplete else "PASS"
     report["summary"] = {"decision": decision, "counts": counts, "gate_counts": gate_counts,
-                         "blockers": blockers}
+                         "blockers": blockers, "advisories": [r["id"] for r in warnings]}
     report.setdefault("review", {})["completed"] = not incomplete
     return report
 
@@ -211,7 +215,7 @@ def compact_markdown(report):
     if report.get("inspection_error") and report.get("inspection_stage") == "input":
         return "# 输入未完成读取\n\n" + str(report["inspection_error"]) + "\n\n未执行题目内容质检，不能据此认定材料缺失或通过。\n\n" + return_to_expert(report)
     labels = {"PASS": "通过", "FAIL": "不通过", "INCOMPLETE": "未完成检查"}
-    statuses = {"pass": "通过", "fail": "不通过", "manual": "未完成检查", "not_applicable": "不适用"}
+    statuses = {"pass": "通过", "fail": "不通过", "manual": "未完成检查", "warn": "提示（不单独阻断）", "not_applicable": "不适用"}
     trajectory_labels = {"complete": "完整", "partial": "部分", "missing": "缺失", "unreadable": "无法读取"}
     def cell(value):
         return str(value).replace("|", "\\|").replace("\n", " ").replace("\r", " ")
@@ -436,7 +440,7 @@ def build_report(source, root, files, digest=None):
     cfg = task_config(task)
     return finish({"schema_version": 6, "generated_at": datetime.now(timezone.utc).isoformat(),
                    "source": {"path": str(source), "sha256": digest, "kind": "directory" if source.is_dir() else "zip" if digest else "file" if source.is_file() else "missing"},
-                   "workspace_root": str(root), "policy": {"name": "implementation", "revision": "innerfield-deployment-v6", "execution_revision": "v0.3.10+gpu-notice.20261021", "strict_release_certification": False, "adjustments": []},
+                   "workspace_root": str(root), "policy": {"name": "implementation", "revision": "innerfield-deployment-v6", "execution_revision": project_policy.REVISION, "project_notices": [project_policy.NOTICE], "strict_release_certification": False, "adjustments": []},
                    "overview": empty_overview(), "format_alignment": collect_submission_format(root),
                    "content_gates": empty_content_gates(), "runtime_review": None,
                    "checks": checks, "extra_checks": [], "runtime_candidates": results, "runtime_parse_errors": errors,
@@ -644,11 +648,13 @@ def apply_review(report, review, root):
                     acceptance_evidence="同版本题包、合法方法及完整可信评分记录；保留旧失败证据。")
     if hardware_scores != "pass":
         gate = next(row for row in report["content_gates"]["checks"] if row["id"] == "G03")
-        if gate["status"] != "fail":
+        if gate["status"] != "fail" and (hardware_scores != "warn" or gate["status"] in ("pass", "warn")):
             gate.update(status=hardware_scores, reason_code="HARDWARE_SCORE_COMPARABILITY",
                         summary="受影响正式 B/R 的换卡成绩对应关系未通过：" + hardware["summary"],
                         evidence=list(dict.fromkeys(gate["evidence"] + hardware["evidence"])),
                         remediation=hardware["remediation"], acceptance_evidence=hardware["acceptance_evidence"])
+            if hardware_scores == "warn":
+                gate.update(project_policy.advisory(gate, "HARDWARE_RECHECK"))
     duration_observations, _ = trajectory_durations(root, [r["source_path"] for r in report["overview"]["trajectories"] if r.get("source_path")])
     report["runtime_review"] = assess_runtime(review.get("runtime_review"), report["overview"]["trajectories"], root, review_evidence, duration_observations)
     report["format_alignment"]["review"] = validate_format_review(review.get("format_review"))
@@ -658,7 +664,7 @@ def apply_review(report, review, root):
     final = []
     for row in sorted(rows, key=lambda row: row["id"]):
         check_id, status = row["id"], row.get("status")
-        if status not in ("pass", "fail", "manual", "not_applicable"):
+        if status not in ("pass", "fail", "manual", "not_applicable", "warn") or (status == "warn" and not project_policy.allowed(row)):
             raise ValueError(f"{check_id}: unsupported status")
         reason, evidence = row.get("summary", ""), row.get("evidence", [])
         if not isinstance(reason, str) or not reason.strip() or len(reason) > 220:
@@ -680,6 +686,8 @@ def apply_review(report, review, root):
             result = item("QA15", resources["status"], resources["summary"][:220], resources["evidence"])
             result["remediation"] = resources.get("remediation", "补充完整单轮的耗时、GPU数量和CPU核数估算，并引用现有日志或实现依据。")
             result["acceptance_evidence"] = resources.get("acceptance_evidence", "有来源的资源估算符合7200秒、8张H20/L20及64CPU上限；标明计时阶段及实测/推断。")
+            if result["status"] == "warn":
+                result = project_policy.advisory(result, "HARDWARE_RECHECK")
             final.append(result)
         elif check_id == "QA16":
             runtime = report["runtime_review"]
@@ -696,6 +704,8 @@ def apply_review(report, review, root):
                 reason = harbor_summary(harbor)
             refs = list(dict.fromkeys(ref for r in harbor["checks"] for ref in r["evidence"]))
             result = item("QA17", harbor["qa17_status"], reason, refs)
+            if result["status"] == "warn":
+                result = project_policy.advisory(result, "NOP_EVIDENCE")
             if result["status"] in ("fail", "manual"):
                 defaults = {}
                 if harbor["deployment_contract"]["status"] != "pass":
@@ -710,6 +720,8 @@ def apply_review(report, review, root):
             final.append(result)
         else:
             result = item(check_id, status, reason, evidence)
+            if status == "warn":
+                result = project_policy.advisory(result, row["advisory_code"])
             for field in ("remediation", "acceptance_evidence"):
                 result[field] = row.get(field, "")
                 if status in ("fail", "manual"):
@@ -727,10 +739,12 @@ def apply_review(report, review, root):
                     result.update(status=deployment["constraint_status"], summary=deployment["summary"][:220],
                                   evidence=list(dict.fromkeys(result["evidence"] + deployment["evidence"])),
                                   remediation=deployment["remediation"], acceptance_evidence=deployment["acceptance_evidence"])
-            if check_id in ("QA03", "QA13") and hardware_scores != "pass" and result["status"] != "fail":
+            if check_id in ("QA03", "QA13") and hardware_scores != "pass" and result["status"] != "fail" and (hardware_scores != "warn" or result["status"] in ("pass", "warn")):
                 result.update(status=hardware_scores, summary=("受影响正式成绩的硬件对应待核：" + hardware["summary"])[:220],
                               evidence=list(dict.fromkeys(result["evidence"] + hardware["evidence"])),
                               remediation=hardware["remediation"], acceptance_evidence=hardware["acceptance_evidence"])
+                if hardware_scores == "warn":
+                    result = project_policy.advisory(result, "HARDWARE_RECHECK")
             if check_id in ("QA03", "QA13") and invalid_formal:
                 result.update(status="fail", summary="正式 B/R 运行存在已确认无效评分，当前复现/改善证据不成立。",
                               evidence=list(dict.fromkeys(result["evidence"] + invalid_formal)),
@@ -747,10 +761,9 @@ def apply_review(report, review, root):
                     result["remediation"] = "补齐两条真实轨迹，每轮八字段须完整有效；保留失败原因，不补造分数、时间或轮次。自定义状态需说明其语义。"
                     result["acceptance_evidence"] = "overview.source_path 指向两份可读取轨迹，轮次及八字段符合教程，并与运行摘要和最佳方法记录一致。"
                 integrity = report["trajectory_review"]
-                integrity_status = integrity["content_status"] if check_id == "QA18" else (
-                    "fail" if any(r["task_binding"]["status"] == "fail" for r in integrity["trajectories"]) else
-                    "manual" if any(r["task_binding"]["status"] != "pass" for r in integrity["trajectories"]) or integrity["binding_errors"] else "pass")
-                if integrity_status != "pass" and result["status"] != "fail":
+                integrity_status = integrity["content_status"] if check_id == "QA18" else project_policy.aggregate(
+                    [r["task_binding"] for r in integrity["trajectories"]] + ([{"status": "manual"}] if integrity["binding_errors"] else []))
+                if integrity_status != "pass" and result["status"] != "fail" and (integrity_status != "warn" or result["status"] in ("pass", "warn")):
                     result["status"] = integrity_status
                     binding_summary = "；".join(r["name"] + "：" + r["task_binding"]["summary"] for r in integrity["trajectories"] if r["task_binding"]["status"] != "pass")
                     if integrity["binding_errors"]:
@@ -760,6 +773,9 @@ def apply_review(report, review, root):
                     if check_id == "QA21":
                         result["remediation"] = "核对轨迹使用的题包版本，在 run_summary.json 的 task_binding 写 hash_profile=harbor-task-inputs-v1 与 task_content_sha256。两轨相同版本只写一次；不同版本可各写在 agent_execution 中。无需新建 start_record、run_id 或轨迹哈希。"
                         result["acceptance_evidence"] = "重算 environment/、task.toml、tests/、instruction.md 的四项指纹，与 run_summary.task_binding 一致；版本确有变化则提交对应题包或重跑，不能只修改错误哈希。"
+                        if integrity_status == "warn":
+                            result = project_policy.advisory(result, "TASK_FINGERPRINT")
+                            result.update(remediation="保留真实版本与哈希差异说明，不回填历史哈希或强制补跑。", acceptance_evidence="内容/任务对应关系已核；指纹缺口按项目通知保留提示。")
                     else:
                         result["remediation"] = row.get("remediation") or integrity["remediation"]
                         result["acceptance_evidence"] = row.get("acceptance_evidence") or integrity["acceptance_evidence"]

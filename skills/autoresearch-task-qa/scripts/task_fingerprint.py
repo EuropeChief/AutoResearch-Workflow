@@ -90,26 +90,33 @@ def resolve_file(root, reference):
 def check_binding(root, current, trajectory_path, binding, semantic_review=None):
     """Compare the four-input hash recorded in run_summary; extra fields optional."""
     out = {"status": "manual", "basis": "missing", "authenticity_verified": False,
-           "summary": "run_summary.json 未记录四项题包哈希；补 task_binding.hash_profile 和 task_content_sha256。", "evidence": []}
-    if not isinstance(binding, dict):
-        return out
+           "summary": "run_summary.json 未记录四项题包哈希；保留缺口提示，不单独阻断或要求补跑。", "evidence": []}
+    from project_policy import advisory
+    def warn(value):
+        return advisory(value, "TASK_FINGERPRINT")
     if current.get("status") != "pass":
         return {**out, "basis": "fingerprint_unavailable", "summary": current["summary"]}
-    if binding.get("hash_profile") != PROFILE:
-        return {**out, "basis": "unsupported_profile", "summary": "run_summary 的 hash_profile 应为 harbor-task-inputs-v1。"}
-    digest = binding.get("task_content_sha256")
-    if digest is None:
-        return {**out, "basis": "hash_missing"}
-    if digest != current["task_content_sha256"]:
-        return {**out, "status": "fail", "basis": "task_hash_mismatch", "summary": "run_summary 记录的题包哈希与当前 environment/task.toml/tests/instruction.md 不一致。"}
+    if not isinstance(binding, dict):
+        return warn(out)
+    # A hash advisory must never hide a known association with another task/run.
     try:
         path = resolve_file(root, trajectory_path)
         named = binding.get("trajectory_path")
         if named is not None and resolve_file(root, named).resolve() != path.resolve():
             return {**out, "status": "fail", "basis": "trajectory_path_mismatch", "summary": "可选 trajectory_path 指向另一份轨迹；请核对绑定对应关系。"}
+    except (OSError, ValueError, UnicodeError) as exc:
+        return {**out, "basis": "unreadable_binding", "summary": str(exc)}
+    if binding.get("hash_profile") != PROFILE:
+        return warn({**out, "basis": "unsupported_profile", "summary": "run_summary 的 hash_profile 应为 harbor-task-inputs-v1；按项目通知保留提示。"})
+    digest = binding.get("task_content_sha256")
+    if digest is None:
+        return warn({**out, "basis": "hash_missing"})
+    if digest != current["task_content_sha256"]:
+        return warn({**out, "basis": "task_hash_mismatch", "summary": "run_summary 记录的题包哈希与当前 environment/task.toml/tests/instruction.md 不一致；保留差异，不单独阻断或要求补跑。"})
+    try:
         expected = binding.get("trajectory_sha256")
         if expected is not None and expected != sha256_file(path):
-            return {**out, "status": "fail", "basis": "trajectory_hash_mismatch", "summary": "可选轨迹 SHA-256 与提交文件不一致。"}
+            return warn({**out, "basis": "trajectory_hash_mismatch", "summary": "可选轨迹 SHA-256 与提交文件不一致；保留实际差异提示。"})
         return {**out, "status": "pass", "basis": "summary_hash_matches",
                 "summary": "run_summary 的四项题包哈希与当前包一致。", "evidence": [trajectory_path]}
     except (OSError, ValueError, UnicodeError) as exc:

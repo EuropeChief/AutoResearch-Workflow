@@ -6,6 +6,7 @@ import math
 from pathlib import Path
 import re
 import deployment_review
+from project_policy import advisory
 
 LIMITS = {"score_seconds": 7200, "gpu_count": 8, "gpu_types": ["H20"], "cpu_cores": 64}
 FIELDS = ("score_seconds", "gpu_count", "gpu_type", "cpu_cores", "peak_memory_mb", "peak_storage_mb")
@@ -78,8 +79,10 @@ def hardware_review(current, review, estimate, root, validate_evidence, deployme
         gaps.append("CPU/GPU任务性质尚未据实判定")
     if not refs or not isinstance(data.get("summary"), str) or not data["summary"].strip():
         gaps.append("任务性质与换卡成绩可比性的现有依据")
+    warnings = []
+    hardware_advisory = data.get("advisory_code") == "HARDWARE_RECHECK" and kind == "gpu"
     if comparison == "unverified":
-        gaps.append("当前成绩的硬件归属/换卡影响尚未确认")
+        (warnings if hardware_advisory else gaps).append("换卡后的成绩影响尚未核验；原成绩保留真实设备标签")
     if comparison == "reused_without_validation":
         problems.append("旧卡成绩未经复核直接作为新卡成绩，不能据此声称目标硬件结果")
     profile = (deployment or {}).get("profile", deployment_review.INNERFIELD)
@@ -107,15 +110,18 @@ def hardware_review(current, review, estimate, root, validate_evidence, deployme
                     gaps.append(f"{role}有效gpu_types尚未明确")
                 elif any(not isinstance(t, str) or t.strip().upper() not in deployment_review.GPU_TYPES for t in types):
                     problems.append(f"{role}最终gpu_types未按项目通知写为H20；实际研究卡型可自选")
-    status = "fail" if problems else "manual" if gaps else "pass"
-    score_status = "fail" if comparison == "reused_without_validation" else "manual" if comparison == "unverified" or not refs or not data.get("summary") else "pass"
-    return {**data, "task_type": kind, "score_comparability": comparison, "status": status,
+    status = "fail" if problems else "manual" if gaps else "warn" if warnings else "pass"
+    score_status = "fail" if comparison == "reused_without_validation" else ("warn" if hardware_advisory else "manual") if comparison == "unverified" else "pass"
+    if not refs or not data.get("summary"):
+        score_status = "manual"
+    result = {**data, "task_type": kind, "score_comparability": comparison, "status": status,
             "score_status": score_status if formal_effect else "pass", "affects_formal_scores": formal_effect,
             "affected_formal_runs": affected, "problems": problems, "gaps": gaps,
             "evidence": list(dict.fromkeys(refs + ([(deployment or {})["config_source"]] if (deployment or {}).get("config_source") else []))),
-            "summary": "；".join(problems + gaps) or data.get("summary", ""),
+            "warnings": warnings, "summary": "；".join(problems + gaps + warnings) or data.get("summary", ""),
             "remediation": "按任务性质核对当前Solver/Verifier资源。换卡只复核受影响的成绩或耗时，并引用已有配置、说明或运行记录；旧测量保留原硬件标签。",
             "acceptance_evidence": "CPU题不申请GPU；GPU题提交配置写H20，实际设备据实记录；H20适配由算法部门负责，不把专家原卡测量改写为H20实测。"}
+    return advisory(result, "HARDWARE_RECHECK") if status == "warn" else result
 
 
 def apply_review(current, review, root, validate_evidence, deployment=None):
@@ -174,7 +180,10 @@ def apply_review(current, review, root, validate_evidence, deployment=None):
     estimate = estimate or {}
     numbers(estimate, "resource_review.estimate")
     er = validate_evidence(root, estimate.get("evidence", []), "resource estimate")
-    missing = []
+    missing, warnings = [], []
+    hardware_data = review.get("hardware_review", {})
+    hardware_advisory = (isinstance(hardware_data, dict) and hardware_data.get("task_type") == "gpu"
+        and (hardware_data.get("advisory_code") == "HARDWARE_RECHECK" or review.get("advisory_code") == "HARDWARE_RECHECK"))
     # A supported target estimate may differ from old calibration measurements,
     # but already supplied score records cannot silently contradict it. This is
     # a reviewer explanation over existing evidence, not a new required artifact.
@@ -185,7 +194,8 @@ def apply_review(current, review, root, validate_evidence, deployment=None):
         for field in ("score_seconds", "gpu_count", "cpu_cores"):
             observed, proposed = row.get(field), estimate.get(field)
             if observed is not None and proposed is not None and observed > proposed:
-                conflicts.append(f"{row['run_id']}.{field} 已给观测为{observed}，高于目标估算{proposed}")
+                target = warnings if field == "score_seconds" and hardware_advisory and hardware_data.get("score_comparability") != "same_hardware" else conflicts
+                target.append(f"{row['run_id']}.{field} 已给观测为{observed}，高于目标估算{proposed}")
         hardware_data = review.get("hardware_review", {})
         same_hardware = isinstance(hardware_data, dict) and hardware_data.get("score_comparability") == "same_hardware"
         if same_hardware and row.get("gpu_count") and estimate.get("gpu_count") and row.get("gpu_type") and estimate.get("gpu_type"):
@@ -205,7 +215,7 @@ def apply_review(current, review, root, validate_evidence, deployment=None):
     for field, label in (("score_seconds", "完整一轮评分耗时"), ("gpu_count", "GPU数量"), ("cpu_cores", "CPU核数")):
         value = estimate.get(field)
         if value is None:
-            missing.append(label)
+            (warnings if field == "score_seconds" and hardware_advisory else missing).append(label)
         elif value > LIMITS[field]:
             problems.append(f"估算{label} {value} 超过上限{LIMITS[field]}")
     if not estimate.get("time_accounting"):
@@ -225,24 +235,25 @@ def apply_review(current, review, root, validate_evidence, deployment=None):
     hardware = hardware_review(current, review, estimate, root, validate_evidence, deployment)
     problems.extend(hardware["problems"])
     missing.extend(hardware["gaps"])
+    warnings.extend(hardware.get("warnings", []))
     conclusion = review.get("status", "manual")
-    if conclusion not in ("pass", "manual", "fail"):
+    if conclusion not in ("pass", "manual", "fail", "warn") or (conclusion == "warn" and not hardware_advisory):
         raise ValueError("QA15 cannot be skipped")
     if conclusion == "fail" and (not refs or not review.get("summary")):
         raise ValueError("resource_review fail needs evidence and explanation")
-    status = "fail" if problems or conclusion == "fail" else "manual" if missing or conclusion != "pass" else "pass"
-    summary = ("；".join(problems) if problems else "缺少：" + "、".join(missing) if missing else
+    status = "fail" if problems or conclusion == "fail" else "manual" if missing or conclusion not in ("pass", "warn") else "warn" if warnings else "pass"
+    summary = ("；".join(problems) if problems else "缺少：" + "、".join(missing) if missing else "换卡补证提示（不单独阻断）：" + "、".join(warnings) if warnings else
                review.get("summary") or f"估算完整一轮{estimate['score_seconds']}秒、{estimate['gpu_count']}GPU、{estimate['cpu_cores']}CPU，符合资源上限。")
     covered = {r.get("source_path") for r in rows if r.get("scope") == "score"}
     covered_scores = {(r.get("source_path"), n) for r in rows for n in r.get("covered_rounds", [])}
     # Coverage and deployment details are observations, not new mandatory gates.
-    return {**current, "status": status, "summary": summary, "estimate": estimate, "runs": checked,
+    result = {**current, "status": status, "summary": summary, "estimate": estimate, "runs": checked,
             "observation_conflicts": conflicts, "observation_reconciliation": reconciliation,
             "hardware_review": hardware,
             "enforcement_review": review.get("enforcement_review"),
             "missing_run_paths": sorted(set(current.get("formal_run_paths", [])) - covered),
             "missing_agent_scores": [r for r in current.get("agent_scores", []) if (r["source_path"], r["round"]) not in covered_scores],
-            "problems": problems, "gaps": missing,
+            "problems": problems, "gaps": missing, "warnings": warnings,
             "evidence": list(dict.fromkeys(refs + er + reconciliation_refs + hardware["evidence"] + [ref for row in rows for ref in row["evidence"]])),
             "feasibility_summary": review.get("feasibility_summary", estimate.get("basis", "")),
             "remediation": "" if status == "pass" else review.get("remediation") or
@@ -252,3 +263,7 @@ def apply_review(current, review, root, validate_evidence, deployment=None):
             "acceptance_evidence": "" if status == "pass" else review.get("acceptance_evidence") or
                 (hardware["acceptance_evidence"] if hardware["status"] != "pass" else
                  "一份有来源的完整单轮资源估算：耗时≤7200秒、GPU≤8张、CPU≤64核；提交目标H20，实际卡型自选，标明实测与推断及包含的运行阶段。")}
+    if status == "warn":
+        result.update(remediation="保留原卡成绩/耗时与换卡未核验说明；不强制补跑。", acceptance_evidence="原始设备与观测保持真实；提示不作为换卡后实测证明。")
+        return advisory(result, "HARDWARE_RECHECK")
+    return result

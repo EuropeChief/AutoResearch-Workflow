@@ -1,23 +1,23 @@
 {
-  "at": "2026-10-21T13:01:59+00:00",
-  "checked_links": 202,
-  "development_files": 299,
+  "at": "2026-10-21T14:04:38+00:00",
+  "checked_links": 209,
+  "development_files": 303,
   "fresh_cli_capabilities": true,
   "model_calls": 0,
-  "native_tests": "565",
+  "native_tests": "569",
   "package_revision": "2.1.1-v4.20261021.dev",
   "pending": [
     "离线合同已核；显式发布证据和正式归档尚未验收"
   ],
   "python": "3.13.13",
   "qa_coverage_count": 38,
-  "qa_revision": "v0.3.10+gpu-notice.20261021",
+  "qa_revision": "v0.3.10+project-notices.20261021",
   "release_ready": false,
-  "relocated_tests": "565",
+  "relocated_tests": "569",
   "relocation_without_design_or_pilot_runs": true,
   "relocation_without_host_config_or_auth": true,
   "rule_count": 50,
-  "runtime_payload_files": 172,
+  "runtime_payload_files": 175,
   "runtime_smoke": [
     {
       "command": [
@@ -131,7 +131,7 @@
   "runtime_without_development_files": true,
   "schema_version": 2,
   "scope": "tool contracts, not scientific or platform acceptance",
-  "source_manifest_sha256": "e0551ea129ad4c519f134e14285b91e87a1c5b51eb06373cf4aad76ed165da31",
+  "source_manifest_sha256": "03f84ef2580d75689cf200debd7324fce78e1e9a349663601a863094337923ca",
   "status": "contracts_passed",
   "version": "2.1.1"
 }

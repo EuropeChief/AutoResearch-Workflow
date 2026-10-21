@@ -1,7 +1,7 @@
 {
   "catalog": {
     "path": "rules/catalog.json",
-    "sha256": "778a52ab654b6a15c8ed0e952fa4b7a5649d943f3f4bab12fa749eb127700565"
+    "sha256": "fb719441ce4e645349057b886862c55a2eb168796a2ad8d043df3146bcb23755"
   },
   "flow_version": "2.1.1",
   "schema_version": 1,
@@ -61,8 +61,8 @@
       "path": "skills/autoresearch-task-qa/SKILL.md",
       "priority": 2,
       "scope": "global",
-      "sha256": "3699f7386382a724ae25bc7cff4244f0d7d0b4eedceda6ae5ce3068ef8518c54",
-      "version": "v0.3.10+gpu-notice.20261021",
+      "sha256": "c75374d6c93002297153c30ddb45b2d62a565ef205a69120f4d83ad1f84726f7",
+      "version": "v0.3.10+project-notices.20261021",
       "origin_path": "sources/originals/review_skill-0.3.10_1015.zip#autoresearch-task-qa/SKILL.md"
     },
     {
@@ -70,7 +70,7 @@
       "path": "skills/autoresearch-task-qa/references/source-alignment.md",
       "priority": 2,
       "scope": "global",
-      "sha256": "3edc85141a1c8f5cc1efac538f05fe76f5c5a54d75301b566d209b0ae131bbf5",
+      "sha256": "a2cd75dce6996a5540c2c6085654e553dfc6bc3d325d20d79e7678241d9f71af",
       "version": "v0.3.10@2026-10-15",
       "origin_path": "sources/originals/review_skill-0.3.10_1015.zip#autoresearch-task-qa/references/source-alignment.md"
     },
@@ -79,7 +79,7 @@
       "path": "skills/autoresearch-task-qa/references/research-quality.md",
       "priority": 2,
       "scope": "global",
-      "sha256": "13292e4040045d7da1c098ca544bfd06b9aa65a8ba7e0bdc28d8e6642a144f59",
+      "sha256": "f3258d01bbbfaefcc49419543da706c9dc4023ba8008963751e796c03e096b93",
       "version": "v0.3.10@2026-10-15",
       "origin_path": "sources/originals/review_skill-0.3.10_1015.zip#autoresearch-task-qa/references/research-quality.md"
     },
@@ -88,7 +88,7 @@
       "path": "skills/autoresearch-task-qa/references/implementation-policy.md",
       "priority": 2,
       "scope": "global",
-      "sha256": "8a3d0bfa256a920001d464e0613ffd14ecdf82cad0c38e1186e8897280f5d608",
+      "sha256": "a47579d9cf525dedf6e7f88fe7e7d0ad4e05e003343bdc09876e003647af11ba",
       "version": "v0.3.10@2026-10-15",
       "origin_path": "sources/originals/review_skill-0.3.10_1015.zip#autoresearch-task-qa/references/implementation-policy.md"
     },
@@ -115,7 +115,7 @@
       "path": "skills/autoresearch-task-qa/references/harbor-harness.md",
       "priority": 2,
       "scope": "global",
-      "sha256": "d9f1874ebbf4e1f346a3c4b56ff735550a383b44e8501a90a72a493b307c0995",
+      "sha256": "41450179f843cd7f9ce4ffc9d773ddd593fab507b465f3045f47bbcf418942aa",
       "version": "v0.3.10@2026-10-15",
       "origin_path": "sources/originals/review_skill-0.3.10_1015.zip#autoresearch-task-qa/references/harbor-harness.md"
     },
@@ -124,7 +124,7 @@
       "path": "skills/autoresearch-task-qa/references/implementation-report.md",
       "priority": 2,
       "scope": "global",
-      "sha256": "c6a7712a3c33585d333be9645677b31f10f7315c14a83470b9a638feaf52b651",
+      "sha256": "b241da30762bcb5395abbb236fbee5455a152f9d23889c5c80e71cb693dd5a41",
       "version": "v0.3.10@2026-10-15",
       "origin_path": "sources/originals/review_skill-0.3.10_1015.zip#autoresearch-task-qa/references/implementation-report.md"
     },
@@ -156,7 +156,7 @@
       "origin_path": "sources/originals/review_skill-0.3.10_1015.zip#autoresearch-task-qa/references/exposure-manifest.md"
     }
   ],
-  "qa_revision": "v0.3.10+gpu-notice.20261021",
+  "qa_revision": "v0.3.10+project-notices.20261021",
   "package_revision": "2.1.1-v4.20261021.dev",
   "bundled_files": [
     {
@@ -173,7 +173,7 @@
     },
     {
       "path": "skills/autoresearch-task-qa/SKILL.md",
-      "sha256": "3699f7386382a724ae25bc7cff4244f0d7d0b4eedceda6ae5ce3068ef8518c54"
+      "sha256": "c75374d6c93002297153c30ddb45b2d62a565ef205a69120f4d83ad1f84726f7"
     },
     {
       "path": "skills/autoresearch-task-qa/agents/openai.yaml",
@@ -189,19 +189,19 @@
     },
     {
       "path": "skills/autoresearch-task-qa/references/harbor-harness.md",
-      "sha256": "d9f1874ebbf4e1f346a3c4b56ff735550a383b44e8501a90a72a493b307c0995"
+      "sha256": "41450179f843cd7f9ce4ffc9d773ddd593fab507b465f3045f47bbcf418942aa"
     },
     {
       "path": "skills/autoresearch-task-qa/references/implementation-policy.md",
-      "sha256": "8a3d0bfa256a920001d464e0613ffd14ecdf82cad0c38e1186e8897280f5d608"
+      "sha256": "a47579d9cf525dedf6e7f88fe7e7d0ad4e05e003343bdc09876e003647af11ba"
     },
     {
       "path": "skills/autoresearch-task-qa/references/implementation-report.md",
-      "sha256": "c6a7712a3c33585d333be9645677b31f10f7315c14a83470b9a638feaf52b651"
+      "sha256": "b241da30762bcb5395abbb236fbee5455a152f9d23889c5c80e71cb693dd5a41"
     },
     {
       "path": "skills/autoresearch-task-qa/references/innerfield-deployment.md",
-      "sha256": "b74c6e242648b8f7a3459049e8e3b7461343d39a588b79e386d4d16b8afc9d2f"
+      "sha256": "7246a4a17693ca5b87be6554a0c4674e541bd0337f0ff723b307282a125429a9"
     },
     {
       "path": "skills/autoresearch-task-qa/references/precheck-policy.md",
@@ -217,15 +217,15 @@
     },
     {
       "path": "skills/autoresearch-task-qa/references/research-quality.md",
-      "sha256": "13292e4040045d7da1c098ca544bfd06b9aa65a8ba7e0bdc28d8e6642a144f59"
+      "sha256": "f3258d01bbbfaefcc49419543da706c9dc4023ba8008963751e796c03e096b93"
     },
     {
       "path": "skills/autoresearch-task-qa/references/runtime-integrity.md",
-      "sha256": "2d3a21433e8c03d125685c81b1d632b6400e230f19154cbb67e44c45e73f27e9"
+      "sha256": "4a5f6913d6ed05d45075b65d1c2a6aad8ee7effc9a6ba17f91e8cb0673e670ec"
     },
     {
       "path": "skills/autoresearch-task-qa/references/source-alignment.md",
-      "sha256": "3edc85141a1c8f5cc1efac538f05fe76f5c5a54d75301b566d209b0ae131bbf5"
+      "sha256": "a2cd75dce6996a5540c2c6085654e553dfc6bc3d325d20d79e7678241d9f71af"
     },
     {
       "path": "skills/autoresearch-task-qa/references/submission-format.md",
@@ -241,7 +241,7 @@
     },
     {
       "path": "skills/autoresearch-task-qa/scripts/content_gates.py",
-      "sha256": "92463886f11e6a114e686df08dae3e95ae873a1a561ab422a5ced4641a257cb7"
+      "sha256": "5fb30c2eb422bdb40d66268d0206583cc8f02faebb31d87dd1e3a79dcac265c3"
     },
     {
       "path": "skills/autoresearch-task-qa/scripts/deployment_review.py",
@@ -257,15 +257,19 @@
     },
     {
       "path": "skills/autoresearch-task-qa/scripts/harbor_review.py",
-      "sha256": "b8d99764f1bf40dcad40c875212191324778259036ed0e634c662601eacab545"
+      "sha256": "831bbc9de2be3a4871045e62523c3374f8aec3a6d96c2b10d4ffd7abb29432b9"
     },
     {
       "path": "skills/autoresearch-task-qa/scripts/implementation_review.py",
-      "sha256": "5688ab21a06ff4fe8e9fda33d8ed579f5ea02a53e5a6ba4c7ddd68b784b62a42"
+      "sha256": "f370148cc61edc0ea5ef4d5441de3f340fd767053cf7f0226a5ac8b4c1f416b4"
+    },
+    {
+      "path": "skills/autoresearch-task-qa/scripts/project_policy.py",
+      "sha256": "0fcc5db2120372b9d84892d17d0d6bfd8ebb45c9826bfe0378e5111d8732e759"
     },
     {
       "path": "skills/autoresearch-task-qa/scripts/resource_review.py",
-      "sha256": "adc64dc225e167e8ac21a2a21ab656553eca41ba29b80776586bb2125aff52ac"
+      "sha256": "97a69ca359566f18630b1c09c41227f07fb71802654e85706867dbc5c9659e0f"
     },
     {
       "path": "skills/autoresearch-task-qa/scripts/submission_format.py",
@@ -273,7 +277,7 @@
     },
     {
       "path": "skills/autoresearch-task-qa/scripts/task_fingerprint.py",
-      "sha256": "3ece294fe70c05e806569953fbe7102014e0b0cec82461822a76106a60976b13"
+      "sha256": "e208918fbf1f315ead00334463edb64fa51658e552a0516f1b6c4db7b5506916"
     },
     {
       "path": "skills/autoresearch-task-qa/scripts/test_audit_collection.py",
@@ -285,7 +289,7 @@
     },
     {
       "path": "skills/autoresearch-task-qa/scripts/test_container_gpu_policy.py",
-      "sha256": "fe5651e3cf98ef8c8adab4325e2224831a31c21a023c2c89cfe4fc4b8b2a0dcf"
+      "sha256": "29aa98b20f68bf258ba648e11b661835ddb1f57b2e121ccabf3cf00b0016ad5e"
     },
     {
       "path": "skills/autoresearch-task-qa/scripts/test_content_gates.py",
@@ -305,7 +309,7 @@
     },
     {
       "path": "skills/autoresearch-task-qa/scripts/test_harbor_review.py",
-      "sha256": "cedada7bfe61a99cf3caef5683f9479db9ccb5d7a8e613abdfe4881cacb6c169"
+      "sha256": "bc9ca4044f2b47701a95407af505eabe713d81ada43964344c0e5d1af51fe109"
     },
     {
       "path": "skills/autoresearch-task-qa/scripts/test_hardware_deployment_integration.py",
@@ -313,15 +317,19 @@
     },
     {
       "path": "skills/autoresearch-task-qa/scripts/test_implementation_review.py",
-      "sha256": "2092934a0adc3f40070fe9420e9eb685033261f29660cd16fc1c1c8496b5af88"
+      "sha256": "415ed281278593f4c16d1fab968faf5e2e1de639ab0d90399790aa7cf70360ac"
     },
     {
       "path": "skills/autoresearch-task-qa/scripts/test_input_reports.py",
       "sha256": "f32e70aeba3020ddc575ca9296336b42512c12417066e951127e9ed3f7eae730"
     },
     {
+      "path": "skills/autoresearch-task-qa/scripts/test_project_notices.py",
+      "sha256": "ac9d26e2b16df2551c4af915b25cf4b2e4a4ceb41c05158ff1de256c196e0824"
+    },
+    {
       "path": "skills/autoresearch-task-qa/scripts/test_runtime_integrity.py",
-      "sha256": "a9adae52e3a8219e42e04421e1518faa5ad3e20fddbefad570db17ae9b0e6997"
+      "sha256": "0ed562a4dafb883efb4e5b2aeb2c21e5a8f6059f5e58fedf649c4e703b75e558"
     },
     {
       "path": "skills/autoresearch-task-qa/scripts/test_runtime_mode_consistency.py",
@@ -337,7 +345,7 @@
     },
     {
       "path": "skills/autoresearch-task-qa/scripts/trajectory_review.py",
-      "sha256": "8aab97a1809455f83192c657cc2d45f0432b338320c663715024c9330fb42f14"
+      "sha256": "da8b2af2acaef5547eaec2f8001fd188d099a46b70662cf92c2f2cb05f2de189"
     },
     {
       "path": "sources/format-precheck/check_package.py",
@@ -369,7 +377,11 @@
     },
     {
       "path": "sources/notices/2026-10-21-gpu.md",
-      "sha256": "bc4608e9c2fdb0dc760a8978acc3e361ab0a59cecaa9545f97c1ed65f64b569f"
+      "sha256": "6e9a7a7ddf134d30cc3cf195a1911be43e7087b6a4ccb76571583d74f4425f22"
+    },
+    {
+      "path": "sources/notices/2026-10-21-qa-relaxation.md",
+      "sha256": "1c8eab7eeb70e3ecf9090bddac9b5a413d81909145d3b718425011f1bb088378"
     },
     {
       "path": "sources/originals/AutoResearch 专家线下标注教程V4 副本.zip",

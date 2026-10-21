@@ -258,22 +258,24 @@ def apply_review(current, review, overview, root, files, validate_evidence):
         content_status = "fail" if invalid or score == "invalid" else "pass" if score == "valid" and behavior_ok and score_ok and not uncertain else "manual"
         if invalid or binding["status"] == "fail":
             score = "invalid"
-        elif uncertain or not behavior_ok or not score_ok or binding["status"] != "pass":
+        elif uncertain or not behavior_ok or not score_ok or binding["status"] not in ("pass", "warn"):
             if score != "invalid":
                 score = "unverified"
-        status = "fail" if score == "invalid" else "pass" if score == "valid" else "manual"
+        status = "fail" if score == "invalid" else ("warn" if binding["status"] == "warn" else "pass") if score == "valid" else "manual"
         gaps = []
         if not behavior_ok:
             gaps.append("工具行为未确认")
         if not score_ok:
             gaps.append("评分来源未确认")
         if binding["status"] != "pass":
-            gaps.append("run_summary 题包哈希缺失或待确认" if binding["status"] == "manual" else "题包绑定冲突")
+            gaps.append("run_summary 题包哈希缺失或待确认" if binding.get("basis") in ("missing", "hash_missing", "unsupported_profile", "fingerprint_unavailable") else "题包绑定冲突")
         if uncertain:
             gaps.append("评分影响待确认")
         if row.get("score_status", "unverified") == "unverified":
             gaps.append("分数有效性待确认")
         status_summary = "分数无效" if score == "invalid" else "分数有效" if score == "valid" else "、".join(gaps) or "分数有效性待确认"
+        if status == "warn":
+            status_summary += "；" + "、".join(gaps) + "（提示，不单独阻断）"
         content_gaps = [g for g in gaps if g not in ("run_summary 题包哈希缺失或待确认", "题包绑定冲突")]
         content_summary = "所交轨迹内容已审" if content_status == "pass" else "分数存在已确认无效问题" if content_status == "fail" else "、".join(content_gaps)
         results.append({"source_path": path, "name": trajectory["name"], "status": status, "score_status": score,
@@ -297,7 +299,7 @@ def apply_review(current, review, overview, root, files, validate_evidence):
         if row["path"] in unused:
             unused.remove(row["path"])
     states = {r["status"] for r in results}
-    status = "fail" if "fail" in states else "manual" if "manual" in states or unused or binding_errors or not results else "pass"
+    status = "fail" if "fail" in states else "manual" if "manual" in states or unused or binding_errors or not results else "warn" if "warn" in states else "pass"
     content_states = {r["content_status"] for r in results}
     content_status = "fail" if "fail" in content_states else "manual" if "manual" in content_states or unused or not results else "pass"
     invalid_formal = sorted({ref for row in results for finding in row["findings"]

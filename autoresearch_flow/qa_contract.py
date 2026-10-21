@@ -3,6 +3,7 @@ from pathlib import Path
 import re
 
 from .common import _read_json, _require
+from .materials_io import bundled
 
 QA_IDS = {f"QA{i:02d}" for i in range(1, 22)}
 G_IDS = {f"G{i:02d}" for i in range(1, 4)}
@@ -21,9 +22,10 @@ def validate_qa_report(report, *, require_pass=False):
                  "content_gates", "review", "summary", "trajectory_review",
                  "resource_review", "task_fingerprint"):
         _require(isinstance(report.get(name), dict), "QA_REPORT_SCHEMA", f"缺少报告对象 {name}")
+    notice = bundled("project_policy")
     harbor = report["harbor"]
     _require(harbor.get("ruleset") == HARBOR_RULESET,
-             "QA_REPORT_SCHEMA", "Harbor 质检规则版本不是当前 NOP 必交版本")
+             "QA_REPORT_SCHEMA", "Harbor 质检规则版本不是当前执行版本")
     groups = [(report.get("checks"), QA_IDS),
               (report["content_gates"].get("checks"), G_IDS),
               (harbor.get("checks"), H_IDS)]
@@ -35,9 +37,15 @@ def validate_qa_report(report, *, require_pass=False):
                  "QA_REPORT_SCHEMA", "QA01–21、G01–03、H01–06 各须恰好出现一次")
         for row in values:
             key, status = row["id"], row.get("status")
-            _require(status in {"pass", "fail", "manual", "not_applicable"}
+            _require(status in {"pass", "fail", "manual", "not_applicable", "warn"}
                      and (status != "not_applicable" or key in NA_IDS),
                      "QA_REPORT_SCHEMA", f"{key} 状态不符合当前 Skill；不得沿用旧豁免")
+            if status == "warn":
+                _require(notice.allowed(row) and report["policy"].get("execution_revision") == notice.REVISION,
+                         "QA_REPORT_SCHEMA", f"{key} 提示须属于当前项目通知的具体补证范围")
+                if key == "G03":
+                    _require(row.get("automatic_status") == "pass", "QA_UNRESOLVED",
+                             "换卡提示不能覆盖Reference数值或质量门未通过")
             _require(isinstance(row.get("summary"), str) and row["summary"].strip()
                      and isinstance(row.get("evidence"), list),
                      "QA_REPORT_SCHEMA", f"{key} 缺结论或证据列表")
@@ -49,9 +57,9 @@ def validate_qa_report(report, *, require_pass=False):
                          "QA_REPORT_SCHEMA", f"{key} 缺返修与验收建议")
             rows[key] = row
     h06 = rows["H06"]
-    expected_runtime = ("not_run" if h06["status"] == "fail" and not h06["evidence"]
+    expected_runtime = ("not_run" if h06["status"] in {"fail", "warn"} and not h06["evidence"]
                         else {"pass": "evidence_consistent", "fail": "failed",
-                              "manual": "unverified"}[h06["status"]])
+                              "manual": "unverified", "warn": "unverified"}[h06["status"]])
     _require(harbor.get("runtime_status") == expected_runtime,
              "QA_REPORT_SCHEMA", "H06 与 Harbor runtime_status 不一致")
     if h06["status"] == "pass":
@@ -65,20 +73,29 @@ def validate_qa_report(report, *, require_pass=False):
     decision = report["summary"].get("decision")
     _require(decision in {"PASS", "FAIL", "INCOMPLETE"}, "QA_REPORT_SCHEMA", "报告总评非法")
     if require_pass or decision == "PASS":
+        integrity = report["trajectory_review"]
+        _require(not integrity.get("invalid_formal_run_paths") and
+                 not any(r.get("task_binding", {}).get("status") == "fail" for r in integrity.get("trajectories", [])),
+                 "QA_UNRESOLVED", "已确认无效成绩或任务错配不能改成指纹提示")
         _require(decision == "PASS" and report["review"].get("completed") is True
                  and report["review"].get("stage") == "semantic_review"
-                 and all(r["status"] in {"pass", "not_applicable"} for r in rows.values()),
-                 "QA_UNRESOLVED", "独立质检须完成且全部适用项通过，不能用例外关闭失败")
+                 and all(r["status"] in {"pass", "not_applicable"} or notice.allowed(r) for r in rows.values()),
+                 "QA_UNRESOLVED", "独立质检须完成；仅项目通知范围内的提示不单独阻断，其他失败/待核仍阻断")
         _require(report["trajectory_review"].get("content_status") == "pass"
-                 and report["trajectory_review"].get("status") == "pass"
+                 and (report["trajectory_review"].get("status") == "pass" or
+                      (report["trajectory_review"].get("status") == "warn" and notice.allowed(rows["QA21"])))
                  and not report["trajectory_review"].get("binding_errors")
                  and report["task_fingerprint"].get("status") == "pass"
-                 and report["resource_review"].get("status") == "pass"
+                 and (report["resource_review"].get("status") == "pass" or
+                      (report["resource_review"].get("status") == "warn" and notice.allowed(rows["QA15"])
+                       and not report["resource_review"].get("problems") and not report["resource_review"].get("gaps")))
                  and harbor.get("deployment_contract", {}).get("status") == "pass"
                  and not report.get("inspection_error"),
                  "QA_UNRESOLVED", "PASS 缺轨迹内容、资源或部署能力的已完成复核")
         _require(report["runtime_review"].get("status") == "pass"
-                 and harbor.get("static_status") == "pass" and harbor.get("qa17_status") == "pass"
+                 and harbor.get("static_status") == "pass"
+                 and (harbor.get("qa17_status") == "pass" or
+                      (harbor.get("qa17_status") == "warn" and notice.allowed(h06) and notice.allowed(rows["QA17"])))
                  and harbor.get("hidden_review", {}).get("status") == "pass"
                  and harbor.get("artifact_contract", {}).get("status") == "pass",
                  "QA_UNRESOLVED", "PASS 缺时长、Harbor、Hidden 或 artifacts 的通过结论")

@@ -18,13 +18,15 @@
 | QA12 | 没有 .git 可通过；有则查 remotes/tags/reflog 的清理结果或实际清理脚本及明显 fix/answer 线索，不强制深挖所有不可达对象。若只审核清理脚本，原因应写“存在清理实现”，不能写“已确认清理完成”。 |
 | QA13 | `optimization_evidence/` 有 Baseline 与 Reference 全部正式 seed 的实际运行/原始指标记录，两者 seed 集一致并逐 seed 同向比较；Reference 汇总有提升且质量门通过。不要求本次复跑。归一化 baseline=0 是正常锚点，不是平凡分数；不得只凭随机输出、单独写 passed 或重复同一 checkpoint 冒充独立运行而通过。 |
 | QA14 | 有可修改空间，并能从实现/分析中找到至少一种题面未直接提示的合法方法方向；参考分数未饱和。无需替专家研究或实证新解。面向用户/专家的私有报告可以介绍已交付Reference的方法；不得把这些报告或方法答案写回Agent题面。 |
-| QA15 | 必查有依据的资源估算：完整单轮≤2h、≤8张H20/L20、≤64CPU。按[内场口径](innerfield-deployment.md)分别核对Agent/Verifier：CPU题不增加GPU，GPU只用支持卡型；旧结果不能冒充换卡后实测。明确超限/不支持配置/冒充结果fail，具体估算或换卡影响缺口manual；不要求逐轮配额或型号认证。 |
+| QA15 | 必查有依据的资源估算：完整单轮≤2h、≤8张GPU、≤64CPU。按[内场口径](innerfield-deployment.md)分别核对Agent/Verifier：CPU题不增加GPU，实际GPU自选、最终配置H20；旧结果不能冒充换卡后实测。明确超限/不支持配置/冒充结果fail；仅换卡引出的耗时补证按[放宽通知](../../../sources/notices/2026-10-21-qa-relaxation.md)为warn，其他具体估算缺口仍manual；不要求逐轮配额或型号认证。 |
 | QA16 | **两条模型轨迹各自有效执行≥10h**；仅不涉及训练且单轮迭代很短的任务，两条各≥7h且具备例外资格证据、每条≥3有效方法闭环、后续方向、best_method干净重跑及真实有效时长证据时可接受。runtime_review由脚本核验，排队/安装/故障/阻塞不计，不相加；未知有效时长或例外资格记未完成；涉及训练/微调、迭代不短却不足10h，或任何轨迹不足7h，明确不通过。容器12h稳定性不等于此项。 |
-| QA17 | **Harbor Harness 兼容性**：按 harbor-harness.md 完成 H01–H06，显式 separate、不同 sandbox；可复用 Solver 镜像并上传 tests，或专用镜像预置 tests。按[内场口径](innerfield-deployment.md)检查真实镜像选择/构建、当前未支持字段、每sandbox单容器及不用Compose；按H03沿启动与评分调用链核对任务／Agent是否部署或调用额外工作环境，需要GPU时须直接使用各自当前沙盒的GPU；区分框架创建两侧沙盒、运行前构建、本地进程及正常模型/数据服务请求，不以关键词判失败；正式运行目录四种Compose文件名的命中直接fail，不因Dockerfile、预构建镜像或unused声明豁免，扫描边界见内场口径；保留公开 Dev、Hidden 来源与调用、独立依赖和 artifacts。必交当前版本 NOP；缺记录 H06/QA17 fail，已有配置/日志/专家说明可关联版本，不强制NOP新增哈希。0 分本身不判失败，Oracle 非必交。 |
+| QA17 | **Harbor Harness 兼容性**：按 harbor-harness.md 完成 H01–H06，显式 separate、不同 sandbox；可复用 Solver 镜像并上传 tests，或专用镜像预置 tests。按[内场口径](innerfield-deployment.md)核实际镜像/构建、未支持字段、每sandbox单容器、不用Compose及H03实际启动/评分调用链。需要GPU时用各自当前沙盒GPU，区分框架创建两侧沙盒、运行前构建、本地进程和正常模型/数据服务请求，不以关键词判失败。正式运行目录四种Compose文件名命中仍fail，扫描边界见内场口径；保留公开Dev、Hidden来源与调用、独立依赖和artifacts。NOP缺证/版本待核仅warn，不强制新增哈希或补跑；真实执行异常仍处理。0分本身不失败，Oracle非必交。 |
 | QA18 | 模型组合可调整，GPT-5.6 Sol与Seed 2.1 Turbo只是示例，不按型号设准入或要求批准换模型。人工核对实际模型、runtime、推理档位及同Prompt/任务版本/Public Dev/资源配置、各自独立空输出；推理档位默认采用所选模型支持的最高档位并记录实际设置。不能仅按文件名认定模型，实际运行无法核对时manual，明确未独立运行fail；不新增轨迹字段或必交日志。审实际提交的两轨方法/分数/失败/best记录，提供sessions就一并审。只交轨迹按轨迹范围审，不因缺sessions或run_summary哈希单独退回。具体泄漏/作弊/评分infra按证据和影响判，已修复无分数失败可保留说明；确实缺轨迹fail，影响当前分数的未解疑点manual。 |
 | QA19 | 确定性 verifier 不适用；随机性评估在题面中只检查 seed 与有效提升阈值说明。**本 QA 项本身不要求题面额外说明重复评估规则、replicate 数或重复次数**，缺少这些文字不能判失败；但一旦正式协议已经声明多个 seed，`optimization_evidence/` 的提交完整性仍须按 QA03/04/13 与格式层核对全部已声明 seed，二者不要混淆。 |
 | QA20 | 题面包含可改范围、网络规则和工具策略即可，允许“按平台默认工具策略”等有明确对象的引用，不要求固定 webSearch 大小写。 |
-| QA21 | trajectory、expert_annotation、run_summary 可解析且与当前任务和 best method 一致。轨迹仍为每轮八字段，不增加字段或修改原始 sessions。run_summary.task_binding记录hash_profile和task_content_sha256；不同版本可分别记在agent_execution。run_id/启动记录/轨迹哈希非必填。重算 environment/、task.toml、tests/、instruction.md；缺旧证据 manual，哈希冲突 fail。等价命名需映射；AutoResearch 与 ATIF 分别识别。 |
+| QA21 | trajectory、expert_annotation、run_summary 可解析且与当前任务和 best method 一致。轨迹仍为每轮八字段，不增加字段或修改原始 sessions。run_summary.task_binding记录hash_profile和task_content_sha256；不同版本可分别记在agent_execution。run_id/启动记录/轨迹哈希非必填。重算 environment/、task.toml、tests/、instruction.md；哈希缺失/不符仅warn，保留差异，不单独阻断或强制补跑。真实任务错配、坏JSON及不实记录仍阻断。等价命名需映射；AutoResearch 与 ATIF 分别识别。 |
+
+QA03/QA13 及 G02/G03 中仅由换卡引出的成绩补证可按放宽通知保留 warn；原始结果缺失、真实错算、质量门失败、Baseline/Reference 实质问题不在放宽范围。H06 的 NOP 缺证/版本待核同样仅提示，QA17 其余部署、隔离与评分要求不变。
 
 ## 证据复核
 
@@ -32,7 +34,7 @@
 
 ## 总结论
 
-- G01–G03与所有适用QA项通过且复核完成：通过。
+- G01–G03与所有适用QA项复核完成、无fail/manual：通过；仅允许放宽通知范围内带标记的warn，不把缺证写成pass。
 - 任何内容门或适用QA项有明确失败：不通过，同时保留复核是否完成。
 - 无已证实失败，但有无法读取/无法判断项或未完成语义复核：未完成检查。
 - QA15 必查，不允许 not_applicable；QA04/QA19 的不适用须说明确定性的依据。

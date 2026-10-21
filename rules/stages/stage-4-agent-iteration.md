@@ -29,12 +29,12 @@
 ### M07-S4 — 双轨评分入口预检
 
 - 规则来源：`M07`（`rules/README.md#M07`）
-- 当前行动：确认两轨均可通过同一可信入口得到公开分数，NOP/候选路径无异常。
-- 所需证据：`track_scoring_probe`, `nop_result`
+- 当前行动：确认两轨均可通过同一可信入口得到公开分数，有效候选评分路径无异常；已有 NOP 按实际覆盖范围参考，缺证不阻断。
+- 所需证据：`track_scoring_probe`
 - 检查性质：`mechanical`；严重性：`hard`
 - 阶段门前阻断：`dual_track_launch`
 - 读取前置：`M07-S3`, `C04-S2`
-- 消费证据：`nop_result`, `entry_probe`
+- 消费证据：`entry_probe`
 - 产生证据：`track_scoring_probe`
 - 影响性变更后复核：`是`
 

@@ -206,8 +206,8 @@ def validate_trial_evidence(root, refs, task_root=None, binding=None):
 
 
 def aggregate(rows):
-    statuses = {row["status"] for row in rows}
-    return "fail" if "fail" in statuses else "manual" if "manual" in statuses else "pass"
+    from project_policy import aggregate as aggregate_status
+    return aggregate_status(rows)
 
 
 def hidden_contract(root, declaration):
@@ -329,7 +329,8 @@ def apply_review(current, review, root):
     final = []
     for row in sorted(rows, key=lambda r: r["id"]):
         check_id, status = row["id"], row.get("status")
-        if status not in ("pass", "fail", "manual", "not_applicable"):
+        from project_policy import advisory, allowed
+        if status not in ("pass", "fail", "manual", "not_applicable", "warn") or (status == "warn" and not allowed(row)):
             raise ValueError(f"{check_id}: invalid Harbor status")
         if status == "not_applicable" and check_id not in ("H05", "H06"):
             raise ValueError(f"{check_id}: required Harbor check cannot be skipped")
@@ -338,8 +339,8 @@ def apply_review(current, review, root):
             raise ValueError(f"{check_id}: concise summary and evidence array required")
         paths = [resolve_ref(root, ref) for ref in refs]
         if check_id == "H06" and not refs:
-            status = "fail"
-            reason = "缺少必交的当前题包版本 NOP 自检记录；请提交一次成功运行的记录，确认题包能构建并跑通独立 Verifier。"
+            status = "warn"
+            reason = "未提供当前题包版本的 NOP 自检记录；按项目通知仅提示，不单独阻断或强制补跑，未证明运行通过。"
         if status == "pass" and not refs:
             raise ValueError(f"{check_id}: passing requires evidence")
         if check_id in ("H01", "H02") and status == "pass":
@@ -413,14 +414,21 @@ def apply_review(current, review, root):
                 if not required_refs <= set(paths):
                     status = "manual"
                     reason = "H03 须引用实际选中的镜像/构建配置和 tests 供给入口，复核独立依赖、上传或预置路径。"
-        if check_id == "H06" and status == "pass":
-            trial_evidence = validate_trial_evidence(root, refs, task_root, review.get("trial_task_binding"))
-            if trial_evidence["agent"] != "nop":
-                status = "fail"
-                reason = "必交一次 NOP 自检记录；当前提供的是其他 Agent 的 Trial，请补交当前题包版本的 NOP 记录。"
-            elif trial_evidence["task_binding"]["status"] != "pass":
-                status = "manual"
-                reason = "NOP 运行记录一致，当前题包版本尚待确认；可引用已有配置、日志或专家说明完成关联。"
+        if check_id == "H06" and status in ("pass", "warn") and refs:
+            names = {path.name for path in paths}
+            complete = {"config.json", "result.json"} <= names and bool(names & {"reward.txt", "reward.json"}) and bool(names & {"trial.log", "test-stdout.txt"})
+            if not complete:
+                status = "warn"
+                reason = "NOP 原件不完整；保留已交记录，仅提示缺证，不单独要求补跑。"
+            else:
+                # Complete supplied records must still expose real execution errors.
+                trial_evidence = validate_trial_evidence(root, refs, task_root, review.get("trial_task_binding"))
+                if trial_evidence["agent"] != "nop":
+                    status = "warn"
+                    reason = "已交其他Agent的Trial，未提供NOP记录；按通知保留提示，不冒称NOP已执行。"
+                elif trial_evidence["task_binding"]["status"] != "pass":
+                    status = "warn"
+                    reason = "NOP记录存在，当前版本对应尚未确认；仅提示，不单独阻断或强制补跑。"
         if check_id == "H06" and status == "not_applicable" and refs:
             raise ValueError("H06: supplied runtime evidence must be reviewed, not skipped")
         platform_status = deployment["config_status"] if check_id == "H02" else deployment["compose_status"] if check_id == "H03" else "pass"
@@ -428,8 +436,9 @@ def apply_review(current, review, root):
             status = deployment_review.aggregate([status, platform_status])
             reason = (reason + "；" + deployment["summary"])[:220]
             refs = list(dict.fromkeys(refs + deployment["evidence"]))
-        final.append({"id": check_id, "title": H_TITLES[H_IDS.index(check_id)], "status": status,
-                      "summary": reason, "evidence": refs})
+        result = {"id": check_id, "title": H_TITLES[H_IDS.index(check_id)], "status": status,
+                  "summary": reason, "evidence": refs}
+        final.append(advisory(result, "NOP_EVIDENCE") if check_id == "H06" and status == "warn" else result)
     if final[4]["status"] == "not_applicable" and any(resolve_ref(root, ref).name == "config.json" for ref in final[5]["evidence"]):
         final[4]["status"] = "manual"
         final[4]["summary"] = "已有 Trial config.json，须复核实际调用配置与任务选择。"
@@ -446,7 +455,7 @@ def apply_review(current, review, root):
     current["static_status"] = aggregate(final[:5])
     runtime = final[5]["status"]
     current["runtime_status"] = "not_run" if not final[5]["evidence"] else {
-        "pass": "evidence_consistent", "fail": "failed", "manual": "unverified", "not_applicable": "not_run"
+        "pass": "evidence_consistent", "fail": "failed", "manual": "unverified", "warn": "unverified", "not_applicable": "not_run"
     }[runtime]
     current["qa17_status"] = aggregate(final)
     return current
