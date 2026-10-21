@@ -12,6 +12,8 @@ from autoresearch_flow.common import _atomic_json, _require
 from autoresearch_flow.runtime_container import NativeContainer
 from autoresearch_flow.track_runtime import TrackRuntime
 
+DEADLINE_SECONDS = 60
+
 
 async def run(args):
     _require(args.allow_live, 'LIVE_PERMISSION', '须明确允许本次有界容器联调')
@@ -37,8 +39,9 @@ async def run(args):
     runtime = TrackRuntime.prepare(config, out / 'runtime', base_dir=out)
     container = NativeContainer(runtime)
     report = {'status': 'failed', 'model_calls': 0, 'training_runs': 0,
-              'image': args.image, 'gpu_ids': config['resources']['gpu_ids']}
-    try:
+              'image': args.image, 'gpu_ids': config['resources']['gpu_ids'],
+              'deadline_seconds': DEADLINE_SECONDS}
+    async def exercise():
         await container.start()
         auth = runtime.directory / 'codex_home/auth.json'
         auth.write_text('{"synthetic_auth_marker":true}')
@@ -56,9 +59,17 @@ async def run(args):
                  final['evaluation_binding']['candidate_after_sha256'], 'CANDIDATE_DRIFT', '评测期间候选变化')
         report.update(status='passed', result=final,
                       artifact_written=(runtime.directory / 'output/evaluation/artifact.json').is_file())
+    try:
+        async with asyncio.timeout(DEADLINE_SECONDS):
+            await exercise()
+    except Exception as exc:
+        report['error'] = type(exc).__name__ + ': ' + str(exc)
+        raise
     finally:
-        _atomic_json(out / 'report.json', report)
-        await container.stop()
+        try:
+            _atomic_json(out / 'report.json', report)
+        finally:
+            await container.stop()
     print(json.dumps({'status': report['status'], 'report': str(out / 'report.json')}))
 
 

@@ -1,10 +1,10 @@
 {
-  "at": "2026-10-21T10:54:51+00:00",
+  "at": "2026-10-21T11:06:44+00:00",
   "checked_links": 198,
-  "development_files": 301,
+  "development_files": 302,
   "fresh_cli_capabilities": true,
   "model_calls": 0,
-  "native_tests": "571",
+  "native_tests": "573",
   "package_revision": "2.1.1-v4.20261021.dev",
   "pending": [
     "离线合同已核；显式发布证据和正式归档尚未验收"
@@ -13,7 +13,7 @@
   "qa_coverage_count": 38,
   "qa_revision": "v0.3.10+gpu-notice.20261021",
   "release_ready": false,
-  "relocated_tests": "571",
+  "relocated_tests": "573",
   "relocation_without_design_or_pilot_runs": true,
   "relocation_without_host_config_or_auth": true,
   "rule_count": 50,
@@ -131,7 +131,7 @@
   "runtime_without_development_files": true,
   "schema_version": 2,
   "scope": "tool contracts, not scientific or platform acceptance",
-  "source_manifest_sha256": "d74a3cb3b930bcbfd1a153f09759a99e2a3d4cef21ddb29c7f9a92d7a486690b",
+  "source_manifest_sha256": "a20ab0a3e29bffa3cb7998e0c14049d4018c52524fbfdf1e93045fb5cf0e9597",
   "status": "contracts_passed",
   "version": "2.1.1"
 }
