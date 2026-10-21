@@ -1,5 +1,6 @@
 """Direct one-track commands, dispatched before importing legacy state tools."""
 from pathlib import Path
+import asyncio
 import json
 import os
 import subprocess
@@ -39,19 +40,8 @@ def dispatch(args):
         return runtime.status()
     if args.runtime_action == 'preflight':
         _require(args.allow_live,'LIVE_PERMISSION','实际容器预检须明确 --allow-live')
-        _, state, _ = runtime._load()
-        _require(not state.get('thread_id'), 'THREAD_EXISTS',
-                 '已有原会话不能以预检覆盖；使用原实例恢复')
-        root = runtime.directory / 'implementation'
-        log = runtime.directory / 'logs/preflight-controller.log'
-        with log.open('a') as stream:
-            result = subprocess.run([sys.executable, '-m', 'autoresearch_flow.runtime_controller',
-                '--runtime-dir', str(runtime.directory), '--preflight-only']
-                + (['--allow-busy'] if args.allow_busy_gpu else []), cwd=root,
-                env={**os.environ, 'PYTHONPATH': str(root)}, stdin=subprocess.DEVNULL,
-                stdout=stream, stderr=subprocess.STDOUT)
-        _require(result.returncode == 0, 'PREFLIGHT_FAILED',
-                 '原冻结实现预检失败；查 ' + str(log) + ' 与本轨 preflight.json，不切换当前实现重试')
+        from .runtime_controller import Controller
+        asyncio.run(Controller(runtime).run(preflight_only=True,allow_busy=args.allow_busy_gpu))
         return _read_json(runtime.directory / 'preflight.json')
     if args.runtime_action in {'run','recover'}:
         _require(args.confirm_cost,'MODEL_PERMISSION','首次真实模型调用须明确 --confirm-cost')

@@ -12,11 +12,12 @@ JSON 指定镜像 ID/digest、Codex 版本、候选目录、公开映射、Promp
 
 默认 `purpose=formal` 用于正式轨迹；`preflight` 仅用于不训练的合成验收，`acceptance` 用于按当次授权执行的真实题适配（可以包含题目原协议训练）。两类验收都不承诺正式 7h/10h，不能通过 `runtime finalize` 冒充正式轨迹。资源与费用范围由验收 Prompt 和本次授权限定，不降低正式题目要求。
 
-- 新运行仅支持 `direct`：Agent 在当前 Codex sandbox 用 `/workspace/evaluate` 执行完整 Public/Dev 程序。底座固定命令、候选绑定与可选单作业 timeout，实际进程及 CUDA 运算留在本轨 sandbox，不启用跨权限 worker。旧 worker 轨迹以原冻结版本处理，新 prepare 明确拒绝 worker。
+- `direct`：Agent 在真实 Codex 沙箱直接运行题目的公开程序；不启用跨权限作业通道。
+- `worker`：固定程序以独立 UID 在本轨 Agent 的同一个容器内执行 CUDA/受保护计算，位于 Codex CLI 内层沙箱之外；不创建额外 GPU 容器或远程计算环境。用 `python /workspace/evaluate.py submit` 获得 job_id，再用 `status`、`logs`、`result --job-id 原ID` 查询。请求不能指定宿主命令、路径、资源。候选快照、日志、真实退出码与有限 score/raw_metric 绑定；独立作业监督进程不因模型暂停而退出。
 
-正式配置指定 `harbor_task`，准备时计算官方四项指纹并随冻结配置保留；事先以题目 Git/快照保存对应版本。`runtime status` 可读 task_binding、实际模型和推理设置，供既有 run_summary 复用。绑定不证明未核对的历史运行，最终配置变化不回填旧哈希。
+快照不提交 Codex 临时创建的顶层空保护目录（`.git/.agents/.codex/.aws`），并记录实际忽略项；非空同名目录和其他内容仍保留，由题目检查。严格限制候选文件数的 CPU 检查可先复制合法候选原字节到临时目录；这不替代正式 worker 的实际文件检查。
 
-题目须提供完整、独立的 Public/Dev 程序。候选位于 solution/，公开评测产物默认在 output/evaluation/，所选必需模型恢复至声明提交面，不可只留在缓存。每 sandbox 单容器，最终独立 Verifier 的候选移交仍交 Harbor 管理。
+题目仍须提供完整、独立的 Public/Dev 程序，不能只提交依赖本地协调器的客户端。worker 是按需能力，不要求每题使用 Broker。checkpoint 等产物位于本轨 jobs/worker/作业ID/output；所选必需模型由题目适配恢复至声明候选面，不可只留在缓存。
 
 ## 操作
 
@@ -38,7 +39,8 @@ attach 用本轨独立 tmux server 只读观察原生 Codex；Ctrl-b d 退出观
 python cli.py runtime pause --runtime-dir /task/runtime-seed
 python cli.py runtime resume --runtime-dir /task/runtime-seed --confirm-cost --prompt '继续原目标；先查已有作业，不能重复提交。'
 python cli.py runtime timing --runtime-dir /task/runtime-seed
-python cli.py runtime logs --runtime-dir /task/runtime-seed
+python cli.py runtime jobs --runtime-dir /task/runtime-seed
+python cli.py runtime logs --runtime-dir /task/runtime-seed --job-id 原ID
 ```
 
 控制器外部异常退出时，用 `runtime recover --runtime-dir ... --confirm-cost` 接管原容器/threadId/Goal，再按实际状态 resume。不能用 --last、新线程或替代 Goal；不重设 objective、不覆盖已刷新的登录副本。不能识别原实例时保留原件并报告，不接管他人容器。
@@ -47,7 +49,7 @@ python cli.py runtime logs --runtime-dir /task/runtime-seed
 
 ## 隔离与兼容
 
-只挂载显式公开面、本轨候选/产物/Codex home/工作区，不挂整题根、参考解、另一轨或 Docker socket。根文件系统只读、非 root Agent；凭据仅 Codex 父进程使用，工具不能读 /codex。GPU 分配由当前容器/provider 执行，sandbox 仅开放本轨设备及 CUDA 控制节点，预检在 sandbox 内运行有界 CUDA kernel 并记录真实型号。命令网络关闭是本运行器现有边界，不宣称题包内场禁网配置可生效；题目须按实际平台能力设计。
+只挂载显式公开面、本轨候选/产物/Codex home/工作区，不挂整题根、参考解、另一轨或 Docker socket。根文件系统只读、非 root Agent、worker 另用 UID、命令网络关闭。凭据仅 Codex 父进程使用，工具不能读 /codex。题目镜像内部仍须正确隔离资产。
 
 默认安全策略阻塞时返回实际阶段，不自动放宽。宿主 Docker/Compose 使用操作者已有配置；Compose 插件若在非默认位置，启动前显式设置 `DOCKER_CONFIG`，底座及独立作业继承该环境，不安装或改写宿主组件。仅取得当前适用许可后可将 security 改为：
 

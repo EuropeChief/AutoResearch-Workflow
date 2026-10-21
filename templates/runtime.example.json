@@ -4,7 +4,6 @@
   "image": "sha256:REPLACE_WITH_FULL_IMAGE_ID",
   "codex_version": "0.160.0",
   "model_profile": "/YOUR_WORKFLOW/local/model_profiles/seed.toml",
-  "harbor_task": "workspace/harbor_task",
   "candidate": "starter",
   "prompt": "agent_prompt.md",
   "public_files": [
@@ -22,7 +21,7 @@
     "optimization_evidence"
   ],
   "evaluation": {
-    "mode": "direct",
+    "mode": "worker",
     "command": [
       "/opt/conda/bin/python",
       "/workspace/public_eval/run.py",

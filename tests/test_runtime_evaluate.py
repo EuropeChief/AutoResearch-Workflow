@@ -16,20 +16,6 @@ from autoresearch_flow.runtime_evaluate import evaluate
 
 
 class EvaluationBindingTests(unittest.TestCase):
-    def test_timeout_interrupts_silent_stubborn_work_instead_of_postchecking(self):
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            pidfile = root / 'worker.pid'
-            candidate = root / 'candidate'
-            candidate.mkdir()
-            code = ('import os,signal,time,pathlib;signal.signal(signal.SIGTERM,signal.SIG_IGN);'
-                    f'pathlib.Path({str(pidfile)!r}).write_text(str(os.getpid()));time.sleep(60)')
-            start = time.monotonic()
-            self.assertEqual(evaluate([sys.executable, '-c', code], candidate, timeout=.15), 124)
-            self.assertLess(time.monotonic() - start, 4)
-            with self.assertRaises(ProcessLookupError):
-                os.kill(int(pidfile.read_text()), 0)
-
     def test_wrapper_term_cleans_stubborn_evaluator_before_outer_five_second_kill(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

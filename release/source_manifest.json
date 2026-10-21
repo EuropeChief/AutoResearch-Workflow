@@ -57,11 +57,6 @@
     },
     {
       "mode": 436,
-      "path": "autoresearch_flow/assets/gpu_probe.py",
-      "sha256": "04c03312ab197ff64cad5d7aad3354e7646404dba4e18ed9ddff750916832497"
-    },
-    {
-      "mode": 436,
       "path": "autoresearch_flow/assets/run_worker.py",
       "sha256": "168c703c6e0bf7b26e49ae5d780fa86c3a6fe4bed7070913bc2d02e1a64b02eb"
     },
@@ -223,7 +218,7 @@
     {
       "mode": 436,
       "path": "autoresearch_flow/runtime_cli.py",
-      "sha256": "3defda31106bfa71db31441b0fb8a9fd02256e37a06bb76d9277cdbc5dda8cfb"
+      "sha256": "7f771c11082f40215826d209ebcd0d0fddac06d569c26eb88e1d4000755af043"
     },
     {
       "mode": 436,
@@ -233,7 +228,7 @@
     {
       "mode": 436,
       "path": "autoresearch_flow/runtime_container.py",
-      "sha256": "a87defe1be8b63183d318c4b1bde608c6e70c48f53d677e29582db6fdbc30da5"
+      "sha256": "0575e5bdfb320c9a09b731ea26725f58e2098c6edeca8ade61a91d746d182580"
     },
     {
       "mode": 436,
@@ -243,7 +238,7 @@
     {
       "mode": 436,
       "path": "autoresearch_flow/runtime_evaluate.py",
-      "sha256": "5eef1fc7b0d9e8b2d4a6b1629e1c524453d7bc2a611bfecf061e23b01a229343"
+      "sha256": "cadf699af9b9d769410581c88a3bc851afa1756bcf9d5772abf7a085d19e8c10"
     },
     {
       "mode": 436,
@@ -318,7 +313,7 @@
     {
       "mode": 436,
       "path": "autoresearch_flow/track_runtime.py",
-      "sha256": "862a1b3726ebdbccfb4609a9007af83b0d534f54fda1b2f5f5e39024a7703e92"
+      "sha256": "05702b895e9cf71d47c4b0526b5283e8fb46bfb1a914ea068e12ffdfb1b2e1e0"
     },
     {
       "mode": 436,
@@ -368,7 +363,7 @@
     {
       "mode": 436,
       "path": "docs/runtime.md",
-      "sha256": "fda677ba3e6cbfa5f31d9c4e5433b0143fb15254ce07ce7b5994309ca6b3df26"
+      "sha256": "c1b5a47ca35f2030ca964de13ab3da8b32133efdec9a89b8dc17db76253b828e"
     },
     {
       "mode": 436,
@@ -863,7 +858,7 @@
     {
       "mode": 436,
       "path": "templates/runtime.example.json",
-      "sha256": "e1415885051f6a88069d74f2c0444bab989f0ee623d4455cdbdfafa060c041a1"
+      "sha256": "7764de20b77b1e9a2a3b25b1c1b096f95ac29dcdc9dafb17b669e7f0286b236d"
     }
   ],
   "package_revision": "2.1.1-v4.20261021.dev",
