@@ -8,11 +8,13 @@
 
 | 优先级 | 当前原件 | 版本与定位 |
 | --- | --- | --- |
-| 1 | [专家线下标注教程][T] | PCA 双镜像对齐版，2026-09-29；下文用章节名定位 |
-| 2 | [项目方任务 QA][Q] 及 [Baseline 专项][B] | 默认 QA v0.3.2（2026-10-03）；Baseline 沿当前配套原件，不虚构独立版本号 |
+| 1 | [专家线下标注教程][T] | V4，2026-10-21 收到；下文用章节名定位 |
+| 2 | [项目方任务 QA][Q] 及 [Baseline 专项][B] | QA v0.3.10；Baseline 使用同包配套原件 |
 | 限定例外 | 用户明确通知 | 只在明确范围内采用；不是旧通知全部继续生效 |
 
-完整原件、版本与哈希已在 [manifest.json](manifest.json) 保留。使用默认 implementation 口径，不混入仅按明确要求启用的 strict；QA15 当前跳过，其余旧口头 QA 豁免已撤回。[来源裁定][A]
+完整原件、版本与哈希已在 [manifest.json](manifest.json) 保留，ZIP 原件位于 `sources/originals/`。使用默认 implementation / schema 6，不混入 strict；QA15 必查，不沿用旧豁免。[来源裁定][A]
+
+2026-10-21 [GPU 通知](../sources/notices/2026-10-21-gpu.md)：专家可自行选合适 GPU，最终提交配置写 H20，算法部门负责 H20 适配。实际运行记录如实保留，不因未在 H20/L20 实跑而退回；不把原卡测量改称 H20 结果。执行 QA 的 GPU 修正为流程维护副本，非未经修改的官方版本；资源数量、预算、公平性和 sandbox 边界继续适用。
 
 **已确认的用户工作约定，区别于项目方原文：**最终未提升不自动失败，前提是 B/R 正确，且不是缺工具或环境问题；不豁免真实独立迭代、时长、日志和合法性。取消专门 12h 容器浸泡门禁，不声称未做的稳定性测试通过。仅最终唯一方法正式复验；最终 QA 由用户在独立会话进行。三包 ZIP、七项填表和轻量工作记录属交付/协作约定，不升级成额外科学门槛。
 
@@ -30,13 +32,13 @@
 
 ## M03
 
-**独立、完整、公平复验。** 运行前确定数据、切分/指纹、指标、预算、正式 seed、重复/聚合及选择规则；B/R/待评方案同口径。随机评估正式协议未规定时至少各 3 次独立运行，波动大至少 5 次；已声明五个 seed 就保留全部五组，成对比较，不挑有利 seed、不用同一 checkpoint 重复评估冒充独立训练。研究变量可不同，但共同预算和匹配控制须公平。确定性适用性须有依据，固定 seed 不等于确定性。来源：[T]「优化面、Baseline 与 Reference 训练证据」「随机性与可分辨性」；[B] B03–B05/B07；[I] QA04/13。
+**独立、完整、公平复验。** 运行前确定数据、切分/指纹、指标、预算、正式 seed、重复/聚合及选择规则；B/R/待评方案同口径。随机评估正式协议未规定时至少各 3 次独立运行，波动大至少 5 次；已声明五个 seed 就保留全部五组，成对比较，不挑有利 seed。固定模型可按 seed 做随机评估；逐 seed 训练时各方法固定，允许权重不同，不用同一 checkpoint 重评冒充独立训练。确定性有依据时不强制重复或套 3σ，固定 seed 不等于确定性。来源：[T]「优化面、Baseline 与 Reference 训练证据」「随机性与可分辨性」；[B] B03–B05/B07；[I] QA04/13。
 
 可迁移性制作约定：研究时在协议草案中明确目标部署条件及指标的环境敏感性；冻结前结合实际证据确认适用范围。部署配置不得隐式改变指标、计时边界、预算或评分协议；需改变科学协议时沿用既有冻结机制，不到最终 QA 才处理。
 
 ## M04
 
-**改善与评分有效。** 从全部有效正式结果复算均值及 `n−1` 样本标准差。随机任务正向改善 `Δ>0` 且 `Δ≥3σ_B`；3–5σ 可接受，按教程增加重复并标平台复核，≥5σ 为强证据。确定性须真实正向改善，不套已删除的统一 5% 门槛。质量门须同时满足。
+**改善与评分有效。** 从全部有效正式结果复算均值及 `n−1` 样本标准差。随机任务正向改善 `Δ>0` 且 `Δ≥3σ_B`；3–5σ 可接受，建议增加重复，≥5σ 为强证据，不另加 5σ 硬门槛。确定性须真实正向改善，不套 3σ 或统一 5% 门槛。质量门须同时满足。
 
 归一化 B=0、预计可达上限 U=1，连续单调、方向正确、不裁剪；R 不作固定锚点，自验 Public/Dev 正式归一化应在 [0.15,0.8]。maximize 用 `(x-B)/(U-B)`，minimize 用 `(B-x)/(B-U)`；U 位于正确方向且不等于 B，不能按目标分数反推，无可靠估计时有依据地用 Metric Ceiling。R 未饱和，剩余 headroom 的 3σ 是原则性风险复核，不擅自增加一刀切门禁。正式 Hidden 由平台复核，不把 Dev 值称 Hidden。来源：[T]「评分锚点与公式」「随机性与可分辨性」；[G] G03；[A] 当前裁定。
 
@@ -46,11 +48,13 @@
 
 **实际可见性。** Agent 可用题面、Starter、公开数据/Dev 评分及本轨合法输出；不能看到私有 tests/Hidden、Reference、参考分数、汇总专家证据或另一轨内容。核真实镜像层、挂载、日志、环境变量和可读权限，不凭目录名判断。候选在 Verifier 内仍不可信，不能借 grader 权限读取私有标签或伪造 reward。
 
+每个 sandbox 单容器，两轨各自独立；Public/Dev 直接在本轨 Agent sandbox 执行，不依赖额外 GPU 工作环境。最终 Verifier 由框架独立管理；镜像可以相同，不代表 sandbox 可共用。H03 审题包部署，QA18 审 Agent 实际行为，不能仅凭 Docker/SSH/HTTP 关键词判违规。
+
 Agent 视图窄于作者包时，按 [exposure manifest][E] 在 `workspace/qa_exposure_manifest.json` 描述公开/可写/可信路径、双镜像标识、真实视图清单及核验身份；不能编造镜像探针记录。只选择满足边界的实现，不每题固定 Broker/chroot。来源：[T]「数据隔离与防作弊实现」；[H] H03；[E]。
 
 ## M06
 
-**硬约束实际生效。** 教程要求题面限制由环境或评分逻辑执行；默认 QA05 核核心约束存在真实实现，不要求逐条映射签字或全套负向测试。冻结面有只读、可信恢复或校验保护；不用独立 digest 文件也可满足，不只靠文字禁令。QA15 跳过不豁免公平预算或题目硬约束。来源：[T]「错误与 Hard Gate」；[I] QA05/10/15。
+**硬约束实际生效。** 核心限制须有真实环境或评分实现，不要求逐条签字或全套负向测试。Agent、评分、submission 超时须实际中断工作及子进程，构建/setup 单列。冻结面用只读、可信恢复或校验保护。QA15 以已有材料评估完整单轮评分 ≤7200 秒、GPU ≤8、CPU ≤64，不增加每轮配额证明。移除不支持的 storage_mb、禁网/allowlist 配置；依赖磁盘配额才成立的题目不能仅删字段放行。来源：[T]「错误与 Hard Gate」；[I] QA05/10/15。
 
 ## M07
 
@@ -58,7 +62,7 @@ Agent 视图窄于作者包时，按 [exposure manifest][E] 在 `workspace/qa_ex
 
 ## M08
 
-**双轨真实运行与净时长。** Codex＋GPT-5.6 Sol、Codex＋Seed 2.1 Turbo 使用同题、同 Prompt/公开协议和相同资源口径，各自独立上下文/输出/运行实例；推理档位使用各模型实际支持的最高有效档位，不仅写配置字符串。默认各净有效 ≥10h。仅不训练/微调且单轮很短时，可在启动前选择各 ≥7h：每轨至少 3 个有效方法闭环、连续演进、后续方向、最佳方法干净重跑，以及完整资格和净时长证据缺一不可。不得事后为不足时长降格。
+**双轨真实运行与净时长。** 保留 Codex CLI 运行接口，模型组合可按实际条件配置；记录真实模型、runtime 和支持的推理档位，不静默替换。两轨使用同题、同 Prompt/公开协议和相同资源口径，各自独立上下文/输出/运行实例。默认各净有效 ≥10h。仅不训练/微调且单轮很短时，可在启动前选择各 ≥7h：每轨至少 3 个有效方法闭环、连续演进、后续方向、最佳方法干净重跑，以及完整资格和净时长证据缺一不可。不得事后为不足时长降格。
 
 排队、安装、构建故障和真实阻塞扣除；两轨不相加，重叠区间不重复计，不能仅用首尾时间戳或原生计数代替净时长。保留实际操作/输出/作业与中断恢复依据供包内复算。来源：[T]「模型组合与执行时长」；[I] QA16/18。用户约定：外部异常只续接原会话/原 Goal，不拼接新会话，不干预正常自主收口；没有最终提升按本页限定例外处理。
 
@@ -90,6 +94,8 @@ Agent 视图窄于作者包时，按 [exposure manifest][E] 在 `workspace/qa_ex
 
 用户交付约定：通过后直接以 `package_root`、`qa_report`、包外 `output_dir` 打完整包、其中 harbor_task、optimization_evidence 三个 ZIP；默认上传上限 300,000,000 字节、分卷 290,000,000 字节，按表单可调整，超限才分卷。UTF-8 名称及必要权限可恢复。输出目录写七项中文填表信息，缺项据实待补；不新增 qa_bind、阶段关闭或打包审批。源包未变的压缩/包外填表不重复 QA。
 
+格式前检使用项目方 `check_package.py`：结构可检查后、双轨前检查；最终实际完整包复检并记录该归档 SHA-256。中间仅相关修改时复查。ERROR 阻断适用环节，WARN 留待核事项，未完成不算通过；启动前未产生的最终证据按时点说明，保留原输出，不造占位结果或冒称全包通过。最终包不使用此时点解释排除必需材料。前检不替代 QA/NOP。
+
 ## C01
 
 **结果防伪。** 可信评分前清理候选可能预写的结果，实际计算并原子替换 reward；不能采信候选自报分数。不额外强制 fsync、唯一临时文件名或完整竞态测试。来源：[T]「数据隔离与防作弊实现」；[I] QA09。
@@ -108,7 +114,7 @@ Agent 视图窄于作者包时，按 [exposure manifest][E] 在 `workspace/qa_ex
 
 ## C05
 
-**双镜像路径与产物移交。** 默认 Agent Dockerfile/context=`environment/`，Verifier=`tests/`，各自依赖自足；核 COPY/ignore/WORKDIR/入口/实际权限。Hidden 的文件、生成或安全注入必须有来源和真实调用，不造空目录。`task.toml` 显式 `[verifier] environment_mode="separate"`，artifacts 仅移交候选与必要模型/配置，Verifier 保持源绝对路径，destination 不是容器重映射。源码 `solution/` 是可选 Oracle，不等于运行时 `/workspace/solution`。来源：[T]「Docker 路径契约」「task.toml」；[H] H01/H03；[D]。
+**双镜像路径与产物移交。** Agent 默认 context=`environment/`；Verifier 按专用镜像 → `tests/Dockerfile` → 复用 Solver 镜像/构建的实际分支核对。前两类须预置 tests，复用分支须向独立 Verifier 正确上传 tests；依赖自足，核 COPY/ignore/WORKDIR/入口/权限，不因同镜像判失败。Hidden 须有来源及调用。`task.toml` 显式 `[verifier] environment_mode="separate"`，artifacts 仅移交候选与必要模型/配置，Verifier 保持源绝对路径，destination 不是容器重映射。源码 `solution/` 是可选 Oracle，不等于运行时 `/workspace/solution`。来源：[T]「Docker 路径契约」「task.toml」；[H] H01/H03；[D]。
 
 对唯一主服务的 `/workspace/solution` 声明，按 Trial 绑定的冻结题包解析宿主目录：显式 destination 对应 `<trial>/artifacts/<destination>`，省略或空字符串才默认 `artifacts/workspace/solution`。显式目录缺失不回退；核相对路径、类型、重复声明和符号链接越界。Verifier 内仍为 `/workspace/solution`，源码/模型/配置的完整移交及真实 reward 仍须检查。此段是 C05/H01 路径合同的检查器落实说明，不新增题目审批或训练要求。
 
@@ -134,9 +140,11 @@ Agent 视图窄于作者包时，按 [exposure manifest][E] 在 `workspace/qa_ex
 
 每轮 B/R `result.json` 顶层至少有 `schema_version, status, role, seed, task_type, method, protocol, training, execution, metrics, quality_gate, artifacts`；核类型/适用性、真实 seed、路径/哈希和摘要一致性，不只检查存在。当前程序未覆盖的语义仍需阅读证据。来源：[T]「expert_annotation.json」「run_summary.json」；[F] §2；[I] QA21。
 
+正式研究前保存实际题包快照与官方 `harbor-task-inputs-v1` 四项指纹（environment/、task.toml、tests/、instruction.md），记录真实 task_binding；QA21 单独核版本，QA18 核轨迹内容。历史缺哈希只在原快照及运行对应可证明时补算并说明依据；不同版本不改写为相同哈希。GPU 最终目标配置与实际用卡分开记录，通知不自动豁免版本冲突。
+
 ## QA 项目到本页的映射
 
-用于维护查漏，不是另一次 QA 或每题填写表。B 专项的八项分别沿原 Skill 执行；QA15 只保留当前跳过口径。
+用于维护查漏，不是另一次 QA 或每题填写表。B 专项沿原 Skill 执行；QA15 复用已有材料评估资源，QA18 的语义审阅不以关键词自动判作弊，只有明确受影响的正式运行才扩大复验。collection 初稿不等于完成，新版报告 schema 6，旧 PASS 不直接沿用。
 
 | 当前项目 | 本页落点 |
 | --- | --- |
@@ -167,7 +175,7 @@ Agent 视图窄于作者包时，按 [exposure manifest][E] 在 `workspace/qa_ex
 
 `catalog.json` 的 AR 编号及阶段 timing 暂供尚未解耦的旧程序使用，不是本入口要求用户履行的登记步骤；不同时执行两套流程。规则原件更新通过维护入口定位影响，不让每题重填来源或复审无变化内容。
 
-[T]: ../sources/tutorial/AutoResearch%20专家线下标注教程｜PCA%20双镜像对齐版.md
+[T]: ../sources/tutorial/AutoResearch%20专家线下标注教程V4%20副本.md
 [Q]: ../skills/autoresearch-task-qa/SKILL.md
 [B]: ../skills/autoresearch-baseline-quality/SKILL.md
 [A]: ../skills/autoresearch-task-qa/references/source-alignment.md

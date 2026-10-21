@@ -74,7 +74,12 @@ class EnvironmentContractTests(unittest.TestCase):
     def test_missing_private_image_escape_and_artifacts_rejected(self):
         dockerfile = self.task / "tests/Dockerfile"
         dockerfile.unlink()
+        self.assertEqual(check_task(self.task)['image_selection']['tests_delivery'], 'runtime_upload')
+        agent_file = self.task / 'environment/Dockerfile'
+        agent_source = agent_file.read_text()
+        agent_file.unlink()
         with self.assertRaises(FlowError): check_task(self.task)
+        agent_file.write_text(agent_source)
         dockerfile.write_text("FROM scratch\nCOPY ../secret /secret\n")
         with self.assertRaises(FlowError): check_task(self.task)
         dockerfile.write_text("FROM scratch\n")

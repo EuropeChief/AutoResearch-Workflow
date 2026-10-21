@@ -66,12 +66,16 @@ class AuditCollectionTests(unittest.TestCase):
         checks = [{"id": key, "title": key, "status": "pass", "severity": "info", "summary": "reviewed",
                    "evidence": ["instruction.md"], "remediation": "", "acceptance_evidence": ""}
                   for key in COLLECTION.EXPECTED_CHECK_IDS]
-        return {"schema_version": 4, "policy": {"name": "implementation"}, "checks": checks,
+        return {"schema_version": 6, "policy": {"name": "implementation"}, "checks": checks,
                   "summary": {"decision": "PASS"}, "review": {"completed": True},
                   "runtime_review": {"status": "pass"},
+                  "resource_review": {"status": "pass", "hardware_review": {"status": "pass", "score_status": "pass"}},
+                  "trajectory_review": {"status": "pass", "trajectories": [
+                      {"score_status": "valid", "task_binding": {"status": "pass"}} for _ in range(2)]},
                   "overview": {"baseline_reference": {"baseline_method": "linear", "reference_method": "feature transformation"}},
                   "content_gates": {"checks": [{"id": key, "status": "pass"} for key in ("G01", "G02", "G03")]},
                   "harbor": {"static_status": "pass", "qa17_status": "pass", "runtime_status": "evidence_consistent",
+                             "deployment_contract": {"profile": "innerfield-maso-v1", "status": "pass", "findings": [], "innerfield_compliant": True},
                              "checks": [{"id": f"H{i:02d}", "status": "pass" if i != 5 else "not_applicable",
                                          "evidence": ["run-a/config.json"] if i == 6 else []} for i in range(1, 7)],
                              "trial_evidence": {"agent": "nop"},
@@ -90,7 +94,7 @@ class AuditCollectionTests(unittest.TestCase):
 
     def test_old_implementation_schema_cannot_be_counted_as_pass(self):
         report = {"checks": [], "schema_version": 3, "policy": {"name": "implementation"}, "summary": {"decision": "PASS"}}
-        self.assertIn("implementation report requires schema_version 4", COLLECTION.validate_report(report))
+        self.assertIn("implementation report requires schema_version 6", COLLECTION.validate_report(report))
 
     def test_path_fail_cannot_be_hidden_by_qa17_pass(self):
         report = self.passing_report()
@@ -148,6 +152,31 @@ class AuditCollectionTests(unittest.TestCase):
         report["content_gates"]["checks"][0]["status"] = "fail"
         report["checks"][0]["status"] = "manual"
         self.assertEqual(COLLECTION.validate_report(report), [])
+
+    def test_resource_observation_conflicts_cannot_be_hidden_by_pass(self):
+        report = self.passing_report()
+        resource = report["resource_review"]
+        resource["observation_conflicts"] = ["old-score.cpu_cores=128 exceeds estimate=1"]
+        issue = "PASS contains unreconciled resource observation conflicts"
+        self.assertIn(issue, COLLECTION.validate_report(report))
+        for explanation in (None, {}, {"summary": " ", "evidence": ["log.txt"]},
+                            {"summary": "Old calibration", "evidence": []},
+                            {"summary": "Old calibration", "evidence": [None]}):
+            with self.subTest(explanation=explanation):
+                resource["observation_reconciliation"] = explanation
+                self.assertIn(issue, COLLECTION.validate_report(report))
+        resource["observation_reconciliation"] = {
+            "summary": "The retained old calibration uses different hardware; current estimate is cited separately.",
+            "evidence": ["log.txt", "task.toml"],
+        }
+        self.assertEqual(COLLECTION.validate_report(report), [])
+
+    def test_resource_conflict_shape_cannot_crash_or_count_as_pass(self):
+        for conflicts in (None, "conflict", [None], [""]):
+            with self.subTest(conflicts=conflicts):
+                report = self.passing_report()
+                report["resource_review"]["observation_conflicts"] = conflicts
+                self.assertIn("PASS has malformed resource observation conflicts", COLLECTION.validate_report(report))
 
 
 if __name__ == "__main__":

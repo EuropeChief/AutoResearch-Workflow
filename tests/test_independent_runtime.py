@@ -23,6 +23,9 @@ class TrackPreparationTests(unittest.TestCase):
         (self.root / 'public_eval').mkdir()
         (self.root / 'public_eval/run.py').write_text('print("public")\n')
         (self.root / 'instruction.md').write_text('合法公开任务\n')
+        (self.root / 'environment').mkdir()
+        (self.root / 'tests').mkdir()
+        (self.root / 'task.toml').write_text('version="1.0"\n')
         (self.root / 'prompt.md').write_text('请独立迭代并由你记录轨迹。\n')
         self.profile = self.root / 'seed.toml'
         self.profile.write_text('''# do not copy this raw comment
@@ -41,6 +44,7 @@ key = "OPENAI_API_KEY"
         self.config = {
             'schema_version': 3, 'track': 'seed', 'image': 'sha256:' + 'a' * 64,
             'codex_version': '0.160.0', 'model_profile': 'seed.toml',
+            'harbor_task': '.',
             'candidate': 'starter', 'prompt': 'prompt.md',
             'public_files': [{'source': 'instruction.md', 'destination': 'instruction.md'},
                              {'source': 'public_eval', 'destination': 'public_eval'}],
@@ -62,6 +66,18 @@ key = "OPENAI_API_KEY"
         self.assertEqual(report['track'], 'seed')
         self.assertFalse((self.root / '.autoresearch').exists())
         self.assertEqual((runtime.directory / 'solution/method.py').read_text(), 'value = 1\n')
+        self.assertEqual(report['task_binding']['hash_profile'], 'harbor-task-inputs-v1')
+        self.assertTrue((runtime.directory / 'public/evaluate').is_file())
+
+    def test_formal_binding_and_direct_execution_are_required(self):
+        cfg = copy.deepcopy(self.config)
+        cfg.pop('harbor_task')
+        with self.assertRaisesRegex(FlowError, 'harbor_task'):
+            self.prepare('missing-binding', cfg)
+        cfg = copy.deepcopy(self.config)
+        cfg['evaluation']['mode'] = 'worker'
+        with self.assertRaisesRegex(FlowError, 'sandbox'):
+            self.prepare('worker', cfg)
 
     def test_real_task_acceptance_is_explicit_and_not_a_formal_trajectory(self):
         cfg = copy.deepcopy(self.config)

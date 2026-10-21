@@ -206,6 +206,16 @@ class IndependentExperimentTests(unittest.TestCase):
         self.assertFalse(r["normalization"]["reference_in_range"])
         self.assertEqual(normalize(0, 12, 6, "minimize"), 2)
 
+    def test_documented_deterministic_training_does_not_require_extra_seeds(self):
+        p = {**self.p, 'training': True, 'evaluation_mode': 'deterministic', 'seeds': [1],
+             'determinism_basis': 'Synthetic fixed arithmetic and saved bytes; no random operator.'}
+        self.execute(p=p, extra=['--training'])
+        self.execute('reference', p=p, extra=['--training', '--offset', '-4'])
+        result = summarize([self.root / 'baseline', self.root / 'reference'])
+        self.assertTrue(result['formal_sample_complete'])
+        self.assertTrue(result['significance_rule']['passed'])
+        self.assertIsNone(result['statistics']['baseline_sample_std'])
+
     def test_cli_run_and_summary_do_not_import_state_or_runtime(self):
         config = self.root / "protocol.json"
         _atomic_json(config, {**self.p, "seeds": [1], "purpose": "exploratory"})

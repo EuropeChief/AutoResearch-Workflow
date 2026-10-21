@@ -4,8 +4,10 @@ import importlib.util
 import json
 from pathlib import Path
 import sys
+import subprocess
 import tempfile
 import unittest
+from unittest.mock import patch
 import zipfile
 
 
@@ -18,6 +20,118 @@ SPEC.loader.exec_module(AUDIT)
 
 
 class AuditTaskTests(unittest.TestCase):
+    def run_cli(self, source, out, *options):
+        return subprocess.run([sys.executable, str(SCRIPT), str(source), "--out-dir", str(out), *options],
+                              capture_output=True, text=True, timeout=30)
+
+    def test_duplicate_policy_options_are_rejected_before_dispatch(self):
+        variants = [("--policy", "strict", "--policy", "precheck"),
+                    ("--policy", "precheck", "--policy", "strict"),
+                    ("--policy=strict", "--policy=precheck"),
+                    ("--policy=precheck", "--policy", "strict"),
+                    ("--pol", "strict", "--policy=implementation"),
+                    ("--policy", "strict", "--policy=strict")]
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary)
+            source = base / "task"
+            source.mkdir()
+            for index, options in enumerate(variants):
+                with self.subTest(options=options):
+                    out = base / f"report-{index}"
+                    actual = self.run_cli(source, out, *options)
+                    self.assertEqual(actual.returncode, 2)
+                    self.assertIn("--policy may be supplied only once", actual.stderr)
+                    self.assertFalse(out.exists())
+
+    def test_default_implementation_and_precheck_alias_stay_consistent(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary)
+            source = base / "task"
+            source.mkdir()
+            for index, options in enumerate(((), ("--policy", "precheck"), ("--policy=implementation",))):
+                with self.subTest(options=options):
+                    out = base / f"report-{index}"
+                    actual = self.run_cli(source, out, *options)
+                    self.assertEqual(actual.returncode, 0, actual.stderr)
+                    report = json.loads((out / "report.json").read_text())
+                    self.assertEqual(report["schema_version"], 6)
+                    self.assertEqual(report["policy"]["name"], "implementation")
+                    self.assertEqual(report["summary"]["decision"], "INCOMPLETE")
+
+    def test_single_strict_policy_still_uses_explicit_legacy_mode(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary)
+            source = base / "task"
+            source.mkdir()
+            (source / "harbor_task").mkdir()
+            actual = self.run_cli(source, base / "report", "--policy=strict")
+            self.assertEqual(actual.returncode, 0, actual.stderr)
+            report = json.loads((base / "report/report.json").read_text())
+            self.assertEqual(report["policy"]["name"], "strict")
+            self.assertEqual(report["schema_version"], 1)
+
+    def test_input_boundary_distinguishes_zip_invalid_zip_unsupported_and_missing(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary)
+            self.assertEqual(AUDIT.inspect_source_kind(base), "directory")
+            valid = base / "valid.zip"
+            with zipfile.ZipFile(valid, "w") as archive:
+                archive.writestr("instruction.md", "Synthetic input only")
+            self.assertEqual(AUDIT.inspect_source_kind(valid), "zip")
+            tar = base / "task.tar"
+            tar.write_bytes(b"synthetic non-ZIP")
+            with self.assertRaisesRegex(ValueError, "Unsupported input format.*directory or ZIP"):
+                AUDIT.inspect_source_kind(tar)
+            invalid = base / "broken.zip"
+            invalid.write_bytes(b"PK broken")
+            with self.assertRaisesRegex(ValueError, "Invalid or unreadable ZIP"):
+                AUDIT.inspect_source_kind(invalid)
+            with self.assertRaisesRegex(ValueError, "Input path does not exist"):
+                AUDIT.inspect_source_kind(base / "missing")
+
+    def test_unreadable_input_does_not_become_unsupported_format(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "input.zip"
+            path.write_bytes(b"synthetic")
+            with patch.object(Path, "open", side_effect=PermissionError("input access denied")):
+                with self.assertRaisesRegex(PermissionError, "input access denied"):
+                    AUDIT.inspect_source_kind(path)
+            with patch.object(AUDIT.os, "scandir", side_effect=PermissionError("directory access denied")):
+                with self.assertRaisesRegex(PermissionError, "directory access denied"):
+                    AUDIT.inspect_source_kind(Path(temporary))
+
+    def test_strict_unsupported_input_gives_actionable_boundary_without_report(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary)
+            source = base / "task.tar.gz"
+            source.write_bytes(b"synthetic non-ZIP")
+            out = base / "report"
+            actual = self.run_cli(source, out, "--policy", "strict")
+            self.assertEqual(actual.returncode, 2)
+            self.assertIn("Unsupported input format", actual.stderr)
+            self.assertIn("Safely extract", actual.stderr)
+            self.assertIn("extracted directory", actual.stderr)
+            self.assertNotIn("does not exist", actual.stderr)
+            self.assertFalse(out.exists())
+
+    def test_strict_unsupported_zip_compression_fails_without_traceback_or_report(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            base = Path(temporary)
+            source = base / "unsupported-compression.zip"
+            with zipfile.ZipFile(source, "w") as archive:
+                archive.writestr("instruction.md", "Synthetic input only")
+            raw = bytearray(source.read_bytes())
+            for signature, offset in ((b"PK\x03\x04", 8), (b"PK\x01\x02", 10)):
+                position = raw.index(signature) + offset
+                raw[position:position + 2] = (99).to_bytes(2, "little")
+            source.write_bytes(raw)
+            out = base / "report"
+            actual = self.run_cli(source, out, "--policy", "strict")
+            self.assertEqual(actual.returncode, 2)
+            self.assertIn("audit failed safely", actual.stderr)
+            self.assertNotIn("Traceback", actual.stderr)
+            self.assertFalse(out.exists())
+
     def test_markdown_report_has_21_item_verdict_table(self) -> None:
         checks = [
             {

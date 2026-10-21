@@ -4,6 +4,7 @@ import tempfile
 import unittest
 
 import harbor_review as harbor
+import task_fingerprint
 
 
 def valid_review():
@@ -11,6 +12,8 @@ def valid_review():
     return {"target_version": "official-docs@2026-09-30", "version_basis": harbor.OFFICIAL_SOURCE,
             "path_contract": {"profile": "harbor-environment-v1", "profile_basis": harbor.OFFICIAL_SOURCE},
             "provider": "docker", "task_root": ".",
+            "capability_review": {"status": "pass", "outcome": "not_required",
+                "summary": "Synthetic task does not rely on unsupported constraints.", "evidence": ["task.toml"]},
             "hidden_review": {"mode": "prebuilt", "summary": "cases.json 仅进入 Verifier，由私有评分器读取。",
                               "evidence": ["tests/test.sh", "tests/Dockerfile"], "asset_paths": ["tests/hidden_assets/cases.json"]},
             "checks": [
@@ -44,6 +47,33 @@ class HarborReviewTests(unittest.TestCase):
 
     def apply(self, value):
         return harbor.apply_review(self.facts(), value, self.root)
+
+    def test_runtime_compose_forces_h03_failure_despite_pass_and_unused(self):
+        for directory in ("environment", "tests"):
+            for name in harbor.docker_paths.COMPOSE_NAMES:
+                for profile in ("innerfield-maso-v1", "generic-harbor"):
+                    with self.subTest(directory=directory, name=name, profile=profile):
+                        compose = self.root / directory / name
+                        compose.write_text("services: {}\n")
+                        review = valid_review()
+                        review["deployment_profile"] = profile
+                        review["deployment_basis"] = {"summary": "Explicit provider evidence.", "evidence": ["task.toml"]}
+                        review["compose_review"] = {"selection": "unused", "roles": ["agent", "verifier"],
+                            "summary": "Declared unused.", "evidence": ["task.toml"]}
+                        result = self.apply(review)
+                        self.assertEqual(result["checks"][2]["status"], "fail")
+                        self.assertEqual(result["qa17_status"], "fail")
+                        compose.unlink()
+
+    def test_harbor_cited_explicit_locations_are_checked(self):
+        review = valid_review()
+        review["hidden_review"]["evidence"] = ["tests/hidden_assets/cases.json#cases[0]"]
+        self.apply(review)
+        for ref in ("tests/test.sh:999", "tests/hidden_assets/cases.json#absent"):
+            with self.subTest(ref=ref):
+                review["hidden_review"]["evidence"] = [ref]
+                with self.assertRaises(ValueError):
+                    self.apply(review)
 
     def test_inventory_is_not_a_pass(self):
         self.assertEqual(self.facts()["static_status"], "manual")
@@ -119,7 +149,8 @@ class HarborReviewTests(unittest.TestCase):
     def trial(self, value=1.25):
         folder = self.root / "run-a"
         (folder / "verifier").mkdir(parents=True)
-        (folder / "config.json").write_text('{"task":{"path":"fixture"},"agent":{"name":"nop"}}')
+        (folder / "config.json").write_text(json.dumps({"task": {"path": "fixture", "hash_profile": task_fingerprint.PROFILE,
+            "task_content_sha256": task_fingerprint.fingerprint(self.root)["task_content_sha256"]}, "agent": {"name": "nop"}}))
         (folder / "result.json").write_text(json.dumps({"finished_at": "2026-09-08T06:00:00Z", "exception_info": None,
                                                      "agent_info": {"name": "nop"}, "verifier_environment_mode": "separate",
                                                      "verifier_result": {"rewards": {"reward": value}}}))
@@ -302,6 +333,67 @@ class HarborReviewTests(unittest.TestCase):
         self.assertEqual(actual["qa17_status"], "fail")
         self.assertEqual(actual["trial_evidence"]["agent"], "oracle")
 
+    def mixed_trials(self):
+        review = self.trial()
+        nop_refs = review["checks"][5]["evidence"]
+        candidate_refs = [ref.replace("run-a/", "run-b/") for ref in nop_refs]
+        for source, target in zip(nop_refs, candidate_refs):
+            target_path = self.root / target
+            target_path.parent.mkdir(parents=True, exist_ok=True)
+            target_path.write_bytes((self.root / source).read_bytes())
+        for filename, field in (("config.json", "agent"), ("result.json", "agent_info")):
+            path = self.root / "run-b" / filename
+            value = json.loads(path.read_text())
+            value[field]["name"] = "oracle"
+            path.write_text(json.dumps(value))
+        return review, nop_refs, candidate_refs
+
+    def test_nop_and_supplemental_candidate_are_order_independent(self):
+        review, nop_refs, candidate_refs = self.mixed_trials()
+        for refs in (candidate_refs + nop_refs, nop_refs + candidate_refs):
+            with self.subTest(first=refs[0]):
+                review["checks"][5]["evidence"] = refs
+                actual = self.apply(review)
+                self.assertEqual(actual["qa17_status"], "pass")
+                self.assertEqual(actual["runtime_status"], "evidence_consistent")
+                self.assertEqual(actual["trial_evidence"]["agent"], "nop")
+                self.assertEqual(actual["trial_evidence"]["trial_dir"], "run-a")
+
+    def test_candidate_cannot_hide_nop_exception(self):
+        review, nop_refs, candidate_refs = self.mixed_trials()
+        path = self.root / "run-a/result.json"
+        result = json.loads(path.read_text())
+        result["exception_info"] = {"exception_type": "VerifierTimeoutError"}
+        path.write_text(json.dumps(result))
+        for refs in (candidate_refs + nop_refs, nop_refs + candidate_refs):
+            with self.subTest(first=refs[0]):
+                review["checks"][5]["evidence"] = refs
+                with self.assertRaisesRegex(ValueError, "exception_info"):
+                    self.apply(review)
+
+    def test_candidate_cannot_complete_nop_with_another_trial_reward(self):
+        review, nop_refs, candidate_refs = self.mixed_trials()
+        nop_refs.remove("run-a/verifier/reward.txt")
+        review["checks"][5]["evidence"] = candidate_refs + nop_refs
+        with self.assertRaisesRegex(ValueError, "from the same trial"):
+            self.apply(review)
+
+    def test_candidate_cannot_hide_malformed_nop_result(self):
+        review, nop_refs, candidate_refs = self.mixed_trials()
+        (self.root / "run-a/result.json").write_text("{invalid json")
+        review["checks"][5]["evidence"] = candidate_refs + nop_refs
+        with self.assertRaises(json.JSONDecodeError):
+            self.apply(review)
+
+    def test_mixed_trials_still_require_nop_task_version_binding(self):
+        review, nop_refs, candidate_refs = self.mixed_trials()
+        del review["trial_task_binding"]
+        review["checks"][5]["evidence"] = candidate_refs + nop_refs
+        actual = self.apply(review)
+        self.assertEqual(actual["checks"][5]["status"], "manual")
+        self.assertEqual(actual["runtime_status"], "unverified")
+        self.assertEqual(actual["trial_evidence"]["agent"], "nop")
+
     def test_relocated_host_task_path_is_not_rejected(self):
         review = self.trial()
         config_path = self.root / "run-a/config.json"
@@ -315,11 +407,21 @@ class HarborReviewTests(unittest.TestCase):
         del review["trial_task_binding"]
         self.assertEqual(self.apply(review)["runtime_status"], "unverified")
 
+    def test_legacy_nop_uses_reviewed_version_evidence_without_new_hash(self):
+        review = self.trial()
+        path = self.root / "run-a/config.json"
+        value = json.loads(path.read_text())
+        value["task"].pop("task_content_sha256")
+        value["task"].pop("hash_profile")
+        path.write_text(json.dumps(value))
+        self.assertEqual(self.apply(review)["runtime_status"], "evidence_consistent")
+
     def test_other_task_cannot_be_hidden_by_weak_binding(self):
         review = self.trial()
         config_path = self.root / "run-a/config.json"
         config = json.loads(config_path.read_text())
         config["task"]["path"] = "/old/other-task"
+        del config["task"]["task_content_sha256"]
         config_path.write_text(json.dumps(config))
         with self.assertRaisesRegex(ValueError, "explicit cited mapping"):
             self.apply(review)

@@ -63,7 +63,7 @@ def _copy_input(source, target, readonly=False):
 
 def _validate(config, base, output, model):
     allowed = {'schema_version', 'track', 'image', 'codex_version', 'model_profile', 'candidate', 'prompt',
-               'public_files', 'private_paths', 'evaluation', 'resources', 'duration', 'purpose', 'security', 'codex_vendor'}
+               'public_files', 'private_paths', 'evaluation', 'resources', 'duration', 'purpose', 'security', 'codex_vendor', 'harbor_task'}
     _require(isinstance(config, dict) and config.get('schema_version') == 3 and set(config) <= allowed,
              'INVALID_RUNTIME', '独立运行配置 schema_version 须为 3，且不含旧状态/内联凭据字段')
     _require(config.get('track') in {'codex', 'seed'}, 'INVALID_TRACK', '须显式指定本轨 codex 或 seed')
@@ -74,7 +74,8 @@ def _validate(config, base, output, model):
     _require(config.get('purpose', 'formal') in {'formal', 'preflight', 'acceptance'}, 'INVALID_RUNTIME', '运行用途不合法')
     evaluation = config.get('evaluation')
     _require(isinstance(evaluation, dict) and set(evaluation) <= {'command', 'mode', 'timeout_seconds', 'max_candidate_bytes'}
-             and evaluation.get('mode', 'direct') in {'direct', 'worker'}, 'INVALID_EVALUATOR', '须指定公开执行模式')
+             and evaluation.get('mode', 'direct') == 'direct', 'INVALID_EVALUATOR',
+             '新版须在 Agent sandbox 内直接执行 Public/Dev；旧 worker 仅用原冻结版本处理')
     command = evaluation.get('command')
     _require(isinstance(command, list) and command and all(isinstance(x, str) and x and '\x00' not in x for x in command),
              'INVALID_EVALUATOR', '固定公开命令须为参数列表')
@@ -132,7 +133,7 @@ def _validate(config, base, output, model):
         destination = Path(item['destination'])
         _require(not destination.is_absolute() and destination.parts and '..' not in destination.parts
                  and not set(destination.parts) & PRIVATE_PARTS
-                 and destination.parts[0] not in {'solution', 'evaluate', 'runtime', 'output'},
+                 and destination.parts[0] not in {'solution', 'evaluate', 'evaluate.py', '_evaluate.py', '_gpu_probe.py', '_public_command.json', 'runtime', 'output'},
                  'INVALID_PATH', '公开目标须为合法非保留相对位置')
         _require(not any(destination.is_relative_to(d) or d.is_relative_to(destination) for d in destinations),
                  'DUPLICATE_PATH', '公开挂载目标不能重叠')
@@ -163,6 +164,14 @@ class TrackRuntime:
         model, profile_source = load_profile(_path(requested['model_profile'], base))
         config = copy.deepcopy(requested)
         candidate, prompt, mappings = _validate(config, base, output, model)
+        if config.get('harbor_task'):
+            from .task_binding import fingerprint
+            task = _path(config['harbor_task'], base)
+            config['harbor_task'] = str(task)
+            config['task_binding'] = fingerprint(task)
+        else:
+            _require(config.get('purpose', 'formal') != 'formal', 'TASK_BINDING_REQUIRED',
+                     '正式研究须指定 harbor_task 并先保留对应快照；有界验收可不绑定实际题包')
         output.parent.mkdir(parents=True, exist_ok=True)
         temporary = Path(tempfile.mkdtemp(prefix='.track-prepare-', dir=output.parent))
         try:
@@ -175,9 +184,18 @@ class TrackRuntime:
                 _copy_input(source, temporary / 'public' / destination, readonly=True)
             # Nested rw bind target must exist before its readonly parent mount.
             (temporary / 'public/solution').mkdir()
-            if config['evaluation'].get('mode', 'direct') == 'worker':
-                _copy_input(FLOW_ROOT / 'autoresearch_flow/assets/evaluate.py',
-                            temporary / 'public/evaluate.py', readonly=True)
+            _copy_input(FLOW_ROOT / 'autoresearch_flow/runtime_evaluate.py',
+                        temporary / 'public/_evaluate.py', readonly=True)
+            direct_command = [arg.replace('{candidate}', '/workspace/solution').replace(
+                '{output}', '/expert_evidence/evaluation') for arg in config['evaluation']['command']]
+            _atomic_json(temporary / 'public/_public_command.json', {
+                'command': direct_command, 'timeout_seconds': config['evaluation'].get('timeout_seconds')})
+            (temporary / 'public/_public_command.json').chmod(0o444)
+            (temporary / 'public/evaluate').write_text('#!/bin/sh\nexec python3 -I /workspace/_evaluate.py "$@"\n')
+            (temporary / 'public/evaluate').chmod(0o555)
+            if config['resources']['gpu_ids']:
+                _copy_input(FLOW_ROOT / 'autoresearch_flow/assets/gpu_probe.py',
+                            temporary / 'public/_gpu_probe.py', readonly=True)
             if config.get('codex_vendor'):
                 _copy_input(Path(config['codex_vendor']), temporary/'codex_runtime',readonly=True)
             prompt_text=prompt.read_text(encoding='utf-8')
@@ -187,13 +205,7 @@ class TrackRuntime:
                           '由你自主收口，不以最终提升为必须条件，不把外部中断墙钟算入有效时间。')
             else:
                 duration='本次仅按 Prompt 明确的授权范围进行有界验收，不用于正式轨迹时长证明。'
-            if config['evaluation'].get('mode','direct')=='worker':
-                entry=('python /workspace/evaluate.py submit；保存 job_id 后用 '
-                       'python /workspace/evaluate.py status 或 logs 或 result --job-id 原ID 查询，'
-                       '等待终态并用 result 的真实 raw_metric/score 比较，不重复提交健康作业。')
-            else:
-                entry=shlex.join([a.replace('{candidate}','/workspace/solution').replace('{output}','/expert_evidence/evaluation')
-                                  for a in config['evaluation']['command']])
+            entry='/workspace/evaluate（当前 Agent sandbox 内执行，保留真实退出码和候选绑定）'
             prompt_text=prompt_text.replace('{{DURATION_REQUIREMENT}}',duration).replace('{{PUBLIC_EVALUATION}}',entry)
             (temporary/'prompt.md').write_text(prompt_text,encoding='utf-8')
             (temporary / 'prompt.md').chmod(0o444)
@@ -203,8 +215,11 @@ class TrackRuntime:
             config['candidate'] = str(candidate)
             config['prompt'] = str(prompt)
             _atomic_json(temporary / 'config.json', config)
+            gpu_paths = (['/dev/nvidia' + index for index in config['resources']['gpu_ids']]
+                         + ['/dev/nvidiactl', '/dev/nvidia-uvm', '/dev/nvidia-uvm-tools', '/dev/nvidia-caps', '/dev/shm']
+                         if config['resources']['gpu_ids'] else [])
             rendered = render_config(model, readable=['/workspace', '/run/autoresearch/responses'],
-                                     writable=['/workspace/solution', '/expert_evidence', '/tmp', '/run/autoresearch/requests'],
+                                     writable=['/workspace/solution', '/expert_evidence', '/tmp', '/run/autoresearch/requests', *gpu_paths],
                                      denied=['/workspace/runtime', '/runtime', '/worker_jobs'])
             (temporary / 'codex_home/config.toml').write_text(rendered, encoding='utf-8')
             (temporary / 'codex_home/config.toml').chmod(0o444)
@@ -263,4 +278,6 @@ class TrackRuntime:
                 'runtime_dir': str(self.directory), 'thread_id': state['thread_id'], 'goal': state['goal'],
                 'implementation_sha256': snapshot['implementation_sha256'],
                 'model_parameters': parameter_application(config['model']),
+                'model': config['model']['model'], 'reasoning_effort': config['model']['reasoning_effort'],
+                'task_binding': config.get('task_binding'),
                 'minimum_seconds': config['duration']['minimum_seconds'], 'purpose': config.get('purpose', 'formal')}

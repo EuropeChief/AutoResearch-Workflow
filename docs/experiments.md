@@ -58,6 +58,8 @@ python3 /流程根/cli.py --format json experiment run \
 
 训练型设置 `training=true`，每次独立训练并保存模型，再由题目入口在干净进程实际重载验证，额外输出：
 
+固定模型的随机评估用 `training=false`、`evaluation_mode=random`，只重评而不强制重训；确需逐 seed 训练时方法固定、权重可不同。确定性有依据时不强制重复或 3σ，随机改善 3–5σ 可接受并建议增加重复。全部有效配对结果用于汇总，不能择优选 seed。
+
 ```json
 {
   "training": {

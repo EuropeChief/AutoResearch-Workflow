@@ -17,9 +17,22 @@ def add_commands(commands):
     p.add_argument("--output-dir", type=Path, required=True)
     p = actions.add_parser("check", help="仅以指定最终包为取证边界，输出格式问题，不运行 QA")
     p.add_argument("--package-root", type=Path, required=True)
+    p = actions.add_parser("precheck", help="项目方格式前检，保留原报告及当前时点解释")
+    p.add_argument("--package-root", type=Path, required=True, help="三目录包根或最终归档")
+    p.add_argument("--output-dir", type=Path, required=True, help="包外新报告目录")
+    p.add_argument("--phase", choices=("before_research", "final"), default="final")
+    p.add_argument("--task-kind", choices=("auto", "cpu", "gpu"), default="auto")
+    p = actions.add_parser("fingerprint", help="只读计算官方四项输入指纹，不证明历史运行归属")
+    p.add_argument("--harbor-task", type=Path, required=True)
 
 
 def dispatch(args):
+    if args.materials_action == "precheck":
+        from .package_precheck import check
+        return check(args.package_root, args.output_dir, phase=args.phase, task_kind=args.task_kind)
+    if args.materials_action == "fingerprint":
+        from .task_binding import fingerprint
+        return {"status": "fingerprinted", **fingerprint(args.harbor_task)}
     if args.materials_action=="trajectory":
         from .materials_trajectory import prepare
         return prepare(args.source, args.output, metric=read_object(args.metric) if args.metric else None,

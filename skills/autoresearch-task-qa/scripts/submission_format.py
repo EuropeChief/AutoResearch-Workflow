@@ -646,7 +646,7 @@ def _collect_trajectory(
     }
     if not _require_file(
         path, submission_root, issues, "MISSING_TRAJECTORY",
-        "三期需提交 trajectory_codex.json 与 trajectory_seed.json 两份真实轨迹。",
+        "三期需提交两份独立真实轨迹；可用 trajectory_codex.json / trajectory_seed.json 或可追溯的等价命名，实际模型在运行摘要或专家说明中记录。",
     ):
         return output
     output["present"] = True
@@ -818,8 +818,8 @@ def collect(root: str | Path) -> dict[str, Any]:
             _require_file(harbor / name, submission_root, issues, "MISSING_HARBOR_FILE", f"harbor_task 缺少 {name}。")
         for name in REQUIRED_HARBOR_DIRS:
             _require_dir(harbor / name, submission_root, issues, "MISSING_HARBOR_DIR", f"harbor_task 缺少 {name}/。")
-        for path in (harbor / "environment" / "Dockerfile", harbor / "tests" / "Dockerfile"):
-            _require_file(path, submission_root, issues, "MISSING_HARBOR_DOCKERFILE", f"harbor_task 缺少 {path.parent.name}/Dockerfile。")
+        # H01/H03 validate the selected build/image branch. The format layer
+        # must not require two Dockerfiles when separate sandboxes reuse an image.
         # Hidden evaluation material is mandatory, but its directory name and
         # delivery method are task-specific. harbor_review validates the material,
         # generation/injection evidence and isolation; format alone cannot do so.
@@ -852,7 +852,8 @@ def collect(root: str | Path) -> dict[str, Any]:
             )
 
     expert = submission_root / "expert_evidence"
-    trajectory_paths = sorted(expert.glob("trajectory*.json")) if _regular_dir(expert) else []
+    index_names = {"trajectory_source_map.json", "trajectory_source_index.json", "trajectory_time_provenance.json"}
+    trajectory_paths = sorted(p for p in expert.glob("trajectory*.json") if p.name not in index_names) if _regular_dir(expert) else []
     expert_evidence = {
         "present": _regular_dir(expert),
         "trajectories": {

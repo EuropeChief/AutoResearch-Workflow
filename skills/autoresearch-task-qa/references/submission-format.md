@@ -17,8 +17,8 @@ submission_root/
 │   │   │   ├── public_eval/          # 公开 Dev 入口，目录名可等价
 │   │   │   └── starter/
 │   │   ├── solution/                # 可选 Oracle；不是 Agent 运行时提交目录
-│   │   └── tests/                   # 仅进入独立 Verifier 镜像
-│   │       ├── Dockerfile            # Verifier 镜像
+│   │   └── tests/                   # 仅供独立 Verifier，运行时上传或在专用镜像预置
+│   │       ├── Dockerfile            # 专用 Verifier 构建时提供；复用 Solver 镜像时可省略
 │   │       ├── grader.py / test.sh
 │   │       └── hidden_assets/       # 私有材料示例；也可其他目录/有依据的生成或注入
 │   └── reference/                   # 出题方参考实现，Agent 不可见
@@ -26,7 +26,7 @@ submission_root/
 └── optimization_evidence/           # Baseline/Reference 优化面证据
 ```
 
-Dockerfile 位置、构建上下文和入口按 docker-path-contract.md 核对。`task.toml` 须显式设置 `[verifier] environment_mode = "separate"`。公开 Dev 入口及其数据必须进入 Agent；若原来与私有评分混在 tests/，先拆分公开部分，再由 Agent 构建或平台交付。上图 tests/ 指拆分后的私有 Verifier 内容。Hidden 材料必需，但不以目录名、是否训练或固定文件数量判断；预置、生成、安全注入的实际来源与调用关系在 hidden_review 中复核。Verifier 依赖须在自身镜像准备，不能依赖 Agent 临时安装包、缓存或未移交文件。
+默认内场交付按[当前内场部署口径](innerfield-deployment.md)核对：按需要预构建镜像并填写docker_image，每个sandbox必须单容器，任务不部署或调用额外工作环境，GPU由程序在各自当前沙盒直接使用；CPU题不增加GPU，GPU环境声明H20/L20。当前不提交依赖storage_mb、禁网/网络白名单或Compose生效的配置。删除未支持字段后仍须核对题面与评分约束是否成立。Dockerfile 位置、构建上下文和入口按 docker-path-contract.md 核对。`task.toml` 须显式设置 `[verifier] environment_mode = "separate"`。公开 Dev 入口及其数据必须进入 Agent；若原来与私有评分混在 tests/，先拆分公开部分，再由 Agent 构建或平台交付。上图 tests/ 指拆分后的私有 Verifier 内容。允许复用 Solver 镜像并运行时上传 tests，或专用 Verifier 镜像预置 tests；tests/Dockerfile 不再一律必交。按目标 Harbor 版本实际选择优先级核对，显式专用镜像不能假定自动上传。Hidden 材料必需，但不以目录名、是否训练或固定文件数量判断；预置、生成、安全注入的实际来源与调用关系在 hidden_review 中复核。Verifier 依赖须在自身镜像准备，不能依赖 Agent 临时安装包、缓存或未移交文件。
 
 当前推荐结构不设置 `environment/trusted/` 或 `tests/runtime/` 中间层。发现这些旧目录时列为格式对齐建议，说明可将最终私有评分实现归入 `tests/`，公开 Dev 仍留在 Agent 可见部分；只有调用链确实失效或暴露内容时，才映射到 QA 失败。
 
@@ -34,7 +34,11 @@ Agent 运行时提交目录以题面为准，本教程采用 `/workspace/solutio
 
 ### 两条专家轨迹
 
-推荐放在 `expert_evidence/trajectory_codex.json`、`trajectory_seed.json`，等价命名应在 overview.source_path 中明确映射。每轮必含 `round`、`policy_name`、`method_summary`、`status`、`score`、`failure_reason`、`retained_best`、`time`。成功须记录有限数值分数；失败保留真实状态与失败原因，分数未知用 null；最佳标记为布尔值，时间须可解析。轮次与顺序、分数方向、最佳候选和 run_summary 相互一致，不补造记录。自动解析不能代替任务身份、实际有效时长或探索质量复核。
+两组模型可按实际需要调整，**Codex + GPT-5.6 Sol** 与 **Codex + Seed 2.1 Turbo** 仅为示例，不强制使用。`trajectory_codex.json`、`trajectory_seed.json` 可沿用作文件名，也接受可追溯的等价命名；在 run_summary 或专家说明中写清两份文件对应的实际模型与 runtime。推理档位默认采用所选模型支持的最高档位并记录实际设置；两组保持同一 Prompt、任务版本、Public/Dev 口径和资源配置、独立空输出。QA18 依据已有材料核对实际运行与独立性，不因换模型判退或要求另行批准；不增加每轮字段、必交 sessions 或新日志。
+
+推荐放在 `expert_evidence/trajectory_codex.json`、`trajectory_seed.json`，等价命名应在 overview.source_path 中明确映射。每轮必含 `round`、`policy_name`、`method_summary`、`status`、`score`、`failure_reason`、`retained_best`、`time`。成功须记录有限数值分数；失败保留真实状态与失败原因，分数未知用 null；最佳标记为布尔值，时间须可解析。轮次与顺序、分数方向、最佳候选和 run_summary 相互一致，不补造记录。自动解析不能代替任务身份、实际有效时长或探索质量复核。轨迹八字段不变，在 run_summary.task_binding 写 hash_profile 与 task_content_sha256；两轨不同版本时可各写在 agent_execution 中。其他关联字段非必填，见 [runtime-integrity.md](runtime-integrity.md)。QA18 按实际提供的轨迹审查，提供工具轨迹/sessions 时一起审；缺哈希只在 QA21 待补，缺 sessions 不自动退回。
+
+专家可在已有作业说明中补部署方式、资源估算与必要的换卡影响说明，引用已有日志；不新增一套必交文件，也不改写旧卡运行记录。换卡补证仅针对受影响成绩与耗时。
 
 必交一次当前题包版本的 NOP 自检记录，可复用平台已有同版本记录。在 expert_evidence/ 保留同一次 Trial 的配置、结果、reward 和日志；用已有配置、日志或专家说明交代任务版本及自检结果，确认题包能够构建并跑通独立 Verifier。详见 harbor-harness.md。
 
@@ -135,4 +139,4 @@ quality_gate, artifacts
 3. **G01–G03内容门结论**：研究优化面、Baseline合理性、Reference提升充分性；按research-quality.md复核。随后列**两条轨迹迭代概况**：分别说明 Agent 模型、打包轨迹轮数、声明有效轮数/时长、主要探索阶段、采用与放弃方向、最终结果及证据缺口。
 4. **格式对齐建议**：列缺失项与所有超出推荐结构的项目；额外项明确标注“建议，不单独扣错”。之后完成21项表与可复制的专家退回说明；两条轨迹默认各10h，只有不涉及训练且单轮迭代很短、例外证据完整时可各7h。
 
-“Seed 2.1 Turbo High”中的 Seed 是 Agent 模型名，`seed_20260911` 等才是训练随机种子；报告中建议分别使用 `agent_model` 与 `training_seed`。
+“Seed 2.1 Turbo”中的 Seed 是 Agent 模型名，`seed_20260911` 等才是训练随机种子；报告中建议分别使用 `agent_model` 与 `training_seed`。

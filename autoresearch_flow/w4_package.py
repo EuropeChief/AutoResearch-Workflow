@@ -442,9 +442,9 @@ class DeliveryPackage:
         checked = check_package(package_root)
         record = {"schema_version": 1, "package_path": checked["package_path"],
                   "package_sha256": checked["package_sha256"], "created_at": _utc_now(),
-                  "qa_contract": {"skill_version": "0.3.2", "schema_version": 4,
-                                  "policy_revision": "research-quality-v3", "skipped_checks": ["QA15"]},
-                  "instruction": "请在独立新会话对 package_path 最终包只读运行当前 autoresearch-task-qa，并按路由审 Baseline；报告写包外。QA15 按 Skill 固定跳过，H05 无配置可不适用；H06 必须核当前题包版本的 NOP Trial 原件，缺失则 H06/QA17 失败。静态通过不替代教程端到端自验。"}
+                  "qa_contract": {"skill_version": "0.3.10+gpu-notice.20261021", "schema_version": 6,
+                                  "policy_revision": "innerfield-deployment-v6", "skipped_checks": []},
+                  "instruction": "请在独立新会话对 package_path 最终包只读使用当前 autoresearch-task-qa，并按路由审 Baseline；报告写包外。QA15 资源和 H06 当前版本 NOP 必查，collection 不作终稿，实际GPU可自选、最终配置H20。静态通过不替代真实运行。"}
         parent = self.directory / "qa" / checked["package_sha256"]
         parent.mkdir(parents=True, exist_ok=True)
         path = parent / "handoff.json"

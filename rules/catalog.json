@@ -203,7 +203,7 @@
       "applicability": "requires_review",
       "reviewer": "专家",
       "source_refs": [
-        "T:PCA-20260929:L80–116"
+        "T:V4-20261021#领取后检查"
       ],
       "stages": [
         1
@@ -217,7 +217,7 @@
       "applicability": "all",
       "reviewer": "专家",
       "source_refs": [
-        "T:PCA-20260929:L18–22,251–282",
+        "T:V4-20261021#出题模式与输入",
         "Q:research-quality.md#G01"
       ],
       "stages": [
@@ -234,7 +234,7 @@
       "applicability": "requires_review",
       "reviewer": "专家",
       "source_refs": [
-        "T:PCA-20260929:L20,160,350–449",
+        "T:V4-20261021#Baseline 训练充分性与方法代表性",
         "Q:research-quality.md#G02"
       ],
       "stages": [
@@ -251,7 +251,7 @@
       "applicability": "all",
       "reviewer": "程序＋专家",
       "source_refs": [
-        "T:PCA-20260929:L38–64,144–165,618",
+        "T:V4-20261021#数据隔离与防作弊实现",
         "Q:submission-format.md#1"
       ],
       "stages": [
@@ -271,7 +271,7 @@
       "applicability": "all",
       "reviewer": "程序＋专家",
       "source_refs": [
-        "T:PCA-20260929:L171–217",
+        "T:V4-20261021#task.toml",
         "Q:harbor-harness.md#H02"
       ],
       "stages": [
@@ -290,7 +290,7 @@
       "applicability": "all",
       "reviewer": "专家",
       "source_refs": [
-        "T:PCA-20260929:L219–282,948",
+        "T:V4-20261021#instruction.md",
         "Q:implementation-policy.md#QA01/QA11/QA19/QA20"
       ],
       "stages": [
@@ -309,7 +309,7 @@
       "applicability": "all",
       "reviewer": "专家",
       "source_refs": [
-        "T:PCA-20260929:L280,515–525",
+        "T:V4-20261021#instruction.md",
         "Q:implementation-policy.md#QA01/QA07/QA08"
       ],
       "stages": [
@@ -328,7 +328,7 @@
       "applicability": "requires_review",
       "reviewer": "专家",
       "source_refs": [
-        "T:PCA-20260929:L251–282,509–525",
+        "T:V4-20261021#错误与 Hard Gate",
         "Q:implementation-policy.md#QA05/QA20"
       ],
       "stages": [
@@ -347,7 +347,7 @@
       "applicability": "all",
       "reviewer": "程序＋专家",
       "source_refs": [
-        "T:PCA-20260929:L38–64,288–324,529–541",
+        "T:V4-20261021#Docker 路径契约与独立 Verifier",
         "Q:docker-path-contract.md#两种受支持 profile",
         "Q:harbor-harness.md#H03"
       ],
@@ -358,7 +358,7 @@
         5,
         6
       ],
-      "statement": "Agent context=environment/，Verifier context=tests/，分别 Dockerfile，禁止 COPY ../ 和旧 task-root 混用。正式入口 bash /tests/test.sh 不依赖 cwd。必须实际构建并验证目标 Harbor 双镜像移交出分；静态解析不等于实跑。"
+      "statement": "按实际镜像选择分支核依赖和 tests 预置/上传；独立 sandbox 可同镜像。正式 environment/tests 根目录禁止 Compose；实际验证目标 Harbor 的候选移交与 reward，静态解析不等于实跑。"
     },
     {
       "evidence": "构建/运行日志、资源记录、专家说明",
@@ -367,7 +367,7 @@
       "applicability": "requires_review",
       "reviewer": "专家＋平台",
       "source_refs": [
-        "T:PCA-20260929:L70–72,324"
+        "T:V4-20261021#environment"
       ],
       "stages": [
         2,
@@ -385,7 +385,7 @@
       "applicability": "all",
       "reviewer": "专家＋平台",
       "source_refs": [
-        "T:PCA-20260929:L144–165,464,515–525",
+        "T:V4-20261021#错误与 Hard Gate",
         "Q:implementation-policy.md#QA10"
       ],
       "stages": [
@@ -404,7 +404,7 @@
       "applicability": "all",
       "reviewer": "专家",
       "source_refs": [
-        "T:PCA-20260929:L455–464,515–525",
+        "T:V4-20261021#数据隔离与防作弊实现",
         "Q:implementation-policy.md#QA06/QA09"
       ],
       "stages": [
@@ -423,7 +423,7 @@
       "applicability": "requires_review",
       "reviewer": "程序＋专家",
       "source_refs": [
-        "T:PCA-20260929:L523",
+        "T:V4-20261021#数据隔离与防作弊实现",
         "Q:implementation-policy.md#QA12"
       ],
       "stages": [
@@ -442,7 +442,7 @@
       "applicability": "requires_review",
       "reviewer": "专家＋平台",
       "source_refs": [
-        "T:PCA-20260929:L9–13,455–464,529–541"
+        "T:V4-20261021#推荐构建顺序"
       ],
       "stages": [
         2,
@@ -460,7 +460,7 @@
       "applicability": "all",
       "reviewer": "程序＋专家",
       "source_refs": [
-        "T:PCA-20260929:L350–449,491–503"
+        "T:V4-20261021#solution 与 reference"
       ],
       "stages": [
         2,
@@ -477,7 +477,7 @@
       "applicability": "all",
       "reviewer": "专家",
       "source_refs": [
-        "T:PCA-20260929:L18–34",
+        "T:V4-20261021#Baseline 训练充分性与方法代表性",
         "Q:baseline-quality/SKILL.md#B01/B08"
       ],
       "stages": [
@@ -493,7 +493,7 @@
       "applicability": "requires_review",
       "reviewer": "专家",
       "source_refs": [
-        "T:PCA-20260929:L24–34,350–449",
+        "T:V4-20261021#Baseline 训练充分性与方法代表性",
         "Q:baseline-quality/SKILL.md#B02"
       ],
       "stages": [
@@ -509,7 +509,7 @@
       "applicability": "requires_review",
       "reviewer": "专家",
       "source_refs": [
-        "T:PCA-20260929:L28,350–449",
+        "T:V4-20261021#Baseline 训练充分性与方法代表性",
         "Q:baseline-quality/SKILL.md#B03"
       ],
       "stages": [
@@ -525,7 +525,7 @@
       "applicability": "all",
       "reviewer": "专家",
       "source_refs": [
-        "T:PCA-20260929:L18–34",
+        "T:V4-20261021#Baseline 训练充分性与方法代表性",
         "Q:baseline-quality/SKILL.md#B04/B08"
       ],
       "stages": [
@@ -541,7 +541,7 @@
       "applicability": "requires_review",
       "reviewer": "程序＋专家",
       "source_refs": [
-        "T:PCA-20260929:L34,350–449",
+        "T:V4-20261021#优化面、Baseline 与 Reference 训练证据",
         "Q:baseline-quality/SKILL.md#B05"
       ],
       "stages": [
@@ -557,7 +557,7 @@
       "applicability": "requires_review",
       "reviewer": "专家",
       "source_refs": [
-        "T:PCA-20260929:L18–34",
+        "T:V4-20261021#优化面、Baseline 与 Reference 训练证据",
         "Q:baseline-quality/SKILL.md#B06"
       ],
       "stages": [
@@ -573,7 +573,7 @@
       "applicability": "requires_review",
       "reviewer": "专家",
       "source_refs": [
-        "T:PCA-20260929:L350–449",
+        "T:V4-20261021#优化面、Baseline 与 Reference 训练证据",
         "Q:baseline-quality/SKILL.md#B07"
       ],
       "stages": [
@@ -589,7 +589,7 @@
       "applicability": "requires_review",
       "reviewer": "专家",
       "source_refs": [
-        "T:PCA-20260929:L18–34",
+        "T:V4-20261021#优化面、Baseline 与 Reference 训练证据",
         "Q:baseline-quality/SKILL.md#八项检查"
       ],
       "stages": [
@@ -605,7 +605,7 @@
       "applicability": "all",
       "reviewer": "程序＋专家",
       "source_refs": [
-        "T:PCA-20260929:L350–449",
+        "T:V4-20261021#优化面、Baseline 与 Reference 训练证据",
         "Q:submission-format.md#2"
       ],
       "stages": [
@@ -624,7 +624,7 @@
       "applicability": "requires_review",
       "reviewer": "程序＋专家",
       "source_refs": [
-        "T:PCA-20260929:L350–449",
+        "T:V4-20261021#优化面、Baseline 与 Reference 训练证据",
         "Q:submission-format.md#模型产物"
       ],
       "stages": [
@@ -643,7 +643,7 @@
       "applicability": "all",
       "reviewer": "程序＋专家",
       "source_refs": [
-        "T:PCA-20260929:L338–449",
+        "T:V4-20261021#评分锚点与公式",
         "Q:implementation-policy.md#QA03/QA13"
       ],
       "stages": [
@@ -661,7 +661,7 @@
       "applicability": "requires_review",
       "reviewer": "程序＋专家",
       "source_refs": [
-        "T:PCA-20260929:L405–449,491–503",
+        "T:V4-20261021#随机性与可分辨性",
         "Q:research-quality.md#G03"
       ],
       "stages": [
@@ -679,7 +679,7 @@
       "applicability": "requires_review",
       "reviewer": "程序＋专家",
       "source_refs": [
-        "T:PCA-20260929:L405–449,491–503",
+        "T:V4-20261021#随机性与可分辨性",
         "Q:research-quality.md#G03"
       ],
       "stages": [
@@ -697,7 +697,7 @@
       "applicability": "requires_review",
       "reviewer": "专家",
       "source_refs": [
-        "T:PCA-20260929:L18–34,491–503",
+        "T:V4-20261021#随机性与可分辨性",
         "Q:research-quality.md#G03",
         "Q:implementation-policy.md#QA04/QA19"
       ],
@@ -716,7 +716,7 @@
       "applicability": "all",
       "reviewer": "程序＋专家",
       "source_refs": [
-        "T:PCA-20260929:L466–503",
+        "T:V4-20261021#评分锚点与公式",
         "Q:implementation-policy.md#QA02"
       ],
       "stages": [
@@ -734,7 +734,7 @@
       "applicability": "requires_review",
       "reviewer": "程序＋专家",
       "source_refs": [
-        "T:PCA-20260929:L466–503",
+        "T:V4-20261021#评分锚点与公式",
         "Q:research-quality.md#G03",
         "Q:implementation-policy.md#QA14"
       ],
@@ -753,7 +753,7 @@
       "applicability": "all",
       "reviewer": "程序＋专家",
       "source_refs": [
-        "T:PCA-20260929:L505–513",
+        "T:V4-20261021#错误与 Hard Gate",
         "Q:implementation-policy.md#QA06"
       ],
       "stages": [
@@ -771,7 +771,7 @@
       "applicability": "all",
       "reviewer": "程序＋专家",
       "source_refs": [
-        "T:PCA-20260929:L118–165,455–464",
+        "T:V4-20261021#Docker 路径契约与独立 Verifier",
         "Q:harbor-harness.md#H01"
       ],
       "stages": [
@@ -790,7 +790,7 @@
       "applicability": "all",
       "reviewer": "专家",
       "source_refs": [
-        "T:PCA-20260929:L455–464,515–541",
+        "T:V4-20261021#tests 与评分校验",
         "Q:harbor-harness.md#H04",
         "Q:implementation-policy.md#QA06/QA17"
       ],
@@ -810,7 +810,7 @@
       "applicability": "requires_review",
       "reviewer": "专家",
       "source_refs": [
-        "T:PCA-20260929:L171–207,529–541",
+        "T:V4-20261021#task.toml",
         "Q:harbor-harness.md#H05"
       ],
       "stages": [
@@ -829,7 +829,7 @@
       "applicability": "requires_review",
       "reviewer": "程序＋专家＋平台",
       "source_refs": [
-        "T:PCA-20260929:L529–541",
+        "T:V4-20261021#NOP 自检与记录提交",
         "Q:harbor-harness.md#H06"
       ],
       "stages": [
@@ -848,7 +848,7 @@
       "applicability": "all",
       "reviewer": "专家",
       "source_refs": [
-        "T:PCA-20260929:L569–618",
+        "T:V4-20261021#运行前准备",
         "Q:implementation-policy.md#QA18"
       ],
       "stages": [
@@ -865,7 +865,7 @@
       "applicability": "requires_review",
       "reviewer": "程序＋专家",
       "source_refs": [
-        "T:PCA-20260929:L70–72,569–618,809–825",
+        "T:V4-20261021#模型组合与执行时长",
         "Q:implementation-policy.md#QA16"
       ],
       "stages": [
@@ -882,7 +882,7 @@
       "applicability": "requires_review",
       "reviewer": "专家",
       "source_refs": [
-        "T:PCA-20260929:L549–563,598–646",
+        "T:V4-20261021#每轮记录方法迭代字段",
         "Q:implementation-policy.md#QA18"
       ],
       "stages": [
@@ -899,7 +899,7 @@
       "applicability": "all",
       "reviewer": "程序＋专家",
       "source_refs": [
-        "T:PCA-20260929:L620–646,829–874",
+        "T:V4-20261021#每轮记录方法迭代字段",
         "Q:implementation-policy.md#QA21"
       ],
       "stages": [
@@ -916,7 +916,7 @@
       "applicability": "requires_review",
       "reviewer": "程序＋专家",
       "source_refs": [
-        "T:PCA-20260929:L557–559,660–668,878–884"
+        "T:V4-20261021#整理最终最佳方法"
       ],
       "stages": [
         5,
@@ -931,7 +931,7 @@
       "applicability": "all",
       "reviewer": "程序＋专家",
       "source_refs": [
-        "T:PCA-20260929:L670–730",
+        "T:V4-20261021#最终交付结构",
         "Q:submission-format.md#1/#3"
       ],
       "stages": [
@@ -946,7 +946,7 @@
       "applicability": "all",
       "reviewer": "程序＋专家",
       "source_refs": [
-        "T:PCA-20260929:L722–807"
+        "T:V4-20261021#专家作业说明文档"
       ],
       "stages": [
         6
@@ -960,7 +960,7 @@
       "applicability": "requires_review",
       "reviewer": "程序＋专家",
       "source_refs": [
-        "T:PCA-20260929:L572–586,809–827",
+        "T:V4-20261021#run_summary.json",
         "Q:implementation-policy.md#QA16/QA21"
       ],
       "stages": [
@@ -975,14 +975,14 @@
       "applicability": "requires_review",
       "reviewer": "用户＋专家＋平台",
       "source_refs": [
-        "T:PCA-20260929:L74–78,886–952",
+        "T:V4-20261021#三期质检 Skill",
         "Q:SKILL.md#工作流程/#覆盖边界",
         "Q:implementation-report.md"
       ],
       "stages": [
         6
       ],
-      "statement": "最终 QA 只对确定版本提交包取证并使用当前 schema 4 / research-quality-v3：先 G01–G03，再 QA01–QA21 和 H01–H06；QA15 固定跳过，H06 必查且不能标不适用。旧口头豁免不能把适用项的 fail/manual 改写为通过，只有 Skill 明示允许的 not_applicable 可采用。"
+      "statement": "最终 QA 只对确定版本提交包取证并使用 schema 6 / innerfield-deployment-v6：先 G01–G03，再 QA01–QA21 和 H01–H06；QA15 资源评估与 H06 NOP 必查。collection 不代表完成，旧报告 PASS 不自动沿用；实际 GPU 可自选，最终配置 H20，真实硬件记录不改写。"
     },
     {
       "evidence": "report.json/md/txt、包哈希、逐项映射",
@@ -991,7 +991,7 @@
       "applicability": "all",
       "reviewer": "用户＋专家",
       "source_refs": [
-        "T:PCA-20260929:L74–78",
+        "T:V4-20261021#返修后先做格式自检，再重传完整包",
         "Q:implementation-report.md"
       ],
       "stages": [
@@ -1006,14 +1006,14 @@
       "applicability": "requires_review",
       "reviewer": "专家＋平台",
       "source_refs": [
-        "T:PCA-20260929:L171–207,529–543"
+        "T:V4-20261021#task.toml"
       ],
       "stages": [
         1,
         2,
         3
       ],
-      "statement": "资源协议核对任务卡；教程给出的通用边界为 CPU ≤64C、单 Job 默认 GPU ≤8，单次改动到 Public/Dev 出分尽量 ≤2 小时。无法通过压缩达到目标时记录原因并交平台复核，不默默提高预算。"
+      "statement": "冻结前据任务性质与已有证据评估完整单轮评分≤7200秒、GPU≤8、CPU≤64。GPU实际型号专家自选，最终提交配置H20，算法部门负责适配；记录真实测量与推断，不新增逐轮配额证明。"
     },
     {
       "evidence": "Dockerfile、依赖、构建/启动记录与适配说明",
@@ -1022,7 +1022,7 @@
       "applicability": "all",
       "reviewer": "专家＋平台",
       "source_refs": [
-        "T:PCA-20260929:L288–324,455–464",
+        "T:V4-20261021#Docker 路径契约与独立 Verifier",
         "Q:harbor-harness.md#H03",
         "Q:source-alignment.md#本次明确裁定"
       ],
@@ -1042,7 +1042,7 @@
       "applicability": "requires_review",
       "reviewer": "专家＋平台",
       "source_refs": [
-        "T:PCA-20260929:L144–165,294,455–464,515–525"
+        "T:V4-20261021#数据隔离与防作弊实现"
       ],
       "stages": [
         2,
@@ -1074,73 +1074,143 @@
     }
   ],
   "workflow_notices": [
-    {
-      "id": "U-20261003-01",
-      "source_kind": "user_notice",
-      "notice_text": "流程没有进行新项目git仓库的建立，不利于后续流程的审查与回退，建议在第一阶段进行合理git仓库的建立。",
-      "stages": [1],
-      "affected_rule_ids": [],
-      "decision": "新任务阶段1.1要求范围确认与首个真实Git检查点。工程策略，不宣称教程强制Git；旧任务用原版本流程恢复。"
-    },
-    {
-      "id": "U-20261003-02",
-      "source_kind": "user_notice",
-      "notice_text": "将流程制定的agent底座设定为codex可视化界面，而不是只输出json格式的日志，这样专家可以实时观察。",
-      "stages": [4],
-      "affected_rule_ids": ["AR-037", "AR-038", "AR-040"],
-      "decision": "采用原生终端TUI，仍须保留原始日志、净计时与同会话恢复；实际可用模式由冻结政策与实现状态声明。"
-    },
-    {
-      "id": "U-20261003-03",
-      "source_kind": "user_notice",
-      "notice_text": "取消最后阶段的12小时容器检查，该部分质检不检查，流程中先不将该部分作为门禁。",
-      "stages": [2, 6],
-      "affected_rule_ids": ["AR-010"],
-      "decision": "取消专门浸泡与收据门禁；教程12h稳定性目标仍保留且不得声称未做测试已通过。"
-    },
-    {
-      "id": "U-20261003-04",
-      "source_kind": "user_notice",
-      "notice_text": "有些题目不需要训练，迭代很快，在进行迭代前，评估是否符合教程中的七小时时长例外，并设定正式迭代的有效市场下限。",
-      "stages": [4, 5, 6],
-      "affected_rule_ids": ["AR-038", "AR-039", "AR-041", "AR-044"],
-      "decision": "原通知的‘有效市场’按上下文理解为‘有效时长’。默认10h；符合完整教程条件的7h例外在启动前评估冻结，后续按证据到期关闭。"
-    },
-    {
-      "id": "U-20261003-05",
-      "source_kind": "user_notice",
-      "notice_text": "最终复验允许在不影响结果的前提下，根据可用GPU数量进行并行，不强制要求串行。",
-      "stages": [5],
-      "affected_rule_ids": ["AR-041", "AR-047", "AR-049"],
-      "decision": "只改变独立运行的调度，不改变单次科学协议或资源合同；指标受资源竞争影响时串行或独占。"
-    },
-    {
-      "id": "U-20261003-06",
-      "source_kind": "user_notice",
-      "notice_text": "在独立质检skill通过后再进行压缩，不要在没通过前就压缩，同时压缩要打包最终提交包、其中的harbor_task仓和optimization_evidence仓。",
-      "stages": [6],
-      "affected_rule_ids": ["AR-042", "AR-045", "AR-046"],
-      "decision": "先目录组装与独立QA，再三包压缩。6.5检查点按qa_verified、archives_verified、form_ready顺序，不要求先finish 6才能压缩。"
-    },
-    {
-      "id": "U-20261003-07",
-      "source_kind": "user_notice",
-      "notice_text": "完成最终打包后，总结研究子方向、优化面介绍、baseline描述及分数、reference描述及分数，以文件形式写入最终打包文件所在文件夹。",
-      "stages": [6],
-      "affected_rule_ids": ["AR-043"],
-      "decision": "生成中文填表信息.md并绑定当前接受包的事实；文件位于压缩输出目录，不改动已经通过QA的提交包。"
-    },
-    {
-      "id": "U-20261014-01",
-      "source_kind": "user_notice",
-      "notice_text": "接受，同时，这一点应当在冻结协议前就进行评估。当前先根据质检skill中的相关要求进行静态检查与验证即可。",
-      "stages": [1, 2, 3, 4, 5, 6],
-      "affected_rule_ids": ["AR-009", "AR-024", "AR-027", "AR-030", "AR-035", "AR-048"],
-      "decision": "2026-10-14 可迁移性讨论 Q1–Q8 已确认：接收方在声明环境独立部署；研究期明确条件，阶段2审阅镜像/设备/组件/资产实际调用链，阶段3冻结前复核评分适用性，后续按变化定向复查。允许小资产随包和固定外部大资产，按实际交付限制与必要校验处理。标准集中于 rules/README.md 的 M03/M04/M11/C05/C06；属用户制作约定，不改 QA 原件。复用已有材料和静态/语义审查，不新增迁移实跑、审批或逐阶段完整报告；原 H06 当前版本 NOP 要求保留。"
-    }
-  ],
+        {
+          "id": "U-20261003-01",
+          "source_kind": "user_notice",
+          "notice_text": "流程没有进行新项目git仓库的建立，不利于后续流程的审查与回退，建议在第一阶段进行合理git仓库的建立。",
+          "stages": [
+            1
+          ],
+          "affected_rule_ids": [],
+          "decision": "新任务阶段1.1要求范围确认与首个真实Git检查点。工程策略，不宣称教程强制Git；旧任务用原版本流程恢复。"
+        },
+        {
+          "id": "U-20261003-02",
+          "source_kind": "user_notice",
+          "notice_text": "将流程制定的agent底座设定为codex可视化界面，而不是只输出json格式的日志，这样专家可以实时观察。",
+          "stages": [
+            4
+          ],
+          "affected_rule_ids": [
+            "AR-037",
+            "AR-038",
+            "AR-040"
+          ],
+          "decision": "采用原生终端TUI，仍须保留原始日志、净计时与同会话恢复；实际可用模式由冻结政策与实现状态声明。"
+        },
+        {
+          "id": "U-20261003-03",
+          "source_kind": "user_notice",
+          "notice_text": "取消最后阶段的12小时容器检查，该部分质检不检查，流程中先不将该部分作为门禁。",
+          "stages": [
+            2,
+            6
+          ],
+          "affected_rule_ids": [
+            "AR-010"
+          ],
+          "decision": "取消专门浸泡与收据门禁；教程12h稳定性目标仍保留且不得声称未做测试已通过。"
+        },
+        {
+          "id": "U-20261003-04",
+          "source_kind": "user_notice",
+          "notice_text": "有些题目不需要训练，迭代很快，在进行迭代前，评估是否符合教程中的七小时时长例外，并设定正式迭代的有效市场下限。",
+          "stages": [
+            4,
+            5,
+            6
+          ],
+          "affected_rule_ids": [
+            "AR-038",
+            "AR-039",
+            "AR-041",
+            "AR-044"
+          ],
+          "decision": "原通知的‘有效市场’按上下文理解为‘有效时长’。默认10h；符合完整教程条件的7h例外在启动前评估冻结，后续按证据到期关闭。"
+        },
+        {
+          "id": "U-20261003-05",
+          "source_kind": "user_notice",
+          "notice_text": "最终复验允许在不影响结果的前提下，根据可用GPU数量进行并行，不强制要求串行。",
+          "stages": [
+            5
+          ],
+          "affected_rule_ids": [
+            "AR-041",
+            "AR-047",
+            "AR-049"
+          ],
+          "decision": "只改变独立运行的调度，不改变单次科学协议或资源合同；指标受资源竞争影响时串行或独占。"
+        },
+        {
+          "id": "U-20261003-06",
+          "source_kind": "user_notice",
+          "notice_text": "在独立质检skill通过后再进行压缩，不要在没通过前就压缩，同时压缩要打包最终提交包、其中的harbor_task仓和optimization_evidence仓。",
+          "stages": [
+            6
+          ],
+          "affected_rule_ids": [
+            "AR-042",
+            "AR-045",
+            "AR-046"
+          ],
+          "decision": "先目录组装与独立QA，再三包压缩。6.5检查点按qa_verified、archives_verified、form_ready顺序，不要求先finish 6才能压缩。"
+        },
+        {
+          "id": "U-20261003-07",
+          "source_kind": "user_notice",
+          "notice_text": "完成最终打包后，总结研究子方向、优化面介绍、baseline描述及分数、reference描述及分数，以文件形式写入最终打包文件所在文件夹。",
+          "stages": [
+            6
+          ],
+          "affected_rule_ids": [
+            "AR-043"
+          ],
+          "decision": "生成中文填表信息.md并绑定当前接受包的事实；文件位于压缩输出目录，不改动已经通过QA的提交包。"
+        },
+        {
+          "id": "U-20261014-01",
+          "source_kind": "user_notice",
+          "notice_text": "接受，同时，这一点应当在冻结协议前就进行评估。当前先根据质检skill中的相关要求进行静态检查与验证即可。",
+          "stages": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "affected_rule_ids": [
+            "AR-009",
+            "AR-024",
+            "AR-027",
+            "AR-030",
+            "AR-035",
+            "AR-048"
+          ],
+          "decision": "2026-10-14 可迁移性讨论 Q1–Q8 已确认：接收方在声明环境独立部署；研究期明确条件，阶段2审阅镜像/设备/组件/资产实际调用链，阶段3冻结前复核评分适用性，后续按变化定向复查。允许小资产随包和固定外部大资产，按实际交付限制与必要校验处理。标准集中于 rules/README.md 的 M03/M04/M11/C05/C06；属用户制作约定，不改 QA 原件。复用已有材料和静态/语义审查，不新增迁移实跑、审批或逐阶段完整报告；原 H06 当前版本 NOP 要求保留。"
+        },
+        {
+          "id": "U-20261021-GPU",
+          "source_kind": "user_notice",
+          "attribution": "用户转述项目方通知",
+          "notice_text": "专家自行选用合适的GPU，只需要在最终提交的配置文件上写为H20就可以了。算法部门内部会去跑兼容H20的适配。",
+          "stages": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "affected_rule_ids": [
+            "AR-005",
+            "AR-045",
+            "AR-047"
+          ],
+          "decision": "sources/notices/2026-10-21-gpu.md；最终GPU目标H20、真实设备自选，其他资源/公平性/sandbox/版本要求保留。"
+        }
+      ],
   "schema_version": 1,
-  "skipped_checks": [
-    "QA15"
-  ]
+  "skipped_checks": []
 }

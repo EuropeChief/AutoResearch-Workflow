@@ -1,5 +1,7 @@
 # AutoResearch delivery QA specification
 
+Legacy `--policy strict` only. Read this file only when the user explicitly requests the historical strict audit. The default `implementation` flow (including the current `precheck` alias) uses [implementation-policy.md](implementation-policy.md); do not import this file's dynamic gates or historical QA numbering into that flow.
+
 ## Evidence standard
 
 The authoring bundle, Agent runtime view, trusted evaluator view, and hidden-data

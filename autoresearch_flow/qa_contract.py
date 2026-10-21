@@ -1,4 +1,4 @@
-"""Small v0.3.2 handoff contracts; no task execution or QA judgments."""
+"""Current QA handoff contracts; no task execution or QA judgments."""
 from pathlib import Path
 import re
 
@@ -7,18 +7,19 @@ from .common import _read_json, _require
 QA_IDS = {f"QA{i:02d}" for i in range(1, 22)}
 G_IDS = {f"G{i:02d}" for i in range(1, 4)}
 H_IDS = {f"H{i:02d}" for i in range(1, 7)}
-NA_IDS = {"QA04", "QA15", "QA19", "H05"}
-HARBOR_RULESET = "harbor-compatibility-2026-10-03-v0.3.2"
+NA_IDS = {"QA04", "QA19", "H05"}
+HARBOR_RULESET = "harbor-compatibility-2026-10-15-v0.3.10"
 
 
 def validate_qa_report(report, *, require_pass=False):
     """Accept current reports, including failures for repair; close only a PASS."""
-    _require(report.get("schema_version") == 4
+    _require(report.get("schema_version") == 6
              and report.get("policy", {}).get("name") == "implementation"
-             and report["policy"].get("revision") == "research-quality-v3",
-             "QA_REPORT_SCHEMA", "需当前 schema 4 / research-quality-v3 报告")
+             and report["policy"].get("revision") == "innerfield-deployment-v6",
+             "QA_REPORT_SCHEMA", "需当前 schema 6 / innerfield-deployment-v6 报告；历史 PASS 不能自动转换")
     for name in ("overview", "runtime_review", "format_alignment", "harbor",
-                 "content_gates", "review", "summary"):
+                 "content_gates", "review", "summary", "trajectory_review",
+                 "resource_review", "task_fingerprint"):
         _require(isinstance(report.get(name), dict), "QA_REPORT_SCHEMA", f"缺少报告对象 {name}")
     harbor = report["harbor"]
     _require(harbor.get("ruleset") == HARBOR_RULESET,
@@ -47,8 +48,6 @@ def validate_qa_report(report, *, require_pass=False):
                              for k in ("remediation", "acceptance_evidence")),
                          "QA_REPORT_SCHEMA", f"{key} 缺返修与验收建议")
             rows[key] = row
-    _require(rows["QA15"]["status"] == "not_applicable",
-             "QA_REPORT_SCHEMA", "QA15 按当前 Skill 固定跳过")
     h06 = rows["H06"]
     expected_runtime = ("not_run" if h06["status"] == "fail" and not h06["evidence"]
                         else {"pass": "evidence_consistent", "fail": "failed",
@@ -67,8 +66,17 @@ def validate_qa_report(report, *, require_pass=False):
     _require(decision in {"PASS", "FAIL", "INCOMPLETE"}, "QA_REPORT_SCHEMA", "报告总评非法")
     if require_pass or decision == "PASS":
         _require(decision == "PASS" and report["review"].get("completed") is True
+                 and report["review"].get("stage") == "semantic_review"
                  and all(r["status"] in {"pass", "not_applicable"} for r in rows.values()),
                  "QA_UNRESOLVED", "独立质检须完成且全部适用项通过，不能用例外关闭失败")
+        _require(report["trajectory_review"].get("content_status") == "pass"
+                 and report["trajectory_review"].get("status") == "pass"
+                 and not report["trajectory_review"].get("binding_errors")
+                 and report["task_fingerprint"].get("status") == "pass"
+                 and report["resource_review"].get("status") == "pass"
+                 and harbor.get("deployment_contract", {}).get("status") == "pass"
+                 and not report.get("inspection_error"),
+                 "QA_UNRESOLVED", "PASS 缺轨迹内容、资源或部署能力的已完成复核")
         _require(report["runtime_review"].get("status") == "pass"
                  and harbor.get("static_status") == "pass" and harbor.get("qa17_status") == "pass"
                  and harbor.get("hidden_review", {}).get("status") == "pass"
@@ -83,7 +91,7 @@ def validate_qa_report(report, *, require_pass=False):
         _require(report["format_alignment"].get("review", {}).get("status") in
                  {"aligned", "aligned_with_extras", "deviations"},
                  "QA_UNRESOLVED", "缺少已完成的格式审阅")
-    return {"schema_version": 4, "decision": decision,
+    return {"schema_version": 6, "decision": decision,
             "runtime_status": harbor["runtime_status"]}
 
 

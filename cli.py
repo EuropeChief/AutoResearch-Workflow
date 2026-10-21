@@ -264,7 +264,7 @@ def main(argv: list[str] | None = None) -> int:
             _emit({"action": "materials." + args.materials_action, **payload}, args.format)
             if payload["status"] == "assembled":
                 return 0 if payload["format_check"]["status"] == "format_checked_not_qa" else 2
-            return 0 if payload["status"] in {"prepared", "format_checked_not_qa"} else 2
+            return 0 if payload["status"] in {"prepared", "format_checked_not_qa", "fingerprinted"} else 2
         except (FlowError, OSError, ValueError, TypeError) as exc:
             _emit({"action": "materials." + args.materials_action, "status": "error",
                    "code": getattr(exc, "code", "INPUT_ERROR"), "message": str(exc)}, args.format)

@@ -5,8 +5,6 @@ import math
 import re
 import stat
 import tomllib
-import importlib.util
-import sys
 from datetime import datetime
 from pathlib import Path
 
@@ -14,6 +12,7 @@ from .core import FlowError, _canonical_digest, _read_json, _require, _sha256
 from .experiments import evidence
 from .runtime_evaluate import TreeError, tree_digest
 from .harbor_native import solution_artifact_destination
+from .materials_io import bundled
 
 
 def task_digest(root: Path) -> str:
@@ -27,12 +26,11 @@ def check_task(root: Path) -> dict:
     """Necessary structural checks; Docker/Harbor execution remains a separate gate."""
     root = Path(root)
     digest = task_digest(root)
-    for name in ("instruction.md", "task.toml", "environment/Dockerfile", "tests/Dockerfile", "tests/test.sh"):
+    for name in ("instruction.md", "task.toml", "tests/test.sh"):
         path = root / name
         _require(path.is_file() and path.stat().st_size > 0, "WORKSPACE_SCHEMA", f"任务缺非空 {name}")
-    starter = root / "environment/starter"
-    _require(starter.is_dir() and any(p.is_file() for p in starter.rglob("*")),
-             "WORKSPACE_SCHEMA", "缺 environment/starter 中的真实初始化材料")
+    for name in ("environment", "tests"):
+        _require((root / name).is_dir(), "WORKSPACE_SCHEMA", "完整题包缺目录 " + name)
     try:
         config = tomllib.loads((root / "task.toml").read_text())
     except (ValueError, OSError) as exc:
@@ -44,10 +42,22 @@ def check_task(root: Path) -> dict:
     verifier = config.get("verifier")
     _require(isinstance(verifier, dict) and verifier.get("environment_mode") == "separate",
              "VERIFIER_NOT_SEPARATE", "verifier.environment_mode 须为 separate")
-    _require(isinstance(config.get("environment"), dict) and isinstance(verifier.get("environment"), dict)
-             and isinstance(config.get("agent"), dict), "DUAL_ENVIRONMENT", "须分别声明 Agent/Verifier 环境与 Agent 配置")
-    for context in ("environment", "tests"):
-        dockerfile = (root / context / "Dockerfile").read_text()
+    _require(isinstance(config.get("environment"), dict)
+             and isinstance(verifier.get("environment", {}), dict), "DUAL_ENVIRONMENT", "须提供有效环境配置")
+    selection = bundled('docker_paths').image_selection(root, config)
+    _require(not any(bundled('docker_paths').compose_files(root / context)
+                     for context in ('environment', 'tests')), 'COMPOSE_UNSUPPORTED',
+             '正式 environment/tests 目录禁止 Compose；同目录 Dockerfile 或镜像不豁免')
+    required_builds = []
+    if not config['environment'].get('docker_image'):
+        required_builds.append('environment')
+    if selection['source'] == 'tests_dockerfile':
+        required_builds.append('tests')
+    for context in required_builds:
+        path = root / context / 'Dockerfile'
+        _require(path.is_file() and path.stat().st_size > 0, 'WORKSPACE_SCHEMA',
+                 '当前构建分支缺非空 ' + context + '/Dockerfile')
+        dockerfile = path.read_text()
         # Conservative detection of an explicitly invalid source. Not a Docker parser.
         logical = dockerfile.replace("\\\n", " ")
         for line in logical.splitlines():
@@ -55,7 +65,7 @@ def check_task(root: Path) -> dict:
                 _require(not re.search(r"(?:^|[\s\"\'])\.\./", line), "DOCKER_CONTEXT_ESCAPE",
                          f"{context}/Dockerfile 不得 COPY/ADD ../")
     return {"status": "structure_checked_not_execution", "task_sha256": digest,
-            "contexts": {"agent": "environment", "verifier": "tests"},
+            "contexts": {"agent": "environment", "verifier": "tests"}, "image_selection": selection,
             "pending": ["实际构建", "目标 Harbor 字段生效与移交", "候选权限", "真实评分出分"]}
 
 
@@ -140,26 +150,7 @@ Receipt is an internal workflow document. Its filename is not a platform require
 
 def _bundled_trial_validator():
     """Load the read-only trial validator from this flow's pinned QA Skill copy."""
-    scripts = Path(__file__).resolve().parents[1] / "skills/autoresearch-task-qa/scripts"
-    docker_spec = importlib.util.spec_from_file_location("docker_paths", scripts / "docker_paths.py")
-    module_path = scripts / "harbor_review.py"
-    spec = importlib.util.spec_from_file_location("_flow_bundled_harbor_review", module_path)
-    _require(docker_spec is not None and docker_spec.loader is not None
-             and spec is not None and spec.loader is not None, "NOP_VALIDATOR_MISSING",
-             "流程包缺少随包 QA Skill 的 Harbor 原件校验器")
-    docker_module = importlib.util.module_from_spec(docker_spec)
-    module = importlib.util.module_from_spec(spec)
-    previous = sys.modules.get("docker_paths")
-    sys.modules["docker_paths"] = docker_module
-    try:
-        docker_spec.loader.exec_module(docker_module)
-        spec.loader.exec_module(module)
-    finally:
-        if previous is None:
-            del sys.modules["docker_paths"]
-        else:
-            sys.modules["docker_paths"] = previous
-    return module.validate_trial_evidence
+    return bundled('harbor_review').validate_trial_evidence
 
 
 def check_nop_record(root: Path, record: dict, task_root: Path) -> dict:

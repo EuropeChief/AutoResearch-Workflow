@@ -122,6 +122,17 @@ class IndependentMaterialTests(unittest.TestCase):
         self.assertEqual(before,{p:_sha256(p) for p in self.root.rglob("*") if p.is_file()})
         self.assertFalse((self.root/".autoresearch-flow").exists())
 
+    def test_custom_models_and_explicit_equivalent_trajectory_names_are_accepted(self):
+        path = self.root / 'expert_evidence/run_summary.json'
+        data = json.loads(path.read_text())
+        for i, track in enumerate(('codex', 'seed')):
+            target = f'expert_evidence/method-history-{i}.json'
+            (self.root / f'expert_evidence/trajectory_{track}.json').rename(self.root / target)
+            data['agent_execution'][i].update(model=f'custom-model-{i}', track=track, trajectory_path=target)
+        path.write_text(json.dumps(data))
+        result = check(self.root)
+        self.assertEqual(result['status'], 'format_checked_not_qa', result['issues'])
+
     def test_native_jsonl_conversion_preserves_source_and_history_best(self):
         source=self.root.parent/"agent.jsonl";source.write_text("\n".join(json.dumps(x) for x in self.rows)+"\n")
         before=source.read_bytes()

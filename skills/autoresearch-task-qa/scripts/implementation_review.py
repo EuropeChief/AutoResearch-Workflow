@@ -19,13 +19,21 @@ import tempfile
 from harbor_review import collect as collect_harbor, apply_review as apply_harbor_review, summary as harbor_summary
 from submission_format import collect as collect_submission_format, validate_trajectory
 from content_gates import empty as empty_content_gates, apply_review as apply_content_review, assess_runtime
+import resource_review
+import evidence_refs
+import trajectory_review
+import task_fingerprint
+try:
+    import tomllib
+except ImportError:
+    tomllib = None
 
 TITLES = [
     "八章节与题面信息泄露", "评分公式与 0/1 锚点", "参考解分数与复现材料",
     "波动指标的 3σ 可分辨性", "约束执行实现", "Verifier 入口、分数与错误处理",
     "instruction 中的 Hidden 信息泄露", "instruction 中的参考解信息泄露",
     "结果清理与原子写入", "冻结面保护或恢复实现", "instruction 八项内容",
-    "Git 清理", "Baseline 与参考解提升", "合法改进空间", "资源限制（不检查）",
+    "Git 清理", "Baseline 与参考解提升", "合法改进空间", "评分资源需求估算",
     "轨迹实际迭代时长", "Harbor Harness 兼容性", "轨迹、日志与分析",
     "seed 与有效提升阈值", "修改范围、网络与工具策略", "三个 JSON 的填写内容",
 ]
@@ -200,6 +208,8 @@ def printable_number(value):
 
 
 def compact_markdown(report):
+    if report.get("inspection_error") and report.get("inspection_stage") == "input":
+        return "# 输入未完成读取\n\n" + str(report["inspection_error"]) + "\n\n未执行题目内容质检，不能据此认定材料缺失或通过。\n\n" + return_to_expert(report)
     labels = {"PASS": "通过", "FAIL": "不通过", "INCOMPLETE": "未完成检查"}
     statuses = {"pass": "通过", "fail": "不通过", "manual": "未完成检查", "not_applicable": "不适用"}
     trajectory_labels = {"complete": "完整", "partial": "部分", "missing": "缺失", "unreadable": "无法读取"}
@@ -209,7 +219,13 @@ def compact_markdown(report):
     surface = overview.get("optimization_surface", {})
     comparison = overview.get("baseline_reference", {})
     direction_label = {"minimize": "越低越好", "maximize": "越高越好", "unknown": "方向待确认"}.get(comparison.get("direction"), "方向待确认")
+    is_collection = report.get("review", {}).get("stage") == "collection"
+    if report.get("review", {}).get("stage") == "semantic_review":
+        statuses["manual"] = "待补充核验"
+        labels["INCOMPLETE"] = "待补充核验"
     lines = ["# 优化面介绍", "", cell(surface.get("summary", "无法确认优化面。")), ""]
+    if is_collection:
+        lines[2:2] = ["**收集初稿：尚未执行逐项语义复核。下列默认待核验状态不表示交付包缺材料或需要整改。**", ""]
     if surface.get("modifiable"):
         lines.append("可修改：" + "；".join(cell(x) for x in surface["modifiable"]) + "。")
     else:
@@ -235,7 +251,7 @@ def compact_markdown(report):
             valid = f"B:{'是' if row.get('baseline_valid') is True else '否' if row.get('baseline_valid') is False else '待确认'} / R:{'是' if row.get('reference_valid') is True else '否' if row.get('reference_valid') is False else '待确认'}"
             lines.append(f"| {cell(row.get('seed', '-'))} | {printable_number(baseline)} | {printable_number(reference)} | {printable_number(improvement)} | {valid} |")
     else:
-        lines.append("未找到可列出的正式 seed 成对跑分。")
+        lines.append("正式 seed 成对跑分尚未整理；请完成 review 后生成结论。" if is_collection else "未找到可列出的正式 seed 成对跑分。")
     lines.extend(["", "汇总：Baseline 均值 " + printable_number(comparison.get("baseline_mean"))
                   + "，样本标准差 " + printable_number(comparison.get("baseline_sample_std"))
                   + "；Reference 均值 " + printable_number(comparison.get("reference_mean"))
@@ -257,16 +273,64 @@ def compact_markdown(report):
                   + "；U=" + computed_number(assessment.get("upper_bound"))
                   + "；归一化分数=" + computed_number(computed.get("normalized_score")) + "。"])
     lines.extend(["", "# 两条轨迹迭代概况", "",
-                  "| Agent 轨迹 | 状态 | 打包轮数 | 声明有效轮数 | 时长 | 概况与最终结果 |",
+                  "| Agent 轨迹 | 状态 | 打包轮数 | 声明有效轮数 | 有效时长 | 概况与最终结果 |",
                   "|---|---|---:|---:|---:|---|"])
     for trajectory in overview.get("trajectories", [])[:2]:
-        duration = trajectory.get("duration_hours")
+        runtime_row = next((r for r in (report.get("runtime_review") or {}).get("trajectories", [])
+                            if r.get("name") == trajectory.get("name")), {})
+        effective = runtime_row.get("effective_seconds")
+        duration = effective / 3600 if numeric(effective) is not None else trajectory.get("duration_hours")
         duration_text = "-" if duration is None else f"{duration:.2f}h"
         first = cell(trajectory.get("summary", "无法确认。")).rstrip("；。 ")
         detail = first + "；" + cell(trajectory.get("final_result", "无法确认。"))
-        lines.append(f"| {cell(trajectory.get('name', '未命名'))} | {trajectory_labels.get(trajectory.get('status'), '待确认')} | {printable_number(trajectory.get('packaged_rounds'))} | {printable_number(trajectory.get('reported_effective_rounds'))} | {duration_text} | {detail} |")
+        state = "尚未复核" if is_collection else trajectory_labels.get(trajectory.get('status'), '待确认')
+        lines.append(f"| {cell(trajectory.get('name', '未命名'))} | {state} | {printable_number(trajectory.get('packaged_rounds'))} | {printable_number(trajectory.get('reported_effective_rounds'))} | {duration_text} | {detail} |")
     if len(overview.get("trajectories", [])) < 2:
         lines.append("| 第二条轨迹 | 缺失 | - | - | - | 未提供或尚未完成复核。 |")
+
+    integrity = report.get("trajectory_review", {})
+    lines.extend(["", "# 轨迹可信性与题包绑定", "", cell(integrity.get("summary", "尚未复核。")), "",
+                  "| 轨迹 | 所交内容审查 | 分数与当前包对应 | 审查范围 | run_summary 哈希 |", "|---|---|---|---|---|"])
+    for row in integrity.get("trajectories", []):
+        lines.append(f"| {cell(row['name'])} | {statuses.get(row.get('content_status'), '待确认')} | {cell({'valid': '有效', 'invalid': '无效', 'unverified': row['status_summary']}[row['score_status']])} | {cell(row.get('scope_note') or row['coverage'])} | {cell(row['task_binding']['summary'])} |")
+    # Finish the table before rendering findings; interleaving list blocks
+    # splits the Markdown table and leaves the second trajectory orphaned.
+    for row in integrity.get("trajectories", []):
+        for finding in row.get("findings", []):
+            kind = {"leakage": "存在泄漏", "cheating": "存在作弊/违规", "infra_bug": "infra 故障", "allowed": "合法行为", "suspicious": "待核实疑点"}[finding["classification"]]
+            stage = {"grader": "评分程序", "hidden_assets": "隐藏资产", "download": "下载", "sandbox_start": "sandbox 启动", "artifact_upload": "产物上传/移交"}.get(finding.get("stage"), "")
+            certainty = {"confirmed": "已确认", "suspected": "待核实"}[finding["certainty"]]
+            impact = {"invalid": "受影响分数无效", "unverified": "对分数的影响待核验", "none": "不影响当前有效分数"}[finding.get("score_effect", "unverified")]
+            lines.extend(["", f"- {cell(row['name'])}：{kind}{'（' + stage + '）' if stage else ''} / {certainty}：{cell(finding['summary'])}；{impact}；影响轮次 {cell(finding.get('affected_rounds', []))}；证据 {cell('；'.join(finding['evidence']))}"])
+            if finding.get("remediation"):
+                lines.append("  修复：" + cell(finding["remediation"]) + ("；验收：" + cell(finding["acceptance_evidence"]) if finding.get("acceptance_evidence") else ""))
+    if integrity.get("unreviewed_sources"):
+        lines.extend(["", "尚未复核的已提供轨迹/sessions：" + cell("；".join(integrity["unreviewed_sources"]))])
+    resources = report.get("resource_review", {})
+    lines.extend(["", "# QA15 资源证据", "", cell(resources.get("summary", "尚未复核。")), "",
+                  "| 运行 | 计时范围 | 记录耗时（秒） | GPU 数量/型号 | 分配 CPU 核 |", "|---|---|---:|---|---:|"])
+    for row in resources.get("runs", []):
+        lines.append(f"| {cell(row.get('run_id'))} | {cell(row.get('scope'))} | {printable_number(row.get('score_seconds'))} | {printable_number(row.get('gpu_count'))} / {cell(row.get('gpu_type') or '-')} | {printable_number(row.get('cpu_cores'))} |")
+    if resources.get("feasibility_summary") and not resources.get("estimate"):
+        lines.extend(["", "资源可行性：" + cell(resources["feasibility_summary"])])
+    estimate = resources.get("estimate", {})
+    if estimate:
+        lines.extend(["", "资源需求估算：完整一轮约 " + printable_number(estimate.get("score_seconds")) + " 秒，"
+                      + printable_number(estimate.get("gpu_count")) + " 张 GPU，" + printable_number(estimate.get("cpu_cores"))
+                      + " 核 CPU；" + cell(estimate.get("basis", "")), "", "计时口径：" + cell(estimate.get("time_accounting", ""))])
+
+    deployment = report.get("harbor", {}).get("deployment_contract")
+    if deployment:
+        lines.extend(["", "# 目标部署能力", "", "配置范围：" + cell(deployment["profile"]),
+                      "", cell(deployment["summary"])])
+        for finding in deployment["findings"]:
+            if finding["status"] != "pass":
+                lines.append("- " + cell(finding["message"]) + "；证据：" + cell("；".join(finding["evidence"])))
+    hardware = resources.get("hardware_review")
+    if hardware:
+        lines.extend(["", "任务硬件与成绩对应：" + cell(hardware["task_type"]) + " / "
+                      + cell(hardware["score_comparability"]) + "；" + cell(hardware["summary"]),
+                      "证据：" + cell("；".join(hardware["evidence"]))])
 
     format_alignment = report.get("format_alignment", {})
     format_review = format_alignment.get("review", {})
@@ -296,6 +360,11 @@ def compact_markdown(report):
         value = format_alignment.get(key, [])
         if isinstance(value, list):
             missing_or_issues.extend(value)
+    # Raw collection observations remain in JSON. An explicit semantic review
+    # can recognize equivalent evidence; do not reissue resolved observations
+    # as defects after the reviewer has explained why the format is aligned.
+    if format_review.get("status") in ("aligned", "aligned_with_extras"):
+        missing_or_issues = []
     for issue in missing_or_issues:
         if isinstance(issue, dict):
             lines.append("- 格式缺口：" + cell(issue.get("summary") or issue.get("message") or issue.get("path") or issue))
@@ -309,11 +378,11 @@ def compact_markdown(report):
     lines.extend(["", f"# 质检结论：{labels[report['summary']['decision']]}", "",
                   f"产物：{cell(Path(report['source']['path']).name)}｜通过 {counts['pass']} 项｜不通过 {counts['fail']} 项｜未完成 {counts['manual']} 项｜跳过/不适用 {counts['not_applicable']} 项", "",
                   f"前置三门：通过 {gate_counts['pass']} 项｜不通过 {gate_counts['fail']} 项｜待核验 {gate_counts['manual']} 项；全部复核完成：{'是' if report.get('review', {}).get('completed') else '否'}。", "",
-                  "口径：只读实现情况检查；QA07/08 仅查 instruction，QA15 跳过，QA16 默认要求两条轨迹各至少 10h 有效迭代；仅完全不涉及训练或微调且单轮迭代很短的任务，才可凭资格与闭环等证据采用每条至少 7h 的例外。排队、安装与故障不计。未执行提交代码、未独立复跑参考解或反序列化模型。", "",
+                  "口径：只读检查及已有证据复核；QA07/08 查 instruction；QA18 审所交轨迹及提供的 sessions，QA21 单独核对 run_summary 的四项题包哈希；QA15 允许根据日志、轨迹和B/R实现估算资源。QA16 两条各至少 10h；仅无训练且单轮很短、例外证据完整时可各至少 7h。排队、安装与故障不计有效迭代时长。未执行提交代码、未独立复跑或反序列化模型。", "",
                   harbor_summary(report["harbor"]) if "harbor" in report else "Harbor：未检查。", "",
                   "| 检查项 | 是否通过 | 原因 |", "|---|---|---|"])
     for check in report["checks"]:
-        label = "跳过" if check["id"] == "QA15" else statuses[check["status"]]
+        label = statuses[check["status"]]
         lines.append(f"| {check['id']} {cell(check['title'])} | {label} | {cell(check['summary'])} |")
     if report.get("inspection_error"):
         lines.extend(["", "未完成原因：" + cell(report["inspection_error"])])
@@ -326,6 +395,10 @@ def compact_markdown(report):
 
 def return_to_expert(report):
     """Render only concrete reviewed corrections; never fabricate missing advice."""
+    if report.get("inspection_error"):
+        return "质检未完成，尚未形成可发送给专家的内容整改结论。\n错误：" + str(report["inspection_error"]) + "\n请由质检员先解决输入读取或 review 结构问题，再生成报告。\n"
+    if report.get("review", {}).get("stage") == "collection":
+        return "尚未执行语义复核，未形成可发送给专家的整改结论。请完成 review.json 并用 --review 生成报告。\n"
     findings = [row for row in report.get("content_gates", {}).get("checks", []) + report["checks"]
                 if row["status"] in ("fail", "manual")]
     lines = []
@@ -343,6 +416,8 @@ def return_to_expert(report):
     if report.get("inspection_error"):
         lines.extend(["质检未完成：" + report["inspection_error"], "请先修正上述材料读取或 review 结构错误，再生成可交付的质检结论。", ""])
     format_issues = report.get("format_alignment", {}).get("alignment_issues", [])
+    if report.get("format_alignment", {}).get("review", {}).get("status") in ("aligned", "aligned_with_extras"):
+        format_issues = []
     if format_issues:
         lines.append("待质检员核实的格式观察（等价材料可以认可，不直接作为专家整改结论）：")
         lines.extend(f"- {row.get('path', '?')}：{row.get('message', '')}" for row in format_issues)
@@ -352,17 +427,33 @@ def return_to_expert(report):
 def build_report(source, root, files, digest=None):
     results, errors = trajectory_durations(root, files)
     checks = [item(i) for i in IDS]
-    checks[14] = item("QA15", "not_applicable", "按用户要求不检查资源与单次迭代限制。")
+    checks[14] = item("QA15", "manual", "等待结合已有日志、轨迹与实现估算完整单轮耗时、GPU数量及CPU核数。")
     checks[15] = item("QA16", "manual", "等待核对两条轨迹各自的有效时长及排除时段；总历时、预算和单条最长运行不能代替。")
-    return finish({"schema_version": 4, "generated_at": datetime.now(timezone.utc).isoformat(),
-                   "source": {"path": str(source), "sha256": digest, "kind": "directory" if source.is_dir() else "zip"},
-                   "workspace_root": str(root), "policy": {"name": "implementation", "revision": "research-quality-v3", "strict_release_certification": False, "adjustments": []},
+    harbor = collect_harbor(root, files)
+    selected = harbor["observations"].get("task_root")
+    task = root / selected if isinstance(selected, str) else None
+    frozen = task_fingerprint.collect(task)
+    cfg = task_config(task)
+    return finish({"schema_version": 6, "generated_at": datetime.now(timezone.utc).isoformat(),
+                   "source": {"path": str(source), "sha256": digest, "kind": "directory" if source.is_dir() else "zip" if digest else "file" if source.is_file() else "missing"},
+                   "workspace_root": str(root), "policy": {"name": "implementation", "revision": "innerfield-deployment-v6", "execution_revision": "v0.3.10+gpu-notice.20261021", "strict_release_certification": False, "adjustments": []},
                    "overview": empty_overview(), "format_alignment": collect_submission_format(root),
                    "content_gates": empty_content_gates(), "runtime_review": None,
                    "checks": checks, "extra_checks": [], "runtime_candidates": results, "runtime_parse_errors": errors,
-                   "harbor": collect_harbor(root, files),
-                   "review": {"completed": False}, "risk_notes": [], "assumptions": [],
+                   "harbor": harbor, "task_fingerprint": frozen,
+                   "trajectory_review": trajectory_review.collect(root, files, frozen),
+                   "resource_review": resource_review.collect(root, files, cfg),
+                   "review": {"completed": False, "stage": "collection"}, "risk_notes": [], "assumptions": [],
                    "limitations": ["通过仅表示存在对应实现或材料，不证明独立复现和运行安全。"]})
+
+
+def task_config(task):
+    try:
+        if task and tomllib:
+            return tomllib.loads((task / "task.toml").read_text(encoding="utf-8"))
+    except (OSError, ValueError, UnicodeError):
+        pass
+    return None
 
 
 def inventory(root):
@@ -389,12 +480,7 @@ def cleanup_previous_evidence(out):
 
 
 def evidence_path(root, evidence):
-    name = evidence.split("#", 1)[0]
-    name = re.sub(r":\d+$", "", name)
-    path = (root / name).resolve()
-    if not path.is_relative_to(root.resolve()) or not path.is_file():
-        raise ValueError(f"evidence path is not a readable file within the inspected bundle: {evidence}")
-    return path
+    return evidence_refs.resolve_ref(root, evidence)
 
 
 def review_evidence(root, evidence, label, required=False):
@@ -518,6 +604,25 @@ def apply_review(report, review, root):
     harbor = apply_harbor_review(report["harbor"], review.get("harbor"), root)
     report["harbor"] = harbor
     report["overview"] = validate_overview(review.get("overview"), root)
+    files = inventory(root)
+    task = root / harbor["task_root"] if isinstance(harbor.get("task_root"), str) else None
+    frozen = task_fingerprint.collect(task)
+    report["task_fingerprint"] = frozen
+    report["trajectory_review"]["task_fingerprint"] = frozen
+    report["trajectory_review"] = trajectory_review.apply_review(report["trajectory_review"], review.get("trajectory_review"),
+        report["overview"]["trajectories"], root, files, review_evidence)
+    invalid_formal = report["trajectory_review"].get("invalid_formal_run_paths", [])
+    for ref in invalid_formal:
+        data = json.loads((root / ref).read_text(encoding="utf-8"))
+        role = "baseline" if Path(ref).parts[-3] == "baseline_runs" else "reference"
+        for pair in report["overview"]["baseline_reference"]["paired_runs"]:
+            if str(pair["seed"]) == str(data.get("seed")):
+                pair[role + "_valid"] = False
+    report["resource_review"] = resource_review.apply_review(resource_review.collect(root, files, task_config(task),
+        [r["source_path"] for r in report["overview"]["trajectories"] if r.get("source_path")]),
+        review.get("resource_review"), root, review_evidence, harbor["deployment_contract"])
+    hardware = report["resource_review"].get("hardware_review", {})
+    hardware_scores = hardware.get("score_status", "pass")
     # Validate the two reviewed source paths, not only preferred filenames.
     # A handwritten pass must not override malformed or missing round evidence.
     trajectory_validation = []
@@ -531,7 +636,21 @@ def apply_review(report, review, root):
             trajectory_validation.append(validate_trajectory(root / row["source_path"], root))
     report["format_alignment"]["reviewed_trajectories"] = trajectory_validation
     report["content_gates"] = apply_content_review(review.get("content_gates"), report["overview"], root, review_evidence)
-    report["runtime_review"] = assess_runtime(review.get("runtime_review"), report["overview"]["trajectories"], root, review_evidence)
+    if invalid_formal:
+        gate = next(row for row in report["content_gates"]["checks"] if row["id"] == "G03")
+        gate.update(status="fail", reason_code="INVALID_FORMAL_RUN", summary="轨迹审查确认正式 B/R 评分证据无效，不能用其证明提升。",
+                    evidence=list(dict.fromkeys(gate["evidence"] + invalid_formal)),
+                    remediation="修复泄漏、违规或评分故障，按同协议重做受影响的正式运行。",
+                    acceptance_evidence="同版本题包、合法方法及完整可信评分记录；保留旧失败证据。")
+    if hardware_scores != "pass":
+        gate = next(row for row in report["content_gates"]["checks"] if row["id"] == "G03")
+        if gate["status"] != "fail":
+            gate.update(status=hardware_scores, reason_code="HARDWARE_SCORE_COMPARABILITY",
+                        summary="受影响正式 B/R 的换卡成绩对应关系未通过：" + hardware["summary"],
+                        evidence=list(dict.fromkeys(gate["evidence"] + hardware["evidence"])),
+                        remediation=hardware["remediation"], acceptance_evidence=hardware["acceptance_evidence"])
+    duration_observations, _ = trajectory_durations(root, [r["source_path"] for r in report["overview"]["trajectories"] if r.get("source_path")])
+    report["runtime_review"] = assess_runtime(review.get("runtime_review"), report["overview"]["trajectories"], root, review_evidence, duration_observations)
     report["format_alignment"]["review"] = validate_format_review(review.get("format_review"))
     rows = review.get("checks", [])
     if not isinstance(rows, list) or not all(isinstance(row, dict) for row in rows) or len(rows) != 21 or {row.get("id") for row in rows} != set(IDS):
@@ -546,7 +665,7 @@ def apply_review(report, review, root):
             raise ValueError(f"{check_id}: supply a concise reason (1–220 characters)")
         if not isinstance(evidence, list) or not all(isinstance(ref, str) for ref in evidence):
             raise ValueError(f"{check_id}: evidence must be a string array")
-        if status == "not_applicable" and check_id not in ("QA04", "QA15", "QA19"):
+        if status == "not_applicable" and check_id not in ("QA04", "QA19"):
             raise ValueError(f"{check_id}: cannot skip this checklist item")
         if status == "pass" and not evidence:
             raise ValueError(f"{check_id}: passing requires a concrete evidence reference")
@@ -557,9 +676,11 @@ def apply_review(report, review, root):
             if check_id in ("QA07", "QA08") and path.name.lower() != "instruction.md":
                 raise ValueError(f"{check_id}: only instruction.md is in scope")
         if check_id == "QA15":
-            if status != "not_applicable":
-                raise ValueError("QA15 must be skipped")
-            final.append(report["checks"][14])
+            resources = report["resource_review"]
+            result = item("QA15", resources["status"], resources["summary"][:220], resources["evidence"])
+            result["remediation"] = resources.get("remediation", "补充完整单轮的耗时、GPU数量和CPU核数估算，并引用现有日志或实现依据。")
+            result["acceptance_evidence"] = resources.get("acceptance_evidence", "有来源的资源估算符合7200秒、8张H20/L20及64CPU上限；标明计时阶段及实测/推断。")
+            final.append(result)
         elif check_id == "QA16":
             runtime = report["runtime_review"]
             result = item(check_id, runtime["status"], runtime["summary"], runtime["evidence"])
@@ -577,6 +698,8 @@ def apply_review(report, review, root):
             result = item("QA17", harbor["qa17_status"], reason, refs)
             if result["status"] in ("fail", "manual"):
                 defaults = {}
+                if harbor["deployment_contract"]["status"] != "pass":
+                    defaults = {key: harbor["deployment_contract"][key] for key in ("remediation", "acceptance_evidence")}
                 if result["status"] == "fail" and len(failed) == 1 and failed[0]["id"] == "H06":
                     defaults = {
                         "remediation": "请使用当前题包版本运行一次 NOP 自检，确认构建、Trial 和独立 Verifier 正常完成，并提交运行记录。",
@@ -591,6 +714,28 @@ def apply_review(report, review, root):
                 result[field] = row.get(field, "")
                 if status in ("fail", "manual"):
                     result[field] = nonempty_text(result[field], check_id + "." + field)
+            if check_id in ("QA04", "QA19") and status == "not_applicable":
+                g03 = next(r for r in report["content_gates"]["checks"] if r["id"] == "G03")
+                mode = (g03.get("assessment") or {}).get("evaluation_mode")
+                if mode != "deterministic":
+                    result.update(status="manual", summary="仅确定性评估可不适用；当前评估模式为" + str(mode or "unknown") + "，须完成本项复核。",
+                                  remediation="按正式评估模式核对随机 seed、统计判定及题面说明；不能以不适用跳过随机评估检查。",
+                                  acceptance_evidence="本项结论与 G03 evaluation_mode 及真实评估协议一致，并引用对应实现或题面。")
+            if check_id == "QA05" and harbor["deployment_contract"]["constraint_status"] != "pass":
+                deployment = harbor["deployment_contract"]
+                if result["status"] != "fail":
+                    result.update(status=deployment["constraint_status"], summary=deployment["summary"][:220],
+                                  evidence=list(dict.fromkeys(result["evidence"] + deployment["evidence"])),
+                                  remediation=deployment["remediation"], acceptance_evidence=deployment["acceptance_evidence"])
+            if check_id in ("QA03", "QA13") and hardware_scores != "pass" and result["status"] != "fail":
+                result.update(status=hardware_scores, summary=("受影响正式成绩的硬件对应待核：" + hardware["summary"])[:220],
+                              evidence=list(dict.fromkeys(result["evidence"] + hardware["evidence"])),
+                              remediation=hardware["remediation"], acceptance_evidence=hardware["acceptance_evidence"])
+            if check_id in ("QA03", "QA13") and invalid_formal:
+                result.update(status="fail", summary="正式 B/R 运行存在已确认无效评分，当前复现/改善证据不成立。",
+                              evidence=list(dict.fromkeys(result["evidence"] + invalid_formal)),
+                              remediation="修复评分、泄漏或违规问题后重做受影响正式运行。",
+                              acceptance_evidence="完整同协议正式运行、可信分数及相应日志和产物。")
             if check_id in ("QA18", "QA21"):
                 defects = [issue for observation in trajectory_validation for issue in observation["alignment_issues"]]
                 if defects:
@@ -601,13 +746,30 @@ def apply_review(report, review, root):
                     result["evidence"] = list(dict.fromkeys(evidence + [x["path"] for x in trajectory_validation if x.get("present")]))
                     result["remediation"] = "补齐两条真实轨迹，每轮八字段须完整有效；保留失败原因，不补造分数、时间或轮次。自定义状态需说明其语义。"
                     result["acceptance_evidence"] = "overview.source_path 指向两份可读取轨迹，轮次及八字段符合教程，并与运行摘要和最佳方法记录一致。"
+                integrity = report["trajectory_review"]
+                integrity_status = integrity["content_status"] if check_id == "QA18" else (
+                    "fail" if any(r["task_binding"]["status"] == "fail" for r in integrity["trajectories"]) else
+                    "manual" if any(r["task_binding"]["status"] != "pass" for r in integrity["trajectories"]) or integrity["binding_errors"] else "pass")
+                if integrity_status != "pass" and result["status"] != "fail":
+                    result["status"] = integrity_status
+                    binding_summary = "；".join(r["name"] + "：" + r["task_binding"]["summary"] for r in integrity["trajectories"] if r["task_binding"]["status"] != "pass")
+                    if integrity["binding_errors"]:
+                        binding_summary += "；run_summary解析异常：" + "；".join(str(e) for e in integrity["binding_errors"])
+                    result["summary"] = (row["summary"] if check_id == "QA18" and row["status"] in ("manual", "fail") else integrity["content_summary"] if check_id == "QA18" else binding_summary)[:220]
+                    result["evidence"] = list(dict.fromkeys(result["evidence"] + integrity["evidence"]))
+                    if check_id == "QA21":
+                        result["remediation"] = "核对轨迹使用的题包版本，在 run_summary.json 的 task_binding 写 hash_profile=harbor-task-inputs-v1 与 task_content_sha256。两轨相同版本只写一次；不同版本可各写在 agent_execution 中。无需新建 start_record、run_id 或轨迹哈希。"
+                        result["acceptance_evidence"] = "重算 environment/、task.toml、tests/、instruction.md 的四项指纹，与 run_summary.task_binding 一致；版本确有变化则提交对应题包或重跑，不能只修改错误哈希。"
+                    else:
+                        result["remediation"] = row.get("remediation") or integrity["remediation"]
+                        result["acceptance_evidence"] = row.get("acceptance_evidence") or integrity["acceptance_evidence"]
             final.append(result)
     report["checks"] = final
     report["harbor"] = harbor
     report["risk_notes"] = review.get("risk_notes", [])
     if not isinstance(report["risk_notes"], list) or not all(isinstance(x, str) for x in report["risk_notes"]):
         raise ValueError("risk_notes must be an array of strings")
-    report["review"] = {"completed": False, "method": "research gates and per-item semantic evidence review"}
+    report["review"] = {"completed": False, "stage": "semantic_review", "method": "research gates and per-item semantic evidence review"}
     return finish(report)
 
 
@@ -633,29 +795,35 @@ def main(argv=None):
     if out == source or (source.is_dir() and out.is_relative_to(source)):
         parser.error("out-dir must be outside the submitted artifact")
     report = build_report(source, out, [])
+    inspection_stage = "input"
     try:
         import audit_task as legacy
-        if source.is_dir():
+        source_kind = legacy.inspect_source_kind(source)
+        if source_kind == "directory":
             root, digest = source, None
-        elif source.is_file():
+        else:
             # Keep a bounded extracted evidence copy so the model can inspect it later.
             out.mkdir(parents=True, exist_ok=True)
             cleanup_previous_evidence(out)
             root = Path(tempfile.mkdtemp(prefix="evidence-", dir=out))
-            facts = legacy.safe_extract_zip(source, root)
+            try:
+                facts = legacy.safe_extract_zip(source, root)
+            except NotImplementedError as exc:
+                raise ValueError("ZIP 使用当前读取器不支持的压缩方法；请用可信工具安全解包后传入目录。") from exc
             if facts.unsafe_entries:
                 raise ValueError("压缩包无法安全读取：" + "; ".join(facts.unsafe_entries[:3]))
             digest = facts.sha256
-        else:
-            raise ValueError("待检路径不存在或不是目录/ZIP")
         files = inventory(root)
         report = build_report(source, root, files, digest)
+        report["source"]["kind"] = source_kind
         out.mkdir(parents=True, exist_ok=True)
         (out / "inventory.json").write_text(json.dumps({"root": str(root), "files": files}, ensure_ascii=False, indent=2), encoding="utf-8")
         if args.review:
+            inspection_stage = "review"
             report = apply_review(report, json.loads(args.review.read_text(encoding="utf-8")), root)
     except (OSError, ValueError, UnicodeError, legacy.zipfile.BadZipFile) as exc:
         report["inspection_error"] = str(exc)
+        report["inspection_stage"] = inspection_stage
         finish(report)
     write_report(report, out)
     print(json.dumps({"decision": report["summary"]["decision"], "report_txt": str(out / "report.txt"), "report_md": str(out / "report.md"), "report_json": str(out / "report.json")}, ensure_ascii=False))

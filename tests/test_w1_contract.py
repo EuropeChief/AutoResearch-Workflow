@@ -51,7 +51,7 @@ class W1ContractTests(unittest.TestCase):
         self.assertEqual(registry.check_sources(), [])
         self.assertEqual(len(registry.catalog["rules"]), 50)
         self.assertEqual(len(registry.catalog["coverage"]), 38)
-        self.assertEqual(registry.catalog["skipped_checks"], ["QA15"])
+        self.assertEqual(registry.catalog["skipped_checks"], [])
 
     def test_explicit_initialize_and_read_only_check(self) -> None:
         store = TaskStore(self.task_root)

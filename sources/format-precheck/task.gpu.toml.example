@@ -1,0 +1,24 @@
+# 仅示例配置。实际镜像须已准备；各侧按真实需求选择GPU。
+# 不需要GPU的一侧改为gpus=0并删除该侧gpu_types。
+artifacts = ["/workspace/solution"]
+
+[environment]
+docker_image = "hub.byted.org/team/task-solver-gpu:v1"
+cpus = 16
+memory_mb = 65536
+gpus = 1
+gpu_types = ["H20", "L20"]
+
+[agent]
+timeout_sec = 43200
+
+[verifier]
+environment_mode = "separate"
+timeout_sec = 7200
+
+[verifier.environment]
+docker_image = "hub.byted.org/team/task-verifier-gpu:v1"
+cpus = 8
+memory_mb = 32768
+gpus = 1
+gpu_types = ["H20", "L20"]

@@ -3,8 +3,8 @@
   "status": "pilot_required",
   "image": "<实际Agent镜像>",
   "agent_execution": [
-    {"runtime": "Codex", "model": "GPT-5.6 Sol", "duration_hours": null, "effective_rounds": null, "typical_round_minutes": null},
-    {"runtime": "Codex", "model": "Seed 2.1 Turbo", "duration_hours": null, "effective_rounds": null, "typical_round_minutes": null}
+    {"runtime": "Codex", "model": "<本轨实际模型>", "reasoning_effort": "<实际支持档位>", "duration_hours": null, "effective_rounds": null, "typical_round_minutes": null, "task_binding": {"hash_profile": "harbor-task-inputs-v1", "task_content_sha256": "<本轨实际起始包指纹>"}},
+    {"runtime": "Codex", "model": "<另一轨实际模型>", "reasoning_effort": "<实际支持档位>", "duration_hours": null, "effective_rounds": null, "typical_round_minutes": null, "task_binding": {"hash_profile": "harbor-task-inputs-v1", "task_content_sha256": "<本轨实际起始包指纹>"}}
   ],
   "fast_iteration_exception": {
     "used": false, "non_training": null, "short_iterations": null, "rollable_proved": false, "evidence": ""

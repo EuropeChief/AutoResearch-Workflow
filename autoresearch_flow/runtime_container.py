@@ -44,9 +44,7 @@ class NativeContainer:
         volumes = [f'{d / "public"}:/workspace:ro', f'{d / "solution"}:/workspace/solution:rw',
                    f'{d / "output"}:/expert_evidence:rw', f'{d / "codex_home"}:/codex:rw',
                    f'{d / "jobs/requests"}:/run/autoresearch/requests:rw',
-                   f'{d / "jobs/responses"}:/run/autoresearch/responses:ro',
-                   f'{d / "jobs/worker"}:/worker_jobs:rw',
-                   f'{d / "implementation/autoresearch_flow"}:/runtime:ro']
+                   f'{d / "jobs/responses"}:/run/autoresearch/responses:ro']
         if self.config.get('codex_vendor'):
             volumes.append(f'{d / "codex_runtime"}:/opt/autoresearch-codex:ro')
         # JSON is valid YAML scalar/list syntax; no new YAML dependency.
@@ -121,6 +119,20 @@ class NativeContainer:
                       codex_version=self.config['codex_version'], security=self.config['security']['mode'])
         _atomic_json(self.directory / 'preflight.json', report)
         _require(report['status'] == 'succeeded', 'SANDBOX_BLOCKED', '实际沙箱探针被阻止，详见本轨 preflight.json；不自动降级')
+        if self.config['resources']['gpu_ids']:
+            gpu_command = shlex.join([self.codex, 'sandbox', '-C', '/workspace/solution', '-P',
+                                     'autoresearch', '--', 'python', '/workspace/_gpu_probe.py',
+                                     str(len(self.config['resources']['gpu_ids']))])
+            result = await self.exec_agent(gpu_command, timeout=60)
+            gpu = {'status': 'succeeded' if result.return_code == 0 else 'blocked',
+                   'exit_code': result.return_code, 'stdout': result.stdout, 'stderr': result.stderr,
+                   'scope': 'actual CUDA kernel inside current Agent sandbox'}
+            report['gpu'] = gpu
+            if gpu['status'] != 'succeeded':
+                report['status'] = 'blocked'
+            _atomic_json(self.directory / 'preflight.json', report)
+            _require(gpu['status'] == 'succeeded', 'GPU_SANDBOX_BLOCKED',
+                     '当前 Agent sandbox 内 CUDA 核计算未通过；详见preflight.json，不回退额外worker')
         return report
 
     def credential_material(self):

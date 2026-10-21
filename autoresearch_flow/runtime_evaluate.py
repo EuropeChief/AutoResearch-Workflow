@@ -11,6 +11,7 @@ import stat
 import signal
 import subprocess
 import sys
+import threading
 
 
 class TreeError(ValueError):
@@ -43,7 +44,7 @@ def tree_digest(root):
                                     separators=(',', ':')).encode('utf-8')).hexdigest()
 
 
-def evaluate(command, candidate):
+def evaluate(command, candidate, timeout=None):
     before = tree_digest(candidate)
     process = subprocess.Popen(command, stdout=subprocess.PIPE, text=True, errors='replace', start_new_session=True)
     # A private process group owns evaluator workers. Forward wrapper shutdown
@@ -56,10 +57,19 @@ def evaluate(command, candidate):
             os.killpg(process.pid, sig)
         except ProcessLookupError:
             pass
+    expired = threading.Event()
+    def expire():
+        expired.set()
+        stop_group(signal.SIGTERM)
+        threading.Event().wait(2)
+        stop_group(signal.SIGKILL)
+    timer = threading.Timer(timeout, expire) if timeout is not None else None
     last = ''
     try:
         for sig in handlers:
             signal.signal(sig, interrupted)
+        if timer:
+            timer.start()
         while line := process.stdout.readline(4*1024*1024+1):
             if len(line) > 4*1024*1024:
                 raise ValueError('Public/Dev 输出单行超出 4 MiB 记录预算')
@@ -68,6 +78,8 @@ def evaluate(command, candidate):
                     print(last, end='', flush=True)
                 last = line
         code = process.wait()
+        if expired.is_set():
+            return 124
         if code == 0:
             value = json.loads(last)
             if not isinstance(value, dict):
@@ -80,6 +92,10 @@ def evaluate(command, candidate):
         return code
     finally:
         try:
+            if timer:
+                timer.cancel()
+                if timer.ident is not None:
+                    timer.join()
             for sig in handlers:
                 signal.signal(sig, signal.SIG_IGN)
             stop_group(signal.SIGTERM)
@@ -98,8 +114,11 @@ def evaluate(command, candidate):
 
 if __name__ == '__main__':
     try:
-        command = json.loads(Path('/workspace/_public_command.json').read_text())
-        code = evaluate([*command, *sys.argv[1:]], Path('/workspace/solution'))
+        settings = json.loads(Path('/workspace/_public_command.json').read_text())
+        command = settings['command'] if isinstance(settings, dict) else settings
+        timeout = settings.get('timeout_seconds') if isinstance(settings, dict) else None
+        Path('/expert_evidence/evaluation').mkdir(parents=True, exist_ok=True)
+        code = evaluate([*command, *sys.argv[1:]], Path('/workspace/solution'), timeout=timeout)
     except (OSError, ValueError, subprocess.SubprocessError) as error:
         print(json.dumps({'status': 'infrastructure_error', 'error': str(error)}, ensure_ascii=False), flush=True)
         code = 1

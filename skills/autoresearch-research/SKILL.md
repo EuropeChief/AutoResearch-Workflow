@@ -19,3 +19,5 @@ description: 研究 AutoResearch 论文与代码，探索优化面和 Baseline/R
 需要设计启发时使用 [optimization-surface](../autoresearch-optimization-surface/SKILL.md)；写题面时交给[任务实现](../autoresearch-task-implementation/SKILL.md)，可参考 [task-authoring](../autoresearch-task-authoring/SKILL.md)。辅助 Skill 不增加门禁或独立报告。
 
 产物是可执行的研究方向、证据和下一实验，不是“阶段通过”声明。新题在合理范围建立 Git 检查点，已有仓库先核状态，避免把大数据、模型、凭据和日志纳入；这是工作习惯，不是科学通过证据。
+
+冻结前将资源、部署与随机性可行性并入已有协议：区分确定性、固定模型随机评估和逐 seed 训练；按[当前硬件通知](../../sources/notices/2026-10-21-gpu.md)区分专家实跑 GPU 与最终 H20 配置，不为选题新增独立资源证明。

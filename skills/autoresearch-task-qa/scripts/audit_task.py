@@ -1922,7 +1922,32 @@ def render_check(item: dict) -> list[str]:
     return lines
 
 
-def parse_args() -> argparse.Namespace:
+def inspect_source_kind(source: Path) -> str:
+    """Validate the supported input boundary without extracting or executing it."""
+    try:
+        mode = source.stat().st_mode
+    except FileNotFoundError as exc:
+        raise ValueError(f"Input path does not exist: {source}") from exc
+    if stat.S_ISDIR(mode):
+        # Test readability explicitly: os.walk alone can silently skip errors.
+        with os.scandir(source) as entries:
+            next(entries, None)
+        return "directory"
+    if not stat.S_ISREG(mode):
+        raise ValueError("Unsupported input type; only a regular directory or ZIP archive is supported.")
+    with source.open("rb") as stream:
+        valid_zip = zipfile.is_zipfile(stream)
+    if valid_zip:
+        return "zip"
+    if source.suffix.lower() == ".zip":
+        raise ValueError("Invalid or unreadable ZIP archive; obtain a readable ZIP or pass a safely extracted directory.")
+    raise ValueError(
+        f"Unsupported input format ({source.suffix or 'non-ZIP file'}); only a directory or ZIP archive is supported. "
+        "Safely extract other formats with trusted tooling first, then pass the extracted directory."
+    )
+
+
+def parse_args(argv=None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("source", type=Path, help="workspace directory or ZIP")
     parser.add_argument("--out-dir", type=Path, default=Path("qa-report"))
@@ -1938,7 +1963,7 @@ def parse_args() -> argparse.Namespace:
         default="never",
         help="non-zero exit threshold; default never so reports are always generated",
     )
-    return parser.parse_args()
+    return parser.parse_args(argv)
 
 
 def exit_required(report: dict, threshold: str) -> bool:
@@ -1952,25 +1977,31 @@ def exit_required(report: dict, threshold: str) -> bool:
     return bool(statuses & {"fail", "warn", "manual"})
 
 
-def main() -> int:
-    selected = next((arg.split("=", 1)[1] for arg in sys.argv[1:] if arg.startswith("--policy=")), None)
-    if "--policy" in sys.argv:
-        pos = sys.argv.index("--policy")
-        selected = sys.argv[pos + 1] if pos + 1 < len(sys.argv) else None
-    if selected != "strict":
+class _SinglePolicy(argparse.Action):
+    def __call__(self, parser, namespace, value, option_string=None):
+        if getattr(namespace, "_policy_seen", False):
+            parser.error("--policy may be supplied only once; duplicate policy options are not supported")
+        setattr(namespace, "_policy_seen", True)
+        setattr(namespace, self.dest, value)
+
+
+def main(argv=None) -> int:
+    argv = sys.argv[1:] if argv is None else argv
+    # Use argparse for both spellings and '--' boundaries. Reject duplicates so
+    # dispatch can never choose one policy while the selected parser uses another.
+    selector = argparse.ArgumentParser(add_help=False)
+    selector.add_argument("--policy", choices=("implementation", "precheck", "strict"),
+                          default="implementation", action=_SinglePolicy)
+    selected, _ = selector.parse_known_args(argv)
+    if selected.policy != "strict":
         from implementation_review import main as implementation_main
-        return implementation_main()
-    args = parse_args()
+        return implementation_main(argv)
+    args = parse_args(argv)
     source = args.source.expanduser().resolve()
-    if not source.exists():
-        print(f"source does not exist: {source}", file=sys.stderr)
-        return 2
     temporary: tempfile.TemporaryDirectory[str] | None = None
     try:
-        if source.is_file():
-            if not zipfile.is_zipfile(source):
-                print("source file must be a ZIP", file=sys.stderr)
-                return 2
+        kind = inspect_source_kind(source)
+        if kind == "zip":
             temporary = tempfile.TemporaryDirectory(prefix="autoresearch-qa-")
             extraction_root = Path(temporary.name)
             facts = safe_extract_zip(source, extraction_root)
@@ -2016,13 +2047,10 @@ def main() -> int:
             else:
                 root = locate_workspace(extraction_root)
                 report = Auditor(root, source, facts, policy=args.policy).run()
-        elif source.is_dir():
+        else:
             facts = directory_facts(source)
             root = locate_workspace(source)
             report = Auditor(root, source, facts, policy=args.policy).run()
-        else:
-            print("source must be a regular directory or ZIP", file=sys.stderr)
-            return 2
 
         out_dir = args.out_dir.expanduser().resolve()
         out_dir.mkdir(parents=True, exist_ok=True)
@@ -2035,7 +2063,7 @@ def main() -> int:
         markdown_path.write_text(render_markdown(report), encoding="utf-8")
         print(json.dumps({"decision": report["summary"]["decision"], "report_json": str(json_path), "report_md": str(markdown_path)}, ensure_ascii=False))
         return 1 if exit_required(report, args.fail_on) else 0
-    except (OSError, ValueError, zipfile.BadZipFile) as exc:
+    except (OSError, ValueError, zipfile.BadZipFile, NotImplementedError) as exc:
         print(f"audit failed safely: {exc}", file=sys.stderr)
         return 2
     finally:

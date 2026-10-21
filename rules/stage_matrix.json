@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "workflow_revision": "2.1.1",
+  "workflow_revision": "2.1.1-v4.20261021.dev",
   "description": "M/C 规则到六阶段行动与证据的轻量映射；不是题目状态数据库。",
   "stages": [
     {
@@ -443,12 +443,12 @@
     {
       "id": "M08-S4",
       "pre_action": {
-        "dual_track_launch": ["track_configs", "duration_assessment", "timing_plan", "session_policy"]
+        "dual_track_launch": ["track_configs","duration_assessment","timing_plan","session_policy","format_precheck","task_binding"]
       },
       "source_rule": "M08",
       "stage": 4,
       "title": "冻结双轨运行与净时长口径",
-      "action": "为两轨分别固定模型/Prompt/资源、10h 或有依据的 7h 资格、净时长计时和中断续接规则。",
+      "action": "为两轨分别固定模型/Prompt/资源、10h 或有依据的 7h 资格、净时长计时和中断续接规则。 在既有双轨启动前检查中保留格式脚本原结果和时点解释，保存真实起始题包快照及四项指纹。",
       "evidence": ["track_configs", "duration_assessment", "timing_ledger", "session_identity"],
       "check_type": "mixed",
       "severity": "hard",
@@ -667,7 +667,7 @@
       "source_rule": "M09",
       "stage": 6,
       "title": "整理最终八字段轨迹",
-      "action": "只对 Agent 生成的真实轮次做允许的格式/摘要修正，输出根 rounds 与八字段完整轨迹。",
+      "action": "只对 Agent 生成的真实轮次做允许的格式/摘要修正，输出根 rounds 与八字段完整轨迹。 缺sessions不单独退回；已交记录须审，版本问题归QA21。",
       "evidence": ["trajectory_codex.json", "trajectory_seed.json", "trajectory_review"],
       "check_type": "mixed",
       "severity": "hard",
@@ -715,7 +715,7 @@
       "source_rule": "M12",
       "stage": 6,
       "title": "按最小充分结构组包",
-      "action": "组装 workspace、expert_evidence、optimization_evidence 三目录及题面八部分，移除无证明作用的流程文件。",
+      "action": "组装 workspace、expert_evidence、optimization_evidence 三目录及题面八部分，移除无证明作用的流程文件。独立 QA 后压缩时，对实际完整归档运行格式前检并绑定 SHA-256，不以启动前时点解释排除最终材料。",
       "evidence": ["package_root", "package_manifest", "submission_structure_check"],
       "check_type": "mixed",
       "severity": "hard",

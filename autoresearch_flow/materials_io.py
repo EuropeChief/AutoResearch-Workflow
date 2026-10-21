@@ -20,21 +20,24 @@ def bundled(name):
     if name in _PARSERS:
         return _PARSERS[name]
     base = Path(__file__).resolve().parents[1] / "skills/autoresearch-task-qa/scripts"
-    if name == "harbor_review":
-        dependency = bundled("docker_paths")
-        previous = sys.modules.get("docker_paths")
-        sys.modules["docker_paths"] = dependency
+    dependencies = {
+        "harbor_review": ("docker_paths", "evidence_refs", "task_fingerprint", "deployment_review"),
+        "deployment_review": ("docker_paths",),
+    }.get(name, ())
+    loaded = {key: bundled(key) for key in dependencies}
+    previous = {key: sys.modules.get(key) for key in dependencies}
+    sys.modules.update(loaded)
     spec = importlib.util.spec_from_file_location("_materials_" + name, base / (name + ".py"))
     _require(spec is not None and spec.loader is not None, "PARSER_MISSING", f"缺随包解析器：{name}")
     module = importlib.util.module_from_spec(spec)
     try:
         spec.loader.exec_module(module)
     finally:
-        if name == "harbor_review":
-            if previous is None:
-                sys.modules.pop("docker_paths", None)
+        for key, value in previous.items():
+            if value is None:
+                sys.modules.pop(key, None)
             else:
-                sys.modules["docker_paths"] = previous
+                sys.modules[key] = value
     _PARSERS[name] = module
     return module
 
