@@ -39,7 +39,8 @@ class PublicRulesTests(unittest.TestCase):
         registry = Registry()
         self.assertNotIn("w0_inputs", registry.manifest)
         refs = {item["path"] for item in registry.manifest["bundled_files"]}
-        for name in ("autoresearch-task-qa", "autoresearch-baseline-quality"):
+        for name in ("autoresearch-task-qa", "autoresearch-baseline-quality",
+                     "autoresearch-task-qa-legacy-waiver"):
             skill = FLOW / "skills" / name
             self.assertTrue((skill / "SKILL.md").is_file())
             files = {str(p.relative_to(FLOW)) for p in skill.rglob("*")

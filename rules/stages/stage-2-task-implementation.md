@@ -63,7 +63,7 @@
 ### M07-S2 — 接通评分链路
 
 - 规则来源：`M07`（`rules/README.md#M07`）
-- 当前行动：实现公开反馈、候选移交和独立 Verifier/reward；已有 NOP 可作补充，不因缺证阻断。
+- 当前行动：实现公开反馈、候选移交和独立 Verifier/reward；新题正常完成必要 NOP，指定旧题按官方豁免结果处理。
 - 所需证据：`scoring_entry`, `verifier_source`
 - 检查性质：`mixed`；严重性：`hard`
 - 阶段门前阻断：`task_ready`, `anchor_freeze`, `dual_track_launch`

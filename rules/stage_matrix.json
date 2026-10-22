@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "workflow_revision": "2.1.1-v4.20261021.dev",
+  "workflow_revision": "2.1.2-waivers.20261022.dev",
   "description": "M/C 规则到六阶段行动与证据的轻量映射；不是题目状态数据库。",
   "stages": [
     {
@@ -189,7 +189,7 @@
       "source_rule": "M07",
       "stage": 2,
       "title": "接通评分链路",
-      "action": "实现公开反馈、候选移交和独立 Verifier/reward；已有 NOP 可作补充，不因缺证阻断。",
+      "action": "实现公开反馈、候选移交和独立 Verifier/reward；新题正常完成必要 NOP，指定旧题按官方豁免结果处理。",
       "evidence": ["scoring_entry", "verifier_source"],
       "check_type": "mixed",
       "severity": "hard",
@@ -333,7 +333,7 @@
       "source_rule": "M07",
       "stage": 3,
       "title": "核对已有 NOP 记录",
-      "action": "已有 NOP 核同次评分入口、结果、reward、日志和版本；缺证仅提示，不单独阻断或强制补跑，真实执行异常仍处理。",
+      "action": "新题 NOP 核同次评分入口、结果、reward、日志和版本；指定旧题通过官方原因审核处理历史缺口，真实执行异常仍处理。",
       "evidence": ["nop_trial", "nop_result", "nop_reward", "nop_log"],
       "check_type": "mechanical",
       "severity": "advisory",
@@ -429,7 +429,7 @@
       "source_rule": "M07",
       "stage": 4,
       "title": "双轨评分入口预检",
-      "action": "确认两轨均可通过同一可信入口得到公开分数，有效候选评分路径无异常；已有 NOP 按实际覆盖范围参考，缺证不阻断。",
+      "action": "确认两轨均可通过同一可信入口得到公开分数，有效候选评分路径无异常；新题完成必要 NOP 并按实际覆盖范围参考；指定旧题使用官方豁免结果。",
       "evidence": ["track_scoring_probe"],
       "check_type": "mechanical",
       "severity": "hard",

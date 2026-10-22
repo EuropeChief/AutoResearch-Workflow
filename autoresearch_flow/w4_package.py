@@ -28,6 +28,26 @@ EXPERT_FILES = {"专家作业说明文档.md", "best_method", "expert_annotation
 OPT_FILES = {"训练证据说明.md", "baseline_runs", "reference_runs", "comparison_summary.json"}
 
 
+def check_legacy_package(root: Path, report, review, worksheet, result, *, require_pass=True) -> dict:
+    """Use official reconstruction for legacy evidence, retaining package safety."""
+    from .legacy_qa import validate_legacy_qa
+    candidate = Path(root)
+    _require(not candidate.is_symlink(), "PACKAGE_SYMLINK", "提交包根不能是符号链接")
+    root = candidate.resolve()
+    _require(root.is_dir(), "PACKAGE_MISSING", "提交包不是目录")
+    _reject_local_profiles(root)
+    before = _tree_digest(root)
+    _require(all((root / name).is_dir() for name in
+                 ("workspace/harbor_task", "expert_evidence", "optimization_evidence")),
+             "PACKAGE_ROOT_SCHEMA", "旧交付入口须提供完整提交包")
+    outcome = validate_legacy_qa(root, report, review, worksheet, result, require_pass=require_pass)
+    _require(_tree_digest(root) == before, "QA_PACKAGE_DRIFT", "复核期间提交包发生变化")
+    return {"package_path": str(root), "package_sha256": before,
+            "report_sha256": outcome["inputs"]["report"]["sha256"],
+            "qa_review_sha256": _canonical_digest(outcome["inputs"]),
+            "legacy_qa": outcome, "status": "legacy_qa_verified"}
+
+
 def _archive_scopes(root, name):
     return {"submission": (root, name), "harbor_task": (root / "workspace/harbor_task", "harbor_task"),
             "optimization_evidence": (root / "optimization_evidence", "optimization_evidence")}
@@ -377,6 +397,8 @@ class DeliveryPackage:
         binding = {"schema_version": 1, "package_sha256": checked["package_sha256"],
                    "report_sha256": checked["report_sha256"], "qa_review_sha256": checked["qa_review_sha256"],
                    "name": name, "max_part_bytes": max_part_bytes, "upload_limit_bytes": upload_limit_bytes}
+        if "legacy_qa" in checked:
+            binding["legacy_qa"] = checked["legacy_qa"]
         parent = self.directory / "archives"
         parent.mkdir(exist_ok=True)
         directory = parent / (name + "-" + _canonical_digest(binding)[:16])
@@ -399,6 +421,10 @@ class DeliveryPackage:
         manifest = _read_json(directory / "archives.json")
         _require(all(manifest.get(k) == v for k, v in binding.items()), "ARCHIVE_DRIFT", "归档绑定发生变化")
         _verify_archives(root, directory, manifest)
+        if "legacy_qa" in checked:
+            _require(all(Path(ref["path"]).is_file() and _sha256(Path(ref["path"])) == ref["sha256"]
+                         for ref in checked["legacy_qa"]["inputs"].values()),
+                     "QA_REPORT_DRIFT", "归档期间旧题成对输入发生变化")
         _atomic_json(self.directory / "archives_current.json", {"path": str((directory / "archives.json").relative_to(self.root)),
                      "sha256": _sha256(directory / "archives.json")})
         return {"status": "archives_verified", **manifest, "output_directory": str(directory)}
@@ -442,7 +468,7 @@ class DeliveryPackage:
         checked = check_package(package_root)
         record = {"schema_version": 1, "package_path": checked["package_path"],
                   "package_sha256": checked["package_sha256"], "created_at": _utc_now(),
-                  "qa_contract": {"skill_version": "0.3.10+gpu-notice.20261021", "schema_version": 6,
+                  "qa_contract": {"skill_version": "v0.3.10+project-notices.20261022", "schema_version": 6,
                                   "policy_revision": "innerfield-deployment-v6", "skipped_checks": []},
                   "instruction": "请在独立新会话对 package_path 最终包只读使用当前 autoresearch-task-qa，并按路由审 Baseline；报告写包外。QA15 资源和 H06 当前版本 NOP 必查，collection 不作终稿，实际GPU可自选、最终配置H20。静态通过不替代真实运行。"}
         parent = self.directory / "qa" / checked["package_sha256"]
@@ -460,7 +486,32 @@ class DeliveryPackage:
                      {"package_sha256": checked["package_sha256"], "handoff_sha256": _sha256(path)})
         return {"status": "awaiting_independent_qa", **record}
 
-    def qa_bind(self, package_root: Path, report_path: Path) -> dict:
+    def qa_bind(self, package_root: Path, report_path: Path, *, legacy_review=None,
+                legacy_worksheet=None, legacy_result=None) -> dict:
+        if any(value is not None for value in (legacy_review, legacy_worksheet, legacy_result)):
+            _require(all(value is not None for value in (legacy_review, legacy_worksheet, legacy_result)),
+                     "QA_REPORT_SCHEMA", "旧题须同时提供 review、底稿和官方豁免结果")
+            checked = check_legacy_package(package_root, report_path, legacy_review,
+                                           legacy_worksheet, legacy_result, require_pass=False)
+            record = {"schema_version": 2, **checked,
+                      "report_path": checked["legacy_qa"]["inputs"]["report"]["path"],
+                      "attached_at": _utc_now(), "status": "attached_legacy_verified"}
+            directory = self.directory / "qa" / checked["package_sha256"] / "reports"
+            directory.mkdir(parents=True, exist_ok=True)
+            # Different worksheets/results for one strict report retain separate bindings.
+            binding = directory / (_canonical_digest(checked["legacy_qa"]["inputs"]) + ".json")
+            if binding.exists():
+                record = _read_json(binding)
+                _require(record.get("legacy_qa") == checked["legacy_qa"]
+                         and record.get("package_sha256") == checked["package_sha256"]
+                         and record.get("package_path") == checked["package_path"],
+                         "QA_REPORT_DRIFT", "已有旧题绑定与当前核验不一致")
+            else:
+                _atomic_json(binding, record)
+            _atomic_json(self.directory / "qa_binding_current.json",
+                         {"package_sha256": checked["package_sha256"], "binding_sha256": _sha256(binding),
+                          "report_sha256": checked["report_sha256"], "binding_file": binding.name})
+            return record
         checked = check_package(package_root)
         pointer = _read_json(self.directory / "qa_handoff_current.json")
         handoff_path = self.directory / "qa" / pointer["package_sha256"] / "handoff.json"

@@ -442,7 +442,7 @@ def nop(c):
         if value and isinstance(value.get("agent_info"), dict) and value["agent_info"].get("name")=="nop":
             results.append(path)
     if not results:
-        issue(c.issues, "NOP_MISSING", "expert_evidence", "未提供NOP原件；按项目通知仅提示，不单独阻断或强制补跑。", level="warning")
+        issue(c.issues, "NOP_MISSING", "expert_evidence", "普通路径缺少必要 NOP 原件；指定旧题须另行验证官方豁免结果。")
         return
     for path in results:
         trial = path.parent
@@ -454,7 +454,7 @@ def nop(c):
             log = trial/"verifier/test-stdout.txt"
         refs = [str(x.relative_to(c.root)) for x in (trial/"config.json", path, reward, log)]
         if not all((c.root / ref).is_file() for ref in refs):
-            issue(c.issues, "NOP_INCOMPLETE", str(trial.relative_to(c.root)), "NOP原件不完整；保留缺口提示，不冒称已经验证。", level="warning")
+            issue(c.issues, "NOP_INCOMPLETE", str(trial.relative_to(c.root)), "NOP原件不完整，不能视为已经验证。")
             continue
         actual = c.guard(str(path.relative_to(c.root)), lambda: bundled("harbor_review").validate_trial_evidence(c.root, refs, c.root/"workspace/harbor_task"))
         if actual:
@@ -464,7 +464,7 @@ def nop(c):
             if recorded==digest:
                 c.notes.append("同次 NOP 原件一致，task.toml 哈希对应；镜像/实现版本及所覆盖分支仍须语义复核")
             else:
-                c.notes.append("NOP同次原件可解析，版本关联未确认；按项目通知保留提示，不单独阻断。")
+                issue(c.issues, "NOP_VERSION_UNVERIFIED", str(trial.relative_to(c.root)), "NOP同次原件可解析，但当前版本关联未确认。")
 
 
 def best_retest(c, comp):

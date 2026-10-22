@@ -80,7 +80,8 @@ def _directory_version(scan, report, report_path, rows):
     )
 
 
-def accepted(package_root, report_file, snapshot):
+def accepted(package_root, report_file, snapshot, *, legacy_review=None,
+             legacy_worksheet=None, legacy_result=None):
     path = Path(report_file).expanduser().absolute()
     _require(not path.is_symlink(), "QA_SCOPE_MISMATCH", "报告原件不能是链接")
     path = path.resolve()
@@ -90,6 +91,21 @@ def accepted(package_root, report_file, snapshot):
         "独立 QA 报告必须在提交包外",
     )
     report = read_object(path)
+    legacy = (legacy_review, legacy_worksheet, legacy_result)
+    if any(value is not None for value in legacy):
+        _require(all(value is not None for value in legacy), "QA_LEGACY_INPUTS",
+                 "旧题路径须同时提供官方 review、审核底稿和豁免结果")
+        from .legacy_qa import validate_legacy_qa
+        checked = validate_legacy_qa(
+            package_root, path, legacy_review, legacy_worksheet, legacy_result,
+            require_pass=True,
+        )
+        _require(package_snapshot(package_root) == snapshot, "SOURCE_DRIFT",
+                 "官方旧题复核期间源包发生变化")
+        return report, {
+            **checked, "report": str(path), "report_sha256": _sha256(path),
+            "correspondence": "official_strict_reconstruction_and_waiver",
+        }
     try:
         validate_qa_report(report, require_pass=True)
     except (TypeError, KeyError, AttributeError) as exc:

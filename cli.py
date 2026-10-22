@@ -177,6 +177,8 @@ def _parser() -> argparse.ArgumentParser:
             command.add_argument("--max-part-bytes", type=int, default=290_000_000)
         if name == "qa-bind":
             command.add_argument("--report", type=Path, required=True)
+            for option in ("legacy-review", "legacy-worksheet", "legacy-result"):
+                command.add_argument("--" + option, type=Path)
     # argparse keeps hidden subcommands in ``choices`` so compatibility calls
     # still parse, but remove their display actions and stale names from the
     # default help surface.
@@ -264,7 +266,7 @@ def main(argv: list[str] | None = None) -> int:
             _emit({"action": "materials." + args.materials_action, **payload}, args.format)
             if payload["status"] == "assembled":
                 return 0 if payload["format_check"]["status"] == "format_checked_not_qa" else 2
-            return 0 if payload["status"] in {"prepared", "format_checked_not_qa", "fingerprinted"} else 2
+            return 0 if payload["status"] in {"prepared", "format_checked_not_qa", "fingerprinted", "legacy_qa_verified"} else 2
         except (FlowError, OSError, ValueError, TypeError) as exc:
             _emit({"action": "materials." + args.materials_action, "status": "error",
                    "code": getattr(exc, "code", "INPUT_ERROR"), "message": str(exc)}, args.format)
@@ -360,7 +362,9 @@ def main(argv: list[str] | None = None) -> int:
             elif args.delivery_action == "qa-handoff":
                 result = DeliveryPackage(args.task_root).qa_handoff(args.package_root)
             else:
-                result = DeliveryPackage(args.task_root).qa_bind(args.package_root, args.report)
+                result = DeliveryPackage(args.task_root).qa_bind(args.package_root, args.report,
+                    legacy_review=args.legacy_review, legacy_worksheet=args.legacy_worksheet,
+                    legacy_result=args.legacy_result)
             payload = {"action": action, **result}
         elif args.command == "runtime":
             runtime = Runtime(args.task_root)

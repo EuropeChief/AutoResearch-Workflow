@@ -41,7 +41,7 @@ Solver 与 Verifier 可复用同一镜像，也可采用专用 Verifier 镜像�
 
 - **QA05**：检查题面依赖的约束是否真正执行。仅配置禁网/白名单、仅收到 warning 或降级联网，不能证明约束生效；确认仍依赖未生效约束则不通过。不得把删配置字段写成安全认证。
 - **QA15**：保留完整单轮 ≤2h、GPU ≤8 张、CPU ≤64 核及有依据估算的口径；实际GPU自选、最终配置H20。仅换卡引出的耗时补证按[QA放宽通知](../../../sources/notices/2026-10-21-qa-relaxation.md)提示，不单独阻断或强制补跑；关联正式成绩的QA03/QA13/G03也只提示该补证缺口。CPU题无依据申请GPU、明确超限、旧结果冒充新卡实测、真实不可比或无效值证明提升仍不通过。
-- **QA17 / H02–H03**：按内场实际能力检查有效配置与选中构建；`storage_mb`、禁网/白名单请求不可用，不能用一般 Harbor schema 可解析或手写通过覆盖。默认 implementation 交付禁止 Compose（generic-harbor 也不豁免此文件交付规则）：在选定 task 根的 `environment/`（Agent）与 `tests/`（Verifier）直属位置发现 `docker-compose.yaml`、`docker-compose.yml`、`compose.yaml` 或 `compose.yml` 即 fail；与 Dockerfile 并存、预构建镜像、显式 docker_image 或 compose_review.selection=unused 均不豁免。自动扫描只覆盖这两个正式运行目录的直属文件，不递归扫描 docs、examples、history 或其他资料目录；非标准运行入口仍须人工核对，不得据未命中声称没有 Compose。NOP已有记录按实际范围复核，缺证仅提示，不新增哈希字段或强制补跑。
+- **QA17 / H02–H03**：按内场实际能力检查有效配置与选中构建；`storage_mb`、禁网/白名单请求不可用，不能用一般 Harbor schema 可解析或手写通过覆盖。默认 implementation 交付禁止 Compose（generic-harbor 也不豁免此文件交付规则）：在选定 task 根的 `environment/`（Agent）与 `tests/`（Verifier）直属位置发现 `docker-compose.yaml`、`docker-compose.yml`、`compose.yaml` 或 `compose.yml` 即 fail；与 Dockerfile 并存、预构建镜像、显式 docker_image 或 compose_review.selection=unused 均不豁免。自动扫描只覆盖这两个正式运行目录的直属文件，不递归扫描 docs、examples、history 或其他资料目录；非标准运行入口仍须人工核对，不得据未命中声称没有 Compose。NOP 已有记录按实际范围复核；新题必要留证正常执行，指定旧题使用[官方豁免路径](../../../docs/legacy-qa.md)，不统一追加历史哈希或补跑。
 
 质检员从现有 task.toml、日志、原始结果和专家说明归纳以下字段；这些是 review 字段，不要求专家新增同名文件或繁琐 Schema：
 

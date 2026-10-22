@@ -10,9 +10,9 @@ review.json 由质检代理逐项读证据后在报告目录创建，不信任�
 
 QA01–QA21 恰好各一次，status 为 pass/fail/manual/not_applicable/warn；仅 QA04/QA19 可不适用，QA15 必查。G01–G03 恰好各一次，不能不适用。H01–H06 恰好各一次；H06 缺 NOP 为warn且runtime_status=not_run，有缺证为unverified，不冒充执行通过。H05 无可审调用配置时可 not_applicable。已有配置或 Trial 则必须核查，不能选择不适用绕过反证。
 
-`warn` 仅限[放宽通知](../../../sources/notices/2026-10-21-qa-relaxation.md)范围，每项须带 `policy_notice=qa-relaxation-20261021` 与 `advisory_code`：`TASK_FINGERPRINT` 仅 QA21，`NOP_EVIDENCE` 仅 H06/QA17，`HARDWARE_RECHECK` 仅 G02/G03/QA03/QA13/QA15。报告执行修订为 `v0.3.10+project-notices.20261021`；完成语义复核且没有其他失败/待核时，可含这些warn并总评PASS。collection仍不能通过，warn不是对应事实已核实。
+`warn` 仅限[整合通知](../../../sources/notices/2026-10-22-qa-waivers.md)中的全流程硬件补证，每项须带 `policy_notice=qa-hardware-notice-20261022` 与 `advisory_code=HARDWARE_RECHECK`，仅适用 G02/G03/QA03/QA13/QA15。报告执行修订为 `v0.3.10+project-notices.20261022`；完成语义复核且没有其他失败/待核时，可含这些 warn 并总评 PASS。collection 仍不能通过，warn 不是对应事实已核实。指定旧题另用官方严格报告与豁免结果，不在普通报告中扩充提示白名单。
 
-换卡补证由复核者据实际材料标明，如 G02 条目 `status=warn, advisory_code=HARDWARE_RECHECK, policy_notice=qa-relaxation-20261021`；资源复核在 `resource_review.hardware_review` 加同名advisory_code，`score_comparability`仍如实记unverified，必要时 `resource_review` 本身也标记。G03自动数值失败、原始结果缺失等不能用标记覆盖。哈希/NOP缺证由程序自动保留提示，不新增专家必交文件。
+换卡补证由复核者据实际材料标明，如 G02 条目 `status=warn, advisory_code=HARDWARE_RECHECK, policy_notice=qa-hardware-notice-20261022`；资源复核在 `resource_review.hardware_review` 加同名 advisory_code，`score_comparability` 仍如实记 unverified，必要时 `resource_review` 本身也标记。G03 自动数值失败、原始结果缺失等不能用标记覆盖。新题哈希／NOP 缺证正常处理；指定旧题按[官方路径](../../../docs/legacy-qa.md)逐原因审核，不新增专家必交文件。
 
 每条至少 id/status/summary/evidence。summary具体简短（QA/H≤220字）；evidence为包根相对的真实文件，可带行号或JSON字段。pass必须有证据；确定缺文件可无证据，但要写缺失路径。QA07/08引用只许instruction.md；QA12“清点无.git”允许特殊 @inventory。
 
@@ -101,7 +101,7 @@ harbor 必填 task_root（相对包根）、target_version、provider、version_
 
 teaching-task-root-v1与harbor-environment-v1的精确位置由程序计算，按docker-path-contract.md核对。custom另需dockerfile/build_context/runtime_task_root与adapter_evidence包内真实引用。未知动态语法可提交manual_resolution={summary,evidence}进行语义解释；确定源缺失、路径越界、Agent 复制最终私有评测材料或缺实际选中构建的 Dockerfile/入口，不能用人工pass覆盖。允许复用 Solver 镜像或专用 Verifier 镜像/构建；引用实际选择配置和 tests 上传/预置入口。预构建镜像内容及依赖以已有镜像/运行证据复核，不凭镜像名自动通过。
 
-H01/H02 通过需引用选中 task.toml；H03 不能用未知 provider 通过。H06 对已有 NOP 核 config/result 的Agent、reward、日志、版本、separate与异常/结束状态；版本可用配置、日志或专家说明的trial_task_binding，不强制新增四项哈希。缺证/版本待核保留warn，不单独阻断或强制补跑；真实执行异常仍处理。其他 Agent Trial 只证明实际覆盖分支，可复用平台已有NOP；0 分本身不失败，Oracle 非必交。
+H01/H02 通过需引用选中 task.toml；H03 不能用未知 provider 通过。H06 对已有 NOP 核 config/result 的Agent、reward、日志、版本、separate与异常/结束状态；版本可用配置、日志或专家说明的trial_task_binding，不强制新增四项哈希。新题缺证失败、版本待核仍待核；指定旧题的例外通过官方独立结果消费，真实执行异常仍处理。其他 Agent Trial 只证明实际覆盖分支，可复用平台已有NOP；0 分本身不失败，Oracle 非必交。
 
 还需填写 `harbor.hidden_review`，而不是检查固定目录名：
 

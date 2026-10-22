@@ -15,7 +15,7 @@
 }
 ```
 
-默认适用于本摘要的两条研究轨迹；各轨可在 agent_execution 条目中分别记录这两个 task_binding 字段。若提供agent_execution，它必须是对象数组；损坏的结构不能丢弃后仅凭公共task_binding通过。版本发生变化时保留实际依据并说明，当前自动检查只与本次选定题包比较。旧版较详细绑定仍可读取；run_id、start_record、trajectory_path、trajectory_sha256 均非必填。按[QA放宽通知](../../../sources/notices/2026-10-21-qa-relaxation.md)，哈希缺失/不符保留warn，不单独阻断或强制补跑，也不称版本已确认；真实轨迹路径错配、坏JSON、越界及不实记录仍阻断。不要修改题包或伪造历史哈希；实际方法、评分或任务变化按影响处理。
+默认适用于本摘要的两条研究轨迹；各轨可在 agent_execution 条目中分别记录这两个 task_binding 字段。若提供agent_execution，它必须是对象数组；损坏的结构不能丢弃后仅凭公共task_binding通过。版本发生变化时保留实际依据并说明，当前自动检查只与本次选定题包比较。旧版较详细绑定仍可读取；run_id、start_record、trajectory_path、trajectory_sha256 均非必填。按[整合通知](../../../sources/notices/2026-10-22-qa-waivers.md)，普通新题哈希缺失待核、真实不符失败；指定旧题通过官方原因审核及独立豁免结果处理历史绑定缺口，不统一要求旧快照或补跑，也不称版本已确认；真实轨迹路径错配、坏JSON、越界及不实记录仍阻断。不要修改题包或伪造历史哈希；实际方法、评分或任务变化按影响处理。
 
 H06使用已有配置、日志或专家版本说明关联NOP，不强制这两个新字段；QA18审查轨迹内容。不要因run_summary缺哈希重复降级QA17/QA18。
 

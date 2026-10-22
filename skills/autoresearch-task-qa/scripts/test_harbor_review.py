@@ -83,7 +83,7 @@ class HarborReviewTests(unittest.TestCase):
         result = self.apply(valid_review())
         self.assertEqual(result["static_status"], "pass")
         self.assertEqual(result["runtime_status"], "not_run")
-        self.assertEqual(result["qa17_status"], "warn")
+        self.assertEqual(result["qa17_status"], "fail")
         self.assertIn("动态运行未验证", harbor.summary(result))
 
     def test_missing_six_part_review_cannot_pass(self):
@@ -208,9 +208,9 @@ class HarborReviewTests(unittest.TestCase):
         review = valid_review()
         review["checks"][5] = {"id": "H06", "status": "fail", "summary": "未交 NOP。", "evidence": []}
         actual = self.apply(review)
-        self.assertEqual(actual["checks"][5]["status"], "warn")
+        self.assertEqual(actual["checks"][5]["status"], "fail")
         self.assertEqual(actual["runtime_status"], "not_run")
-        self.assertEqual(actual["qa17_status"], "warn")
+        self.assertEqual(actual["qa17_status"], "fail")
 
     def test_generated_hidden_does_not_need_named_data_directory(self):
         review = valid_review()
@@ -329,8 +329,8 @@ class HarborReviewTests(unittest.TestCase):
         result["agent_info"]["name"] = "oracle"
         result_path.write_text(json.dumps(result))
         actual = self.apply(review)
-        self.assertEqual(actual["runtime_status"], "unverified")
-        self.assertEqual(actual["qa17_status"], "warn")
+        self.assertEqual(actual["runtime_status"], "failed")
+        self.assertEqual(actual["qa17_status"], "fail")
         self.assertEqual(actual["trial_evidence"]["agent"], "oracle")
 
     def mixed_trials(self):
@@ -390,7 +390,7 @@ class HarborReviewTests(unittest.TestCase):
         del review["trial_task_binding"]
         review["checks"][5]["evidence"] = candidate_refs + nop_refs
         actual = self.apply(review)
-        self.assertEqual(actual["checks"][5]["status"], "warn")
+        self.assertEqual(actual["checks"][5]["status"], "manual")
         self.assertEqual(actual["runtime_status"], "unverified")
         self.assertEqual(actual["trial_evidence"]["agent"], "nop")
 
