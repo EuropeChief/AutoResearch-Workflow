@@ -29,7 +29,7 @@ python3 "$FLOW_ROOT/cli.py" environment check \
 
 `environment check` 只检查必要结构/TOML/明显 COPY 越界，返回 `structure_checked_not_execution`。它不是完整 Dockerfile 解释器，不证明权限、test.sh 实际评分或目标 Harbor 字段生效。
 
-按 [QA 放宽通知](../../sources/notices/2026-10-21-qa-relaxation.md)，NOP 缺证仅提示，不单独阻断或强制补跑。已有记录核真实 Trial；若自验，使用目标 Harbor 原生 `nop` Agent，配置与结果的 Agent 名一致。NOP 不调用模型，也不主动修改 Starter，已有 Starter 会留在工作区。0 分可以有效，但要核正常结束、独立 Verifier 确实执行和 reward 回收；仅触发无提交早退时，仍需另一条有效候选实跑证明评分分支。
+新题正常执行必要 NOP 并留证；指定旧题依据[官方豁免路径](../legacy-qa.md)处理历史缺口，不统一要求补跑。已有记录核真实 Trial；若自验，使用目标 Harbor 原生 `nop` Agent，配置与结果的 Agent 名一致。NOP 不调用模型，也不主动修改 Starter，已有 Starter 会留在工作区。0 分可以有效，但要核正常结束、独立 Verifier 确实执行和 reward 回收；仅触发无提交早退时，仍需另一条有效候选实跑证明评分分支。
 
 在题目根准备同一 Trial 的 `config.json`、`result.json`、`verifier/reward.json` 或 `reward.txt`、`trial.log` 或 `verifier/test-stdout.txt`，以及已有构建/版本映射依据。用 [NOP 引用模板](../../templates/nop-execution.example.json) 记录这些原件的任务根相对路径和 SHA-256；模板只是流程内部索引，不是项目方另定的文件名。建议从制作期就放在 `expert_evidence/nop_trial/<trial-id>/`，以便组包后路径保持不变；reward 两种文件并存时应如实保留，校验优先使用 JSON。
 

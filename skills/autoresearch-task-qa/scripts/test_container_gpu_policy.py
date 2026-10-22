@@ -60,7 +60,7 @@ class ContainerGpuPolicyTests(unittest.TestCase):
                 self.assertEqual(result["static_status"], status)
                 # No synthetic NOP score or execution claim is produced.
                 self.assertEqual(result["runtime_status"], "not_run")
-                self.assertEqual(result["checks"][5]["status"], "warn")
+                self.assertEqual(result["checks"][5]["status"], "fail")
 
     def test_keywords_alone_do_not_create_deployment_failure(self):
         # Even prohibited-looking strings do not replace semantic review.

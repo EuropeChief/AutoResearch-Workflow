@@ -1,9 +1,7 @@
 """Scoped project notice; a warning records an unverified fact, never a PASS."""
-NOTICE = "qa-relaxation-20261021"
-REVISION = "v0.3.10+project-notices.20261021"
+NOTICE = "qa-hardware-notice-20261022"
+REVISION = "v0.3.10+project-notices.20261022"
 SCOPES = {
-    "TASK_FINGERPRINT": {"QA21"},
-    "NOP_EVIDENCE": {"H06", "QA17"},
     "HARDWARE_RECHECK": {"G02", "G03", "QA03", "QA13", "QA15"},
 }
 

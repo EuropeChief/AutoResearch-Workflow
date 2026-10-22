@@ -31,7 +31,7 @@ SPECIAL_FILES = {"Dockerfile", ".gitignore", ".gitattributes", ".dockerignore"}
 SNAPSHOT_DOCUMENTS = {Path("rules/provenance/PCA_RULE_ALIGNMENT.md")}
 RUNTIME_DIRECTORIES = {"autoresearch_flow", "rules", "skills", "sources", "model_profiles"}
 RUNTIME_DOCUMENTS = {"README.md", "START_HERE.md", "AGENTS.md", "MAINTAINING.md", "RELEASE.md",
-                     "docs/stages.md", "docs/experiments.md", "docs/materials.md", "docs/packaging.md",
+                     "docs/stages.md", "docs/experiments.md", "docs/materials.md", "docs/packaging.md", "docs/legacy-qa.md",
                      "docs/runtime.md", "docs/harbor.md", "docs/preflight.md", "docs/troubleshooting.md"}
 RUNTIME_TEMPLATES = {"README.md", "agent-prompt.zh.md", "runtime.example.json",
                      "delivery-form.example.json", "materials-sources.example.json",
@@ -129,7 +129,8 @@ def check_documents(files, flow=None):
         elif (path.suffix == ".md" and path.relative_to(flow) not in SNAPSHOT_DOCUMENTS
               and path.relative_to(flow).parts[:2] != ("docs", "maintenance")
               and not path.relative_to(flow).parts[:2] in {
-                  ("skills", "autoresearch-task-qa"), ("skills", "autoresearch-baseline-quality")}):
+                  ("skills", "autoresearch-task-qa"), ("skills", "autoresearch-baseline-quality"),
+                  ("skills", "autoresearch-task-qa-legacy-waiver")}):
             for target in re.findall(r"\]\(([^)]+)\)", path.read_text()):
                 if target.startswith(("http:", "https:", "#", "mailto:")):
                     continue

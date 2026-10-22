@@ -704,8 +704,6 @@ def apply_review(report, review, root):
                 reason = harbor_summary(harbor)
             refs = list(dict.fromkeys(ref for r in harbor["checks"] for ref in r["evidence"]))
             result = item("QA17", harbor["qa17_status"], reason, refs)
-            if result["status"] == "warn":
-                result = project_policy.advisory(result, "NOP_EVIDENCE")
             if result["status"] in ("fail", "manual"):
                 defaults = {}
                 if harbor["deployment_contract"]["status"] != "pass":
@@ -773,9 +771,6 @@ def apply_review(report, review, root):
                     if check_id == "QA21":
                         result["remediation"] = "核对轨迹使用的题包版本，在 run_summary.json 的 task_binding 写 hash_profile=harbor-task-inputs-v1 与 task_content_sha256。两轨相同版本只写一次；不同版本可各写在 agent_execution 中。无需新建 start_record、run_id 或轨迹哈希。"
                         result["acceptance_evidence"] = "重算 environment/、task.toml、tests/、instruction.md 的四项指纹，与 run_summary.task_binding 一致；版本确有变化则提交对应题包或重跑，不能只修改错误哈希。"
-                        if integrity_status == "warn":
-                            result = project_policy.advisory(result, "TASK_FINGERPRINT")
-                            result.update(remediation="保留真实版本与哈希差异说明，不回填历史哈希或强制补跑。", acceptance_evidence="内容/任务对应关系已核；指纹缺口按项目通知保留提示。")
                     else:
                         result["remediation"] = row.get("remediation") or integrity["remediation"]
                         result["acceptance_evidence"] = row.get("acceptance_evidence") or integrity["acceptance_evidence"]

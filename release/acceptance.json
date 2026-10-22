@@ -1,188 +1,23 @@
 {
-  "at": "2026-10-21T14:44:50+00:00",
-  "checked_links": 214,
-  "development_files": 305,
+  "at": "2026-10-22T09:50:13+00:00",
+  "checked_links": 229,
+  "development_files": 358,
   "fresh_cli_capabilities": true,
   "model_calls": 0,
-  "native_tests": "569",
+  "native_tests": "580",
   "package_revision": "2.1.2",
-  "pending": [],
+  "pending": [
+    "离线合同已核；显式发布证据和正式归档尚未验收"
+  ],
   "python": "3.13.13",
   "qa_coverage_count": 38,
-  "qa_revision": "v0.3.10+project-notices.20261021",
-  "release_evidence": {
-    "checks": [
-      {
-        "bound_source_count": 18,
-        "claims": {
-          "logs_and_timing": true,
-          "native_tui": true,
-          "observer_detach": true,
-          "same_thread_resume": true,
-          "short_run_not_final": true
-        },
-        "evidence": [
-          {
-            "path": "lp8-release-20261010/native.json",
-            "sha256": "e56aa10adae3ec37e6f52050b5b4c02f5b69be9e8cbe7bd4e4a534214e0aacab"
-          },
-          {
-            "path": "lp7t-tob24-20261009/codex-gpu4-r3/runtime/snapshot.json",
-            "sha256": "a54cbc177d69f78bc0cd75b81d60a39049b2e7b73a346baf655b82ec4ded49a4"
-          },
-          {
-            "path": "lp7t-tob24-20261009/README.md",
-            "sha256": "a859fb05ea0314f785d9f2130d1db3226b71c3319512c230bdf942c1cdc324a6"
-          }
-        ],
-        "id": "native_runtime",
-        "mechanical_result": "passed",
-        "metadata_only_changes": [
-          "autoresearch_flow/__init__.py:FLOW_VERSION"
-        ],
-        "mode": "reused",
-        "origin_at": "2026-10-09T14:57:39Z",
-        "origin_version": "8a3ef24",
-        "result": {
-          "path": "lp8-release-20261010/native.json",
-          "sha256": "e56aa10adae3ec37e6f52050b5b4c02f5b69be9e8cbe7bd4e4a534214e0aacab"
-        },
-        "review": {
-          "path": "release-review-2.1.2-20261021.md",
-          "sha256": "4ccbfa40d33b859424000ad2ad0a284d18476b515e1bb8fd7ab9a9d59a676b93"
-        },
-        "reviewer": "Codex maintainer (2.1.2, 2026-10-21)",
-        "sources": {
-          "kind": "runtime_snapshot",
-          "record": {
-            "path": "lp7t-tob24-20261009/codex-gpu4-r3/runtime/snapshot.json",
-            "sha256": "a54cbc177d69f78bc0cd75b81d60a39049b2e7b73a346baf655b82ec4ded49a4"
-          }
-        },
-        "status": "passed"
-      },
-      {
-        "bound_source_count": 5,
-        "claims": {
-          "candidate_transfer": true,
-          "independent_verifier": true,
-          "reward_retrieval": true
-        },
-        "evidence": [
-          {
-            "path": "harbor-result-2.1.2-20261021.json",
-            "sha256": "8dcd89f37536e413ae7dd6ba66b2557d5ea08eb4e84d47f45e3f4e94df4a21a9"
-          },
-          {
-            "path": "release-2.1.2-20261021/harbor-nop-docker/report.json",
-            "sha256": "c80c0492e8228ea7c08c521f2dcca8118646f6de2e338c1dbeef857a5bba60fe"
-          },
-          {
-            "path": "release-2.1.2-20261021/harbor-candidate/report.json",
-            "sha256": "b97a4b2b4260b23e9b8964cb109d84ea4b3e6509b1378111a9db6857af995758"
-          }
-        ],
-        "id": "harbor_transfer",
-        "mechanical_result": "passed",
-        "metadata_only_changes": [],
-        "mode": "fresh",
-        "origin_at": "2026-10-21T14:36:58.020463+00:00",
-        "origin_version": "2.1.2-pre-release (2c2ba09 + release metadata)",
-        "result": {
-          "path": "harbor-result-2.1.2-20261021.json",
-          "sha256": "8dcd89f37536e413ae7dd6ba66b2557d5ea08eb4e84d47f45e3f4e94df4a21a9"
-        },
-        "review": {
-          "path": "release-review-2.1.2-20261021.md",
-          "sha256": "4ccbfa40d33b859424000ad2ad0a284d18476b515e1bb8fd7ab9a9d59a676b93"
-        },
-        "reviewer": "Codex maintainer (2.1.2, 2026-10-21)",
-        "sources": {
-          "kind": "harbor_snapshot",
-          "record": {
-            "path": "release-2.1.2-20261021/harbor-candidate/report.json",
-            "sha256": "b97a4b2b4260b23e9b8964cb109d84ea4b3e6509b1378111a9db6857af995758"
-          }
-        },
-        "status": "passed"
-      },
-      {
-        "bound_source_count": 14,
-        "claims": {
-          "actual_gpu_execution": true,
-          "authorized_devices": true,
-          "no_duplicate_jobs": true
-        },
-        "evidence": [
-          {
-            "path": "lp8-release-20261010/gpu.json",
-            "sha256": "8d3faa6484871035ac6e70dfa47150d4d8b2c38d60bbde45eb6dcbcd8f7fdef1"
-          },
-          {
-            "path": "lp7t-tob24-20261009/codex-gpu4-r3/runtime/snapshot.json",
-            "sha256": "a54cbc177d69f78bc0cd75b81d60a39049b2e7b73a346baf655b82ec4ded49a4"
-          },
-          {
-            "path": "lp7t-tob24-20261009/README.md",
-            "sha256": "a859fb05ea0314f785d9f2130d1db3226b71c3319512c230bdf942c1cdc324a6"
-          }
-        ],
-        "id": "gpu_dispatch",
-        "mechanical_result": "passed",
-        "metadata_only_changes": [
-          "autoresearch_flow/__init__.py:FLOW_VERSION"
-        ],
-        "mode": "reused",
-        "origin_at": "2026-10-09T14:59:26Z",
-        "origin_version": "8a3ef24",
-        "result": {
-          "path": "lp8-release-20261010/gpu.json",
-          "sha256": "8d3faa6484871035ac6e70dfa47150d4d8b2c38d60bbde45eb6dcbcd8f7fdef1"
-        },
-        "review": {
-          "path": "release-review-2.1.2-20261021.md",
-          "sha256": "4ccbfa40d33b859424000ad2ad0a284d18476b515e1bb8fd7ab9a9d59a676b93"
-        },
-        "reviewer": "Codex maintainer (2.1.2, 2026-10-21)",
-        "sources": {
-          "kind": "runtime_snapshot",
-          "record": {
-            "path": "lp7t-tob24-20261009/codex-gpu4-r3/runtime/snapshot.json",
-            "sha256": "a54cbc177d69f78bc0cd75b81d60a39049b2e7b73a346baf655b82ec4ded49a4"
-          }
-        },
-        "status": "passed"
-      },
-      {
-        "approval": {
-          "path": "independent-trial-waiver-2.1.2-20261021.json",
-          "sha256": "e328111b7b0565b0147ce01e8fc59314207dfec7416080a82766069ecacb7b49"
-        },
-        "id": "independent_trial",
-        "mechanical_result": "waived_by_user",
-        "mode": "explicit_user_authorization",
-        "origin_at": null,
-        "origin_version": null,
-        "status": "waived"
-      }
-    ],
-    "limitations": [
-      "Independent new-session full-workflow trial for 2.1.2 waived by the user's 2026-10-21 instruction to release now and provide feedback after actual use; not performed or passed.",
-      "Native runtime and GPU originals from 2026-10-09 are reused only after current execution-source and original-evidence validation; only FLOW_VERSION differs. The CPU Harbor NOP and frozen-candidate Trials were run on current 2.1.2 sources on 2026-10-21.",
-      "No new GPU, model or training calls. Current CPU checks used existing images, ordinary Docker access, 1 CPU/512MB per environment and a 60-second limit per Trial; no host or container security-policy changes.",
-      "Offline/synthetic checks and bounded component evidence do not prove real task QA, scientific anchors, formal 7h/10h research, real compaction, H20 adaptation or a complete GPU Final Trial.",
-      "GitHub CLI is not authenticated; local formal release is completed separately from remote synchronization."
-    ],
-    "manifest_sha256": "9cb187b0b36927aafadce934bfa5791c3ceccefd25427b65d2ad8b18288ee5a7",
-    "schema_version": 2,
-    "validation_scope": "originals and current execution-source binding; TUI observation/authorization reviewed separately"
-  },
-  "release_ready": true,
-  "relocated_tests": "569",
+  "qa_revision": "v0.3.10+project-notices.20261022",
+  "release_ready": false,
+  "relocated_tests": "580",
   "relocation_without_design_or_pilot_runs": true,
   "relocation_without_host_config_or_auth": true,
   "rule_count": 50,
-  "runtime_payload_files": 175,
+  "runtime_payload_files": 226,
   "runtime_smoke": [
     {
       "command": [
@@ -223,7 +58,7 @@
         "--help"
       ],
       "exit_code": 0,
-      "output_tail": "usage: cli.py materials [-h]\n                        {trajectory,assemble,check,precheck,fingerprint} ...\n\npositional arguments:\n  {trajectory,assemble,check,precheck,fingerprint}\n    trajectory          Agent 自写 JSONL/JSON 整理为 rounds 根对象\n    assemble            少量真实路径映射组包，不默选最终方法\n    check               仅以指定最终包为取证边界，输出格式问题，不运行 QA\n    precheck            项目方格式前检，保留原报告及当前时点解释\n    fingerprint         只读计算官方四项输入指纹，不证明历史运行归属\n\noptions:\n  -h, --help            show this help message and exit\n"
+      "output_tail": "usage: cli.py materials [-h]\n                        {trajectory,assemble,check,precheck,fingerprint,legacy-qa-check} ...\n\npositional arguments:\n  {trajectory,assemble,check,precheck,fingerprint,legacy-qa-check}\n    trajectory          Agent 自写 JSONL/JSON 整理为 rounds 根对象\n    assemble            少量真实路径映射组包，不默选最终方法\n    check               仅以指定最终包为取证边界，输出格式问题，不运行 QA\n    precheck            项目方格式前检，保留原报告及当前时点解释\n    fingerprint         只读计算官方四项输入指纹，不证明历史运行归属\n    legacy-qa-check     重算并核验指定旧题的官方严格报告与豁免结果\n\noptions:\n  -h, --help            show this help message and exit\n"
     },
     {
       "command": [
@@ -233,7 +68,7 @@
         "--help"
       ],
       "exit_code": 0,
-      "output_tail": "usage: cli.py package [-h] --package-root PACKAGE_ROOT --qa-report QA_REPORT\n                      --output-dir OUTPUT_DIR [--name NAME]\n                      [--upload-limit-bytes UPLOAD_LIMIT_BYTES]\n                      [--part-bytes PART_BYTES] [--form-notes FORM_NOTES]\n\noptions:\n  -h, --help            show this help message and exit\n  --package-root PACKAGE_ROOT\n                        明确指定的最终提交包\n  --qa-report QA_REPORT\n                        包外独立会话的当前完整 report.json\n  --output-dir OUTPUT_DIR\n                        包外附件目录；已有目录内自动生成新批次，不覆盖\n  --name NAME           完整包语义名称；子仓名固定，不默认添加题号\n  --upload-limit-bytes UPLOAD_LIMIT_BYTES\n  --part-bytes PART_BYTES\n                        默认 min(290000000, 上传上限)，超限才分卷\n  --form-notes FORM_NOTES\n                        可选 Markdown 概述，不要求审批/引用 JSON\n"
+      "output_tail": "ge: cli.py package [-h] --package-root PACKAGE_ROOT --qa-report QA_REPORT\n                      --output-dir OUTPUT_DIR [--legacy-review LEGACY_REVIEW]\n                      [--legacy-worksheet LEGACY_WORKSHEET]\n                      [--legacy-result LEGACY_RESULT] [--name NAME]\n                      [--upload-limit-bytes UPLOAD_LIMIT_BYTES]\n                      [--part-bytes PART_BYTES] [--form-notes FORM_NOTES]\n\noptions:\n  -h, --help            show this help message and exit\n  --package-root PACKAGE_ROOT\n                        明确指定的最终提交包\n  --qa-report QA_REPORT\n                        包外独立会话的当前完整 report.json\n  --output-dir OUTPUT_DIR\n                        包外附件目录；已有目录内自动生成新批次，不覆盖\n  --legacy-review LEGACY_REVIEW\n                        指定旧题：官方严格报告对应的包外 review.json\n  --legacy-worksheet LEGACY_WORKSHEET\n                        指定旧题：已审核的包外官方豁免底稿\n  --legacy-result LEGACY_RESULT\n                        指定旧题：官方 waiver_report.json；与前两参数同时提供\n  --name NAME           完整包语义名称；子仓名固定，不默认添加题号\n  --upload-limit-bytes UPLOAD_LIMIT_BYTES\n  --part-bytes PART_BYTES\n                        默认 min(290000000, 上传上限)，超限才分卷\n  --form-notes FORM_NOTES\n                        可选 Markdown 概述，不要求审批/引用 JSON\n"
     },
     {
       "command": [
@@ -296,7 +131,7 @@
   "runtime_without_development_files": true,
   "schema_version": 2,
   "scope": "tool contracts, not scientific or platform acceptance",
-  "source_manifest_sha256": "7c34a4a2ad0b2c6b5cf4e78eeb13974aca8af75a42d6958f36fa03b88f7bd5d7",
-  "status": "released",
+  "source_manifest_sha256": "31f67d7c2b832f2f4784db87b66278d4d30b2862d590f8ced4de9f6b94ae9e7b",
+  "status": "contracts_passed",
   "version": "2.1.2"
 }

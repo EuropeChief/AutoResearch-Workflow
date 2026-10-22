@@ -48,14 +48,14 @@ class QaContractTests(unittest.TestCase):
         for key in ('G02', 'G03', 'QA03', 'QA13', 'QA15'):
             rows[key].update(notice.advisory(rows[key], 'HARDWARE_RECHECK'))
         rows['G03']['automatic_status'] = 'pass'
-        rows['QA21'].update(notice.advisory(rows['QA21'], 'TASK_FINGERPRINT'))
-        for key in ('QA17', 'H06'):
-            rows[key].update(notice.advisory(rows[key], 'NOP_EVIDENCE'))
-        rows['H06']['evidence'] = []
-        report['harbor'].update(runtime_status='not_run', qa17_status='warn', trial_evidence=None)
         report['resource_review']['status'] = 'warn'
-        report['trajectory_review']['status'] = 'warn'
         validate_qa_report(report, require_pass=True)
+        for key, code in (('QA21', 'TASK_FINGERPRINT'), ('H06', 'NOP_EVIDENCE')):
+            changed = copy.deepcopy(report)
+            target = next(r for r in changed['checks'] + changed['harbor']['checks'] if r['id'] == key)
+            target.update(status='warn', advisory_code=code, policy_notice=notice.NOTICE)
+            with self.subTest(legacy_code=code), self.assertRaises(FlowError):
+                validate_qa_report(changed, require_pass=True)
         for mutation in ('revision', 'wrong_scope', 'core_quality', 'resource_overrun', 'broken_json', 'wrong_task'):
             changed = copy.deepcopy(report)
             if mutation == 'revision': changed['policy'].pop('execution_revision')

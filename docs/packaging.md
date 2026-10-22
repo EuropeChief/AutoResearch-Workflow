@@ -16,7 +16,9 @@ python3 /流程根/cli.py --format json package \
 
 ## QA 与版本对应
 
-读取当前 schema 6 / innerfield-deployment-v6 的完整语义复核 PASS；G/QA/H、资源、轨迹内容、部署能力与格式复核须完成。按 [QA 放宽通知](../sources/notices/2026-10-21-qa-relaxation.md) 标记的哈希、NOP 缺证及换卡补证可保留 `warn`，不单独阻断；仍如实显示未运行/未核验。QA15 其余要求不跳过；collection 初稿、未授权范围的 warn 和旧 schema 4/5 的 PASS 不能直接打包。
+普通路径读取当前 schema 6 / innerfield-deployment-v6 的完整语义复核 PASS；G/QA/H、资源、轨迹内容、部署能力与格式复核须完成。仅[整合通知](../sources/notices/2026-10-22-qa-waivers.md)限定的换卡补证可保留 `warn`，仍如实显示未核验。QA15 其余要求不跳过；collection 初稿、未授权范围的 warn 和旧 schema 4/5 的 PASS 不能直接打包。
+
+指定旧题使用[官方豁免路径](legacy-qa.md)：同时提供 `--legacy-review`、`--legacy-worksheet`、`--legacy-result`，由官方逻辑重建严格结果并校验豁免结论。严格 FAIL 与有效 PASS_WITH_WAIVERS 可并存，交付保留两者及平台待验证事项；不重复要求已豁免的历史哈希或 NOP。FAIL／INCOMPLETE、未启用底稿或输入变更仍阻断。
 
 目录报告默认复用已有 inventory.json、实际扫描路径和生成时间：核文件清单以及内容/权限的后续改动。QA 扫描副本仍在时，直接比相对路径、内容和权限。没有要求新增绑定台账。
 

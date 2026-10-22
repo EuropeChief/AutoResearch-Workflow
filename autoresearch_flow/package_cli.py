@@ -24,6 +24,12 @@ def add_commands(commands):
         required=True,
         help="包外附件目录；已有目录内自动生成新批次，不覆盖",
     )
+    p.add_argument("--legacy-review", type=Path,
+                   help="指定旧题：官方严格报告对应的包外 review.json")
+    p.add_argument("--legacy-worksheet", type=Path,
+                   help="指定旧题：已审核的包外官方豁免底稿")
+    p.add_argument("--legacy-result", type=Path,
+                   help="指定旧题：官方 waiver_report.json；与前两参数同时提供")
     p.add_argument("--name", help="完整包语义名称；子仓名固定，不默认添加题号")
     p.add_argument("--upload-limit-bytes", type=int, default=300_000_000)
     p.add_argument(
@@ -43,4 +49,7 @@ def dispatch(args):
         upload_limit_bytes=args.upload_limit_bytes,
         part_bytes=args.part_bytes,
         form_notes=args.form_notes,
+        legacy_review=args.legacy_review,
+        legacy_worksheet=args.legacy_worksheet,
+        legacy_result=args.legacy_result,
     )

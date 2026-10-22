@@ -823,7 +823,7 @@
       "statement": "已有 Job/Trial 配置须核任务/provider/agent/入口及有效覆盖；最终评分 verifier 未禁用，迭代期仅公开 Dev。H05 无配置可静态不适用，但教程真实 separate/artifacts 自验仍须完成。"
     },
     {
-      "evidence": "已有 NOP Trial 原件与有效候选 Harbor 实跑记录；NOP 缺证仅提示",
+      "evidence": "新题必要 NOP Trial 原件与有效候选 Harbor 实跑记录；指定旧题可关联官方严格报告与豁免结果",
       "id": "AR-036",
       "timing": {"inform_at":"2.1","check_at":["2.1","3.5","4.1","6.2","6.5"],"due_at":["4.1","6.5"]},
       "applicability": "requires_review",
@@ -839,7 +839,7 @@
         5,
         6
       ],
-      "statement": "按 2026-10-21 QA 放宽通知，NOP 缺证或版本待核保留 warn，不单独阻断或强制补跑；无记录时 runtime_status=not_run，不伪造 PASS。已有原件核同次 config.json、result.json、reward、日志和版本，真实执行异常仍处理，0 分本身不失败。另须验证目标 Harbor 的有效候选移交、独立 Verifier 与评分链路；NOP 不替代有效候选实跑。无正式 Hidden 权限可用授权同接口自验数据，Oracle 非必交。"
+      "statement": "新题正常完成必要 NOP 并核同次 config.json、result.json、reward、日志和版本；指定旧题按官方 legacy-format-migration-v2 逐原因处理历史缺口，旧标准未要求而从未做 NOP 也可按适用条件审核。无记录时 runtime_status=not_run，不伪造 PASS，真实执行异常仍处理，0 分本身不失败。另须验证目标 Harbor 的有效候选移交、独立 Verifier 与评分链路；NOP 不替代有效候选实跑。无正式 Hidden 权限可用授权同接口自验数据，Oracle 非必交。"
     },
     {
       "evidence": "启动配置、实际可见集、会话与目录",
@@ -1075,12 +1075,12 @@
   ],
   "workflow_notices": [
         {
-          "id": "U-20261021-QA",
+          "id": "U-20261022-QA",
           "source_kind": "user_notice",
-          "notice_text": "项目方允许适当放宽 QA21 指纹/哈希、H06 NOP 缺证及 G02/G03/QA03/QA13/QA15 中换卡引出的成绩和时长补证。",
+          "notice_text": "全流程保留 GPU 自选及限定换卡补证放宽；指定旧题格式迁移复用官方 legacy-waiver.2，历史指纹、轨迹和 NOP 等按原因审核。",
           "stages": [2, 3, 5, 6],
           "affected_rule_ids": [],
-          "decision": "用户确认仅作提示，不单独阻断或强制补跑；保留事实。真实错算、任务错配、不实证据、资源超限和 Baseline/Reference 实质质量问题仍阻断。执行副本实现及依据见 sources/notices/2026-10-21-qa-relaxation.md，原件不改。"
+          "decision": "新题正常留存指纹、轨迹及必要 NOP；仅全流程换卡补证使用提示。指定旧题保留官方严格原判和独立 PASS_WITH_WAIVERS，不直接放宽整项或改写历史；G02 沿既有语义复核处理，不伪造官方 cause。真实错算、任务错配、不实证据、资源超限及实质质量问题仍处理。依据见 sources/notices/2026-10-22-qa-waivers.md。"
         },
         {
           "id": "U-20261003-01",

@@ -53,7 +53,7 @@
 ### M07-S3 — 核对已有 NOP 记录
 
 - 规则来源：`M07`（`rules/README.md#M07`）
-- 当前行动：已有 NOP 核同次评分入口、结果、reward、日志和版本；缺证仅提示，不单独阻断或强制补跑，真实执行异常仍处理。
+- 当前行动：新题 NOP 核同次评分入口、结果、reward、日志和版本；指定旧题通过官方原因审核处理历史缺口，真实执行异常仍处理。
 - 所需证据：`nop_trial`, `nop_result`, `nop_reward`, `nop_log`
 - 检查性质：`mechanical`；严重性：`advisory`
 - 阶段门前阻断：无

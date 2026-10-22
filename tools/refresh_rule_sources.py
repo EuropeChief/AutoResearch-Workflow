@@ -20,7 +20,8 @@ def main():
     manifest['catalog']['sha256'] = digest(manifest['catalog']['path'])
     directories = ('sources/tutorial', 'sources/originals', 'sources/notices',
                    'sources/format-precheck', 'skills/autoresearch-task-qa',
-                   'skills/autoresearch-baseline-quality')
+                   'skills/autoresearch-baseline-quality',
+                   'skills/autoresearch-task-qa-legacy-waiver')
     files = sorted({p.relative_to(root).as_posix() for folder in directories
                     for p in (root / folder).rglob('*')
                     if p.is_file() and '__pycache__' not in p.parts})

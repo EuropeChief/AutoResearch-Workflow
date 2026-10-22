@@ -35,7 +35,7 @@ class ProjectNoticeTests(unittest.TestCase):
         resources['runs'][0].update(gpu_count=1, gpu_type='RTX 4090')
         return review
 
-    def test_missing_nop_and_conflicting_hash_are_visible_warnings_and_deliverable(self):
+    def test_new_task_missing_nop_and_conflicting_hash_cannot_use_legacy_waiver(self):
         review = self.review()
         row = next(r for r in review['harbor']['checks'] if r['id'] == 'H06')
         row.update(status='manual', evidence=[], summary='未提供NOP。')
@@ -45,18 +45,18 @@ class ProjectNoticeTests(unittest.TestCase):
             agent['task_binding']['task_content_sha256'] = '0' * 64
         path.write_text(json.dumps(summary))
         report = self.render(review)
-        self.assertEqual(report['summary']['decision'], 'PASS')
+        self.assertEqual(report['summary']['decision'], 'FAIL')
         rows = {r['id']: r for r in report['checks'] + report['harbor']['checks']}
         for key in ('QA21', 'QA17', 'H06'):
-            self.assertEqual(rows[key]['status'], 'warn')
-            self.assertTrue(policy.allowed(rows[key]))
+            self.assertEqual(rows[key]['status'], 'fail')
+            self.assertFalse(policy.allowed(rows[key]))
         self.assertEqual(report['harbor']['runtime_status'], 'not_run')
         self.assertIsNone(report['harbor']['trial_evidence'])
         self.assertEqual(rows['QA18']['status'], 'pass')
-        self.assertEqual(report['trajectory_review']['status'], 'warn')
-        validate_qa_report(report, require_pass=True)
-        self.assertNotIn('请修改/补充', qa.return_to_expert(report))
-        self.assertIn('提示（不单独阻断）', qa.compact_markdown(report))
+        self.assertEqual(report['trajectory_review']['status'], 'fail')
+        with self.assertRaises(Exception):
+            validate_qa_report(report, require_pass=True)
+        self.assertIn('请修改/补充', qa.return_to_expert(report))
 
     def test_card_change_only_does_not_require_new_scores_or_time(self):
         review = self.hardware_review()

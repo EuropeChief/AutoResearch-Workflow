@@ -59,6 +59,9 @@ def package(
     upload_limit_bytes=300_000_000,
     part_bytes=None,
     form_notes=None,
+    legacy_review=None,
+    legacy_worksheet=None,
+    legacy_result=None,
 ):
     """No QA workflow, runtime state, model loading, compression receipt or upload."""
     unresolved = Path(package_root).expanduser().absolute()
@@ -99,7 +102,10 @@ def package(
         stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
         output = output / f"{prefix}-{stamp}-{uuid.uuid4().hex[:8]}"
     snapshot = package_snapshot(root)
-    report, qa = accepted(root, qa_report, snapshot)
+    report, qa = accepted(root, qa_report, snapshot,
+                          legacy_review=legacy_review,
+                          legacy_worksheet=legacy_worksheet,
+                          legacy_result=legacy_result)
     text, form = render(root, report, form_notes)
     scopes = {
         "submission": (root, prefix, snapshot),
@@ -150,6 +156,9 @@ def package(
             "QA_REPORT_DRIFT",
             "压缩期间独立报告变化",
         )
+        _require(all(_sha256(Path(ref["path"])) == ref["sha256"]
+                     for ref in qa.get("inputs", {}).values()),
+                 "QA_REPORT_DRIFT", "压缩期间旧题复核输入发生变化")
         _require(
             not output.exists(), "OUTPUT_EXISTS", "生成期间输出目录已出现，禁止覆盖"
         )

@@ -29,7 +29,7 @@
 
 6.5 的进度为 `qa_verified → archives_verified → form_ready`。`stage check` 可报告中间进度，但只有三者闭合才能登记 6.5 `passed` 并 `finish 6`，压缩本身不依赖先完成阶段 6。任何加删文件、内容或权限变化使旧 QA/归档绑定失效。对不影响方法的说明修订不要求重跑训练，但修订后的最终包仍须新会话 QA。重打包生成新的外部版本绑定，不向被 QA 接受的源包加文件。
 
-可选的 `checks.nop_execution` 引用已有 NOP 原件索引 JSON；6.2/6.5 指向最终包 `expert_evidence/`，2.1/3.5/4.1 指向制作目录。缺证按 [QA 放宽通知](../../sources/notices/2026-10-21-qa-relaxation.md) 提示，不单独阻断。已交索引中 `trial_files` 和 `trial_task_binding.evidence` 相对于当时的 `--task-root`；建议原件放在题目根 `expert_evidence/`，以 `support_files` 原相对路径复制进最终包。实际路径改变应更新引用，最终包只读包内原件，不从制作目录补读。
+普通路径的 `checks.nop_execution` 引用必要 NOP 原件索引 JSON；6.2/6.5 指向最终包 `expert_evidence/`，2.1/3.5/4.1 指向制作目录。新题缺证正常阻断；指定旧题绑定[官方成对结果](../legacy-qa.md)后不重复要求已豁免的历史材料。已交索引中 `trial_files` 和 `trial_task_binding.evidence` 相对于当时的 `--task-root`；建议原件放在题目根 `expert_evidence/`，以 `support_files` 原相对路径复制进最终包。实际路径改变应更新引用，最终包只读包内原件，不从制作目录补读。
 
 ## 输入 JSON 的最小形状
 
@@ -79,7 +79,7 @@
 
 `run_summary.fast_iteration_exception` 默认 used=false，non_training/short_iterations为null。仅启动前冻结7h且全部闭环/干净重跑条件已满足时，used/non_training/short_iterations/rollable_proved才填写true；evidence写依据及duration_evidence.json引用。组包会核摘要与启动前政策相符，为例外任务收集必要的包内证据，并追加与证据一致的中文专家说明；八字段轨迹和run_summary的正式字段不增加。image仍仅指Agent镜像，Verifier及实跑材料写专家说明。候选移交、权限及可选12h诊断见 [PCA环境说明](environment.md)。
 
-需要支撑结论的包内日志/reward/移交清单可在 PACKAGE.json 加 `support_files:[{"source":{"path":"任务内原始文件","sha256":"真实哈希"},"destination":"runtime/文件名"}]`，目标相对包内 expert_evidence。已有 NOP 原件也可定点收录，例如 `destination:"nop_trial/<trial-id>/config.json"`；缺证仅提示，不强制补跑。路径须规范、不重复，不得覆盖必交文件；其余制作材料不要求全量提交。
+需要支撑结论的包内日志/reward/移交清单可在 PACKAGE.json 加 `support_files:[{"source":{"path":"任务内原始文件","sha256":"真实哈希"},"destination":"runtime/文件名"}]`，目标相对包内 expert_evidence。已有 NOP 原件也可定点收录，例如 `destination:"nop_trial/<trial-id>/config.json"`；指定旧题的历史缺证按官方结果处理，新题正常留证。路径须规范、不重复，不得覆盖必交文件；其余制作材料不要求全量提交。
 
 完成后按 [状态登记](state.md) 关闭对应步骤；程序检查不认证 Baseline 代表性、优化收益或平台 Hidden 结果。
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "AutoResearch 旧题迁移豁免质检"
+  short_description: "保留新版严格原判，逐原因审旧题格式迁移与新增要求豁免"
+  default_prompt: "使用 $autoresearch-task-qa-legacy-waiver 对本轮旧题做只读质检：先按0.3.10生成严格原判，再根据已有新旧标准和迁移证据审豁免；不要求为格式迁移重跑，分别输出已豁免、仍需返修和平台待验证事项。"

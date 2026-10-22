@@ -93,6 +93,27 @@ class StageFlow:
         _require(not path.is_absolute() and ".." not in path.parts, "INVALID_PATH", "package_root 须为任务内相对目录")
         target = (self.root / path).resolve()
         _require(target.is_relative_to(self.root), "INVALID_PATH", "提交包越出任务根")
+        pointer_path = self.store.state_dir / "delivery" / "qa_binding_current.json"
+        if pointer_path.is_file():
+            pointer = _read_json(pointer_path)
+            filename = pointer.get("binding_file")
+            if filename is not None:
+                _require(isinstance(filename, str) and Path(filename).name == filename,
+                         "QA_REPORT_DRIFT", "旧题绑定文件名非法")
+                binding_path = pointer_path.parent / "qa" / pointer["package_sha256"] / "reports" / filename
+                _require(binding_path.is_file() and _sha256(binding_path) == pointer["binding_sha256"],
+                         "QA_REPORT_DRIFT", "旧题绑定记录丢失或改变")
+                binding = _read_json(binding_path)
+                from .w4_package import check_legacy_package
+                inputs = binding["legacy_qa"]["inputs"]
+                _require(all(Path(ref["path"]).is_file() and _sha256(Path(ref["path"])) == ref["sha256"]
+                             for ref in inputs.values()), "QA_REPORT_DRIFT", "旧题成对输入改变，须重新绑定")
+                checked = check_legacy_package(target, *(inputs[name]["path"] for name in
+                    ("report", "review", "worksheet", "result")))
+                _require(checked["package_sha256"] == pointer["package_sha256"]
+                         and checked["qa_review_sha256"] == binding["qa_review_sha256"],
+                         "QA_PACKAGE_DRIFT", "旧题绑定不是当前包及审核结果")
+                return checked
         return check_package(target)
 
     def _approval(self, ref, expected):
@@ -241,6 +262,13 @@ class StageFlow:
             return DeliveryEvidence(self.root).best_verification()
         if step.startswith("6."):
             result = self._package(checks)
+            if "legacy_qa" in result:
+                # Official reconstruction already covers all strict causes and
+                # verifies each waiver. Do not reimpose waived historical fields.
+                if step == "6.5":
+                    from .w4_package import DeliveryPackage
+                    result.update(DeliveryPackage(self.root).delivery_state(result))
+                return result
             if step in {"6.2", "6.5"}:
                 package = Path(result["package_path"])
                 result["nop_execution"] = self._nop_record(checks, package,
@@ -379,20 +407,13 @@ class StageFlow:
         return self.root / path
 
     def _nop_record(self, checks, root, task_root, *, package_only=False):
-        from .materials_io import bundled
-        policy = bundled("project_policy")
-        if not checks.get("nop_execution"):
-            return policy.advisory({"summary": "未提供NOP自检原件；按项目通知仅提示，不单独阻断。", "runtime_status": "not_run"}, "NOP_EVIDENCE")
+        _require(checks.get("nop_execution"), "NOP_MISSING",
+                 "普通路径须提供必要 NOP 记录；指定旧题使用官方豁免结果，不自动放宽")
         path = evidence(self.root, checks.get("nop_execution"))
         if package_only:
             _require(path.is_relative_to(root / "expert_evidence"), "PACKAGE_EVIDENCE_BOUNDARY",
                      "NOP 记录须位于最终包 expert_evidence 内")
-        try:
-            return check_nop_record(root, _read_json(path), task_root)
-        except FlowError as exc:
-            if exc.code not in {"NOP_VERSION_STALE", "NOP_VERSION_UNVERIFIED", "NOP_AGENT_INVALID"}:
-                raise
-            return policy.advisory({"summary": str(exc), "runtime_status": "unverified", "source": str(path)}, "NOP_EVIDENCE")
+        return check_nop_record(root, _read_json(path), task_root)
 
     def template(self, step):
         state = self.store._load()

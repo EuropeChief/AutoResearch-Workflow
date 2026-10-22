@@ -161,7 +161,8 @@ class StageTests(unittest.TestCase):
              "upper_bound": 20, "metric_ceiling": 100, "rationale": "synthetic ex ante", "evidence": [self.fx.proof]}))
         self.record("3.3", {"protocol_id": "p1", "baseline_review": review})
         self.record("3.4", {"protocol_id": "p1", "score_contract": score})
-        self.record("3.5", {"protocol_id": "p1", "score_contract": score, "baseline_review": review})
+        self.record("3.5", {"protocol_id": "p1", "score_contract": score, "baseline_review": review,
+                            "nop_execution": self.nop_ref})
         self.flow.finish("3", self.finish_spec("3"))
         self.assertEqual(self.flow.status()["current_stage"], "4")
         self.assertEqual(self.flow.status()["pending_cross_method_checks"], [])
@@ -231,11 +232,11 @@ class StageTests(unittest.TestCase):
     def test_qa_dispositions_preserve_only_scoped_report_warnings(self):
         from autoresearch_flow.materials_io import bundled
         policy = bundled("project_policy")
-        row = policy.advisory({"id": "QA21"}, "TASK_FINGERPRINT")
+        row = policy.advisory({"id": "QA15"}, "HARDWARE_RECHECK")
         report = {"policy": {"execution_revision": policy.REVISION}, "checks": [row]}
-        self.flow._qa_coverage(report, [{"id": "QA21", "status": "warn"}])
+        self.flow._qa_coverage(report, [{"id": "QA15", "status": "warn"}])
         with self.assertRaises(FlowError):
-            self.flow._qa_coverage(report, [{"id": "QA21", "status": "pass"}])
+            self.flow._qa_coverage(report, [{"id": "QA15", "status": "pass"}])
         for key in ("QA01", "QA16"):
             row["id"] = key
             with self.subTest(key=key), self.assertRaises(FlowError):
@@ -271,11 +272,11 @@ class StageTests(unittest.TestCase):
             with self.assertRaises(FlowError):
                 self.flow._gate("6.2", {"nop_execution": self.nop_ref})
 
-    def test_nop_absence_is_advisory_but_supplied_execution_error_still_blocks(self):
+    def test_normal_nop_absence_and_supplied_execution_error_block(self):
         task = self.root / "workspace/harbor_task"
-        result = self.flow._nop_record({}, self.root, task)
-        self.assertEqual((result["status"], result["runtime_status"]), ("warn", "not_run"))
-        self.assertEqual(result["advisory_code"], "NOP_EVIDENCE")
+        with self.assertRaises(FlowError) as missing:
+            self.flow._nop_record({}, self.root, task)
+        self.assertEqual(missing.exception.code, "NOP_MISSING")
         record = json.loads((self.root / self.nop_ref["path"]).read_text())
         raw_result = self.root / record["trial_files"]["result"]["path"]
         data = json.loads(raw_result.read_text())

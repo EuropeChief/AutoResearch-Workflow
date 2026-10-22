@@ -1,6 +1,6 @@
 # 来源、版本与适用范围
 
-当前流程执行副本以随包 V4 教程和 `review_skill-0.3.10_1015.zip` 为底稿，采用 [GPU通知](../../../sources/notices/2026-10-21-gpu.md)及[QA放宽通知](../../../sources/notices/2026-10-21-qa-relaxation.md)：实际GPU自选、最终配置H20；所列哈希/NOP/换卡补证仅提示。执行修订 `v0.3.10+project-notices.20261021`，官方ZIP原件保留。下文历史来源中相冲突的卡型及缺证硬门槛由这两项通知覆盖，其他要求继续适用。
+当前流程执行副本以随包 V4 教程和 `review_skill-0.3.10_1015.zip` 为底稿，采用[整合通知](../../../sources/notices/2026-10-22-qa-waivers.md)：实际 GPU 自选、最终配置 H20；仅限定换卡补证提示。执行修订 `v0.3.10+project-notices.20261022`，官方 ZIP 原件保留。新题保留正常证据要求，指定旧题另走[官方豁免路径](../../../docs/legacy-qa.md)，不把历史例外推广到新题。
 
 本次 v0.3.10（2026-10-15）以用户提供的 `review_skill-0.3.9_1012.zip` 为底稿，只补充用户确认的容器组织与GPU使用要求：每沙盒单容器、直接使用当前沙盒GPU、禁止任务／Agent部署或调用额外工作环境，并保留平台创建独立Agent/Verifier、运行前构建、本地进程和正常模型／数据服务请求的边界。详细规则集中在[内场部署口径](innerfield-deployment.md)，沿既有H03→QA17复核；无关判定标准、作者schema和原Compose文件禁令不变。下段保留v0.3.9的来源记录，不表示本次重新读取其在线来源或复跑题目。
 
@@ -19,7 +19,7 @@ v0.3.9（2026-10-12）仅按用户本轮明确要求补充原始评分参照保�
 
 本轮采用的 _1012 包口径：显式 separate 且不同 sandbox；可以复用同一 Solver 镜像并运行时上传 tests，或使用专用 Verifier 镜像/构建预置 tests，不再一律要求双 Dockerfile。公开 Dev 必须保留供 Agent 迭代，最终私有 Hidden 留在独立 Verifier。Hidden 是私有测试用例、标签、基准或评估生成逻辑等，训练与非训练任务均适用；目录名可不同，也可有依据地生成或安全注入。检查材料、来源与真实调用关系，不要求固定非空 `tests/hidden_assets/`。这覆盖历史附件将全部 tests 复制进 Agent 的做法。
 
-NOP已有记录用于说明实际构建及Harness分支，核正常结束、独立Verifier及reward，可复用平台记录。缺证或版本待核按当前通知仅提示，runtime_status如实记not_run/unverified；真实执行异常仍处理。版本可由已有配置/日志/专家说明关联，不强制新增哈希。NOP的0分本身不失败，Oracle非必交。官方 [Separate verifier](https://docs.harborframework.com/core-concepts/tasks/separate-verifier) 说明独立环境及产物移交；[NOP 实现](https://github.com/harbor-framework/harbor/blob/main/src/harbor/agents/nop.py) 不执行求解操作，已有Starter并不会被清空。
+NOP已有记录用于说明实际构建及Harness分支，核正常结束、独立Verifier及reward，可复用平台记录。新题必要 NOP 缺证／版本待核正常处理，指定旧题通过官方结果逐原因处理；runtime_status 如实记 not_run/unverified，真实执行异常仍处理。版本可由已有配置/日志/专家说明关联，不强制新增哈希。NOP的0分本身不失败，Oracle非必交。官方 [Separate verifier](https://docs.harborframework.com/core-concepts/tasks/separate-verifier) 说明独立环境及产物移交；[NOP 实现](https://github.com/harbor-framework/harbor/blob/main/src/harbor/agents/nop.py) 不执行求解操作，已有Starter并不会被清空。
 
 ## 本次明确裁定
 

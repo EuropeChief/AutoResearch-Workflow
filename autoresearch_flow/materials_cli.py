@@ -24,9 +24,20 @@ def add_commands(commands):
     p.add_argument("--task-kind", choices=("auto", "cpu", "gpu"), default="auto")
     p = actions.add_parser("fingerprint", help="只读计算官方四项输入指纹，不证明历史运行归属")
     p.add_argument("--harbor-task", type=Path, required=True)
+    p = actions.add_parser("legacy-qa-check", help="重算并核验指定旧题的官方严格报告与豁免结果")
+    p.add_argument("--package-root", type=Path, required=True)
+    p.add_argument("--report", type=Path, required=True)
+    p.add_argument("--review", type=Path, required=True)
+    p.add_argument("--worksheet", type=Path, required=True)
+    p.add_argument("--result", type=Path, required=True)
 
 
 def dispatch(args):
+    if args.materials_action == "legacy-qa-check":
+        from .legacy_qa import validate_legacy_qa
+        return {"status": "legacy_qa_verified", **validate_legacy_qa(
+            args.package_root, args.report, args.review,
+            args.worksheet, args.result, require_pass=True)}
     if args.materials_action == "precheck":
         from .package_precheck import check
         return check(args.package_root, args.output_dir, phase=args.phase, task_kind=args.task_kind)

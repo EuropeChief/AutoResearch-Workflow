@@ -5,7 +5,7 @@ description: 对 AutoResearch 目录或 ZIP 做只读质检；审优化面、Bas
 
 # AutoResearch 任务质检
 
-流程执行副本 `v0.3.10+project-notices.20261021`：[GPU 通知](../../sources/notices/2026-10-21-gpu.md)及[QA 补证放宽通知](../../sources/notices/2026-10-21-qa-relaxation.md)在明确范围内优先于原要求。专家实际卡型自选，提交配置写 H20；指纹、NOP缺证及限定的换卡补证保留为 `warn`，不单独阻断或强制补跑。官方 ZIP 原字节保存在 sources/originals/，本执行副本不是未经修改的原件。
+流程执行副本 `v0.3.10+project-notices.20261022`：[整合通知](../../sources/notices/2026-10-22-qa-waivers.md)限定全流程硬件口径。专家实际卡型自选，提交配置写 H20；仅限定的换卡补证保留为 `warn`。新题正常留存指纹、轨迹及必要 NOP。指定旧题使用[官方豁免路径](../../docs/legacy-qa.md)，不在本报告中把历史缺证统一改成提示。官方 ZIP 原字节保存在 sources/originals/，本执行副本不是未经修改的原件。
 
 三期对齐版 v0.3.10（2026-10-15）按当前内场能力核对未支持字段与每sandbox单容器交付；保留separate、轨迹内容审查、资源与版本说明。补证提示按上述项目通知处理，不能用条目ID整项豁免实质问题。
 
@@ -42,9 +42,9 @@ Baseline 专项按 research-quality.md 中的路由使用已安装的 autoresear
 
 5. G03 使用全部正式成对原始值复算。归一化 Reference 分数须在 [0.15,0.8]；随机评估采用 Baseline 样本标准差 σ_B，正向改善至少 3σ_B，3–5σ_B 可接受并建议复核，≥5σ_B 为强证据。确定性评估要求真实正向改善和归一化门槛，不恢复已删除的统一 5% 规则；任务另有预先声明的有效提升阈值时同时核对。固定训练 seed 不代表评估确定，重复评估同一模型不等于多次独立训练。
 
-6. 检查21项、Harbor H01–H06及三目录职责。Solver/Verifier显式separate、不同sandbox，可复用镜像；按目标Harbor的镜像选择和tests上传/预置分支核入口、依赖、Hidden隔离及候选移交。默认内场每sandbox单容器，GPU使用当前已分配设备，不另申请/调用额外工作环境；区分平台准备、普通本地进程和正常模型/数据服务，不能仅凭关键词定性。正式运行目录禁Compose，边界见innerfield-deployment.md。公开Dev供Agent迭代，Hidden不得进入Agent。NOP缺证/版本待核按通知提示，已有完整记录仍审实际运行错误；不必交Oracle，NOP的0分不单独失败。详见[Harbor六项](references/harbor-harness.md)。
+6. 检查21项、Harbor H01–H06及三目录职责。Solver/Verifier显式separate、不同sandbox，可复用镜像；按目标Harbor的镜像选择和tests上传/预置分支核入口、依赖、Hidden隔离及候选移交。默认内场每sandbox单容器，GPU使用当前已分配设备，不另申请/调用额外工作环境；区分平台准备、普通本地进程和正常模型/数据服务，不能仅凭关键词定性。正式运行目录禁Compose，边界见innerfield-deployment.md。公开Dev供Agent迭代，Hidden不得进入Agent。新题必要 NOP 缺证或版本待核正常处理，指定旧题使用官方豁免路径，已有完整记录仍审实际运行错误；不必交Oracle，NOP的0分不单独失败。详见[Harbor六项](references/harbor-harness.md)。
 
-7. 在报告目录建立review.json。QA01–QA21、G01–G03、H01–H06各一次；其余审阅对象从已有材料归纳。通知范围内使用warn及规定的advisory_code/policy_notice，见implementation-report.md；换卡类须先确认剩余缺口仅为换卡影响，resource_review.hardware_review用advisory_code=HARDWARE_RECHECK标记。失败或其他待核仍填具体修复/验收建议。不能手填pass覆盖数值越界、损坏轨迹或未完成的实质审查，哈希差异保留提示不冒称已核验。
+7. 在报告目录建立review.json。QA01–QA21、G01–G03、H01–H06各一次；其余审阅对象从已有材料归纳。通知范围内使用warn及规定的advisory_code/policy_notice，见implementation-report.md；换卡类须先确认剩余缺口仅为换卡影响，resource_review.hardware_review用advisory_code=HARDWARE_RECHECK标记。失败或其他待核仍填具体修复/验收建议。不能手填pass覆盖数值越界、损坏轨迹或未完成的实质审查，哈希差异如实保留，新题不能自动降为提示。
 
 8. 生成并回读最终报告：
 
@@ -60,7 +60,7 @@ Baseline 专项按 research-quality.md 中的路由使用已安装的 autoresear
 - QA05/17 不把原生 Harbor 支持等同内场支持：当前 storage_mb、no-network/网络白名单和 Compose 不可用，warning/降级联网不算约束生效；删字段不证明题目安全或仍成立。依赖禁网的题目须改造题面与评分以适应联网，或待平台落实后再交。详见 innerfield-deployment.md。
 - QA15仍审资源合理性、≤2h/≤8GPU/≤64CPU及CPU/GPU任务性质。实际卡型自选、提交目标H20；仅换卡后的耗时未核验可作提示，不强制补跑。实测与推断分开，真实超限或把旧结果冒充新卡实测仍处理。
 - QA16 按当前教程检查两条模型轨迹各自有效时长：默认各 ≥10h；各 ≥7h 仅适用于不涉及训练且单轮迭代很短的任务，并须有完整例外证据。涉及训练/微调或迭代不短的任务仍须各 ≥10h；不能因训练任务单轮较快就降至7h，不设臆造的统一分钟数阈值。两条不相加，排队、安装、构建故障和阻塞不计。容器应存活 12h 是另一项平台稳定性要求，本静态 skill 不冒充做过压力测试。
-- QA18/21保留独立轨迹及原八字段，不改原始sessions。审真实分数、行为及任务/最佳方法对应；网络关键词不是违规事实。run_summary可记录四项题包指纹；哈希缺失/不符按通知保留warn，不改写历史或单独要求重跑。损坏JSON、已确认任务错配、不实成绩等仍阻断；QA18不因哈希提示重复降级。没有sessions不自动退回。
+- QA18/21保留独立轨迹及原八字段，不改原始sessions。审真实分数、行为及任务/最佳方法对应；网络关键词不是违规事实。run_summary 按当前规范记录题包指纹；新题哈希缺失待核、真实不符失败。指定旧题通过官方原因审核，不改写历史或统一要求补跑。损坏JSON、已确认任务错配、不实成绩等仍阻断；QA18 不重复计入仅属于 QA21 的绑定问题。没有sessions不自动退回。
 - 额外材料不因“多交”判错，列精简/归位建议；必需证据缺失、实际路径错误和内容门失败分别给明确结论。
 - 风险提示最多 3 条，只写具体证据，不把推测写成作弊事实。缺材料写明缺什么，无法访问与确实未实现须区别。
 - 容器组织检查沿用 H03→QA17，由审阅者阅读调用链及已有证据作语义判断；没有 Compose 文件不能证明不存在额外工作环境，也不能仅凭 Docker、SSH、HTTP 等关键词判失败。确认题包要求／允许或实际依赖额外工作环境则 H03 fail，关键调用未核实则 manual；题包符合规则但 Agent 自行违规则按 QA18 记录行为及归属，不自动归为作者部署缺陷或判成绩无效；不新增作者必填字段。详见 innerfield-deployment.md。

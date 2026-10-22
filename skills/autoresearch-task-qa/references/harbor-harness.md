@@ -39,7 +39,7 @@ Hidden 评测材料对训练与非训练任务均需要；可以是预置文件�
 | H03 环境、路径与提交物 | 按部署profile与目标版本镜像优先级核对实际COPY/镜像内容、WORKDIR、入口、依赖与可见边界；内场预构建可用镜像，每sandbox必须单容器，不用Compose；按 innerfield-deployment.md 沿启动和评分调用链核对执行位置，拒绝题包要求／允许或实际依赖额外工作环境；题包符合规则但Agent自行违规时按QA18审查并区分责任。平台创建Agent/Verifier、运行前构建镜像、本地进程及正常模型/数据服务请求须区别处理，不能仅凭关键词判失败；无法确认的关键调用记manual。复用环境上传 tests，专用镜像/构建预置 tests，不能根据镜像相同猜测上传。沿评分调用确认必要提交物与 artifacts。历史 task-root profile 需适配依据；私有 tests 不得进入 Solver。确定路径错误 fail，动态语法待核实；已有 sandbox 身份和上传证据需交叉核对，不认证完整物理隔离或12h稳定性。 |
 | H04 测试入口与 reward | 沿 test.sh 实际调用链检查必填参数、标量主分数及失败处理；须写 /logs/verifier/reward.txt 的有限数值，或 reward.json 非空有限数值对象。两者并存按优先 reward.json 核对。自定义 result.json、stdout score、注释或死代码不算接口完成。合法负数或 >1 与业务归一化门槛分开判断。 |
 | H05 Job/Trial 调用配置 | 有配置时核对所选 task/provider/agent、有效覆盖、启动条件、verifier 未被禁用；检查重复键、错误路径、空选择和明确冲突。单任务 CLI 可用，不强制 job.yaml；确无配置可 not_applicable，已有反证不能跳过。 |
-| H06 NOP 自检记录 | 按[放宽通知](../../../sources/notices/2026-10-21-qa-relaxation.md)，NOP缺证或版本待核仅warn，不单独阻断或强制补跑；无记录记not_run，其余未核验记unverified。已有记录核同次config/result/reward/日志、版本、separate及分数一致性，真实执行异常仍fail。可复用平台记录，0分本身不失败。 |
+| H06 NOP 自检记录 | 新题必要 NOP 缺证失败、版本待核仍待核；指定旧题按[官方路径](../../../docs/legacy-qa.md)处理。无记录记 not_run，其余未核验记 unverified。已有记录核同次config/result/reward/日志、版本、separate及分数一致性，真实执行异常仍fail。可复用平台记录，0分本身不失败。 |
 
 H01–H04 与 H06 必查；H05 按已有材料适用。NOP缺证使H06及派生QA17为warn，其他H项失败或待核不被覆盖。报告同时列静态结论与实际运行状态。
 
@@ -53,11 +53,11 @@ NOP 是 no-operation Agent：不调用模型求解，也不修改初始工作区
 
 ## 自动证据校验与报告
 
-H06 自动校验已有完整单步Trial：config/result Agent身份一致且为nop、separate、有结束时间且无异常、result奖励与reward文件一致、配置/日志非空且同目录。版本可用已有配置/日志/专家说明的trial_task_binding，不强制新增哈希。缺证或版本待核按通知提示；已交原件的真实异常仍阻断。自动检查不鉴定日志真伪，不伪造单步材料；run_summary哈希另归QA21提示。
+H06 自动校验已有完整单步Trial：config/result Agent身份一致且为nop、separate、有结束时间且无异常、result奖励与reward文件一致、配置/日志非空且同目录。版本可用已有配置/日志/专家说明的trial_task_binding，不强制新增哈希。新题缺证及版本待核正常处理；指定旧题通过官方独立结果判断；已交原件的真实异常仍阻断。自动检查不鉴定日志真伪，不伪造单步材料；run_summary 哈希另归 QA21 检查。
 
 Harbor 的 agent/trajectory.json 若为 ATIF，按其声明版本识别；专家 AutoResearch 轨迹仍采用八字段，不互套 schema。artifacts 配置存在不等于文件已成功移交；已有运行记录应检查实际移交结果。源码参考解、私有轨迹不应成为 Agent 前置上下文。
 
-报告保留21行，QA17 汇总 H01–H06；细项与路径证据写入 report.json.harbor。已有记录一致称“已有 NOP 自检记录支持当前版本构建与运行可用，非独立复跑”；无材料显示not_run及NOP_EVIDENCE提示，不称执行通过。
+报告保留21行，QA17 汇总 H01–H06；细项与路径证据写入 report.json.harbor。已有记录一致称“已有 NOP 自检记录支持当前版本构建与运行可用，非独立复跑”；无材料显示 not_run 和实际失败／待核；指定旧题另附官方豁免结果，不称执行通过。
 
 只有用户另行要求动态验证时，才依据目标 Harbor CLI help、provider、隔离环境和授权范围制定命令。在授权的可丢弃环境运行并保留配置、任务版本、日志、reward 与 Trial 结果；不在宿主机直接执行未知 test.sh/solve.sh 或导入候选模块。未实际运行不得声称动态验证完成。
 
