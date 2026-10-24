@@ -1,18 +1,184 @@
 {
-  "at": "2026-10-24T06:37:26+00:00",
+  "at": "2026-10-24T06:46:59+00:00",
   "checked_links": 237,
   "development_files": 371,
   "fresh_cli_capabilities": true,
   "model_calls": 0,
   "native_tests": "588",
   "package_revision": "2.1.4",
-  "pending": [
-    "离线合同已核；显式发布证据和正式归档尚未验收"
-  ],
+  "pending": [],
   "python": "3.13.13",
   "qa_coverage_count": 38,
   "qa_revision": "v0.3.10+project-notices.20261022",
-  "release_ready": false,
+  "release_evidence": {
+    "checks": [
+      {
+        "bound_source_count": 18,
+        "claims": {
+          "logs_and_timing": true,
+          "native_tui": true,
+          "observer_detach": true,
+          "same_thread_resume": true,
+          "short_run_not_final": true
+        },
+        "evidence": [
+          {
+            "path": "lp8-release-20261010/native.json",
+            "sha256": "e56aa10adae3ec37e6f52050b5b4c02f5b69be9e8cbe7bd4e4a534214e0aacab"
+          },
+          {
+            "path": "lp7t-tob24-20261009/codex-gpu4-r3/runtime/snapshot.json",
+            "sha256": "a54cbc177d69f78bc0cd75b81d60a39049b2e7b73a346baf655b82ec4ded49a4"
+          },
+          {
+            "path": "lp7t-tob24-20261009/README.md",
+            "sha256": "a859fb05ea0314f785d9f2130d1db3226b71c3319512c230bdf942c1cdc324a6"
+          }
+        ],
+        "id": "native_runtime",
+        "mechanical_result": "passed",
+        "metadata_only_changes": [
+          "autoresearch_flow/__init__.py:FLOW_VERSION"
+        ],
+        "mode": "reused",
+        "origin_at": "2026-10-09T14:57:39Z",
+        "origin_version": "8a3ef24",
+        "result": {
+          "path": "lp8-release-20261010/native.json",
+          "sha256": "e56aa10adae3ec37e6f52050b5b4c02f5b69be9e8cbe7bd4e4a534214e0aacab"
+        },
+        "review": {
+          "path": "release-review-2.1.4-20261024.md",
+          "sha256": "945e66c09a3f95c1de70f9ed573fa18b4bf895e528ed573e7599a9ab04923d3f"
+        },
+        "reviewer": "Codex maintainer (2.1.4, 2026-10-24)",
+        "sources": {
+          "kind": "runtime_snapshot",
+          "record": {
+            "path": "lp7t-tob24-20261009/codex-gpu4-r3/runtime/snapshot.json",
+            "sha256": "a54cbc177d69f78bc0cd75b81d60a39049b2e7b73a346baf655b82ec4ded49a4"
+          }
+        },
+        "status": "passed"
+      },
+      {
+        "bound_source_count": 5,
+        "claims": {
+          "candidate_transfer": true,
+          "independent_verifier": true,
+          "reward_retrieval": true
+        },
+        "evidence": [
+          {
+            "path": "harbor-result-2.1.2-20261021.json",
+            "sha256": "8dcd89f37536e413ae7dd6ba66b2557d5ea08eb4e84d47f45e3f4e94df4a21a9"
+          },
+          {
+            "path": "release-2.1.2-20261021/harbor-nop-docker/report.json",
+            "sha256": "c80c0492e8228ea7c08c521f2dcca8118646f6de2e338c1dbeef857a5bba60fe"
+          },
+          {
+            "path": "release-2.1.2-20261021/harbor-candidate/report.json",
+            "sha256": "b97a4b2b4260b23e9b8964cb109d84ea4b3e6509b1378111a9db6857af995758"
+          }
+        ],
+        "id": "harbor_transfer",
+        "mechanical_result": "passed",
+        "metadata_only_changes": [
+          "autoresearch_flow/__init__.py:FLOW_VERSION"
+        ],
+        "mode": "reused",
+        "origin_at": "2026-10-21T14:36:58.020463+00:00",
+        "origin_version": "2.1.2-pre-release (2c2ba09 + release metadata)",
+        "result": {
+          "path": "harbor-result-2.1.2-20261021.json",
+          "sha256": "8dcd89f37536e413ae7dd6ba66b2557d5ea08eb4e84d47f45e3f4e94df4a21a9"
+        },
+        "review": {
+          "path": "release-review-2.1.4-20261024.md",
+          "sha256": "945e66c09a3f95c1de70f9ed573fa18b4bf895e528ed573e7599a9ab04923d3f"
+        },
+        "reviewer": "Codex maintainer (2.1.4, 2026-10-24)",
+        "sources": {
+          "kind": "harbor_snapshot",
+          "record": {
+            "path": "release-2.1.2-20261021/harbor-candidate/report.json",
+            "sha256": "b97a4b2b4260b23e9b8964cb109d84ea4b3e6509b1378111a9db6857af995758"
+          }
+        },
+        "status": "passed"
+      },
+      {
+        "bound_source_count": 14,
+        "claims": {
+          "actual_gpu_execution": true,
+          "authorized_devices": true,
+          "no_duplicate_jobs": true
+        },
+        "evidence": [
+          {
+            "path": "lp8-release-20261010/gpu.json",
+            "sha256": "8d3faa6484871035ac6e70dfa47150d4d8b2c38d60bbde45eb6dcbcd8f7fdef1"
+          },
+          {
+            "path": "lp7t-tob24-20261009/codex-gpu4-r3/runtime/snapshot.json",
+            "sha256": "a54cbc177d69f78bc0cd75b81d60a39049b2e7b73a346baf655b82ec4ded49a4"
+          },
+          {
+            "path": "lp7t-tob24-20261009/README.md",
+            "sha256": "a859fb05ea0314f785d9f2130d1db3226b71c3319512c230bdf942c1cdc324a6"
+          }
+        ],
+        "id": "gpu_dispatch",
+        "mechanical_result": "passed",
+        "metadata_only_changes": [
+          "autoresearch_flow/__init__.py:FLOW_VERSION"
+        ],
+        "mode": "reused",
+        "origin_at": "2026-10-09T14:59:26Z",
+        "origin_version": "8a3ef24",
+        "result": {
+          "path": "lp8-release-20261010/gpu.json",
+          "sha256": "8d3faa6484871035ac6e70dfa47150d4d8b2c38d60bbde45eb6dcbcd8f7fdef1"
+        },
+        "review": {
+          "path": "release-review-2.1.4-20261024.md",
+          "sha256": "945e66c09a3f95c1de70f9ed573fa18b4bf895e528ed573e7599a9ab04923d3f"
+        },
+        "reviewer": "Codex maintainer (2.1.4, 2026-10-24)",
+        "sources": {
+          "kind": "runtime_snapshot",
+          "record": {
+            "path": "lp7t-tob24-20261009/codex-gpu4-r3/runtime/snapshot.json",
+            "sha256": "a54cbc177d69f78bc0cd75b81d60a39049b2e7b73a346baf655b82ec4ded49a4"
+          }
+        },
+        "status": "passed"
+      },
+      {
+        "approval": {
+          "path": "independent-trial-waiver-2.1.4-20261024.json",
+          "sha256": "55534aa7b69a38658f522e399d130f102dba55e84c7798ba3c8261e3192769ca"
+        },
+        "id": "independent_trial",
+        "mechanical_result": "waived_by_user",
+        "mode": "explicit_user_authorization",
+        "origin_at": null,
+        "origin_version": null,
+        "status": "waived"
+      }
+    ],
+    "limitations": [
+      "Independent new-session full-workflow trial for 2.1.4 is waived by the user's explicit 2026-10-24 authorization; not performed or passed. New-task/updated-legacy-QA entry usability and omissions remain untested until subsequent actual use.",
+      "Runtime, GPU and CPU Harbor originals are reused after validating all actual current dependencies and original results; only FLOW_VERSION differs. This release did not run new models, GPU jobs, training or Docker containers.",
+      "Offline/synthetic QA and bounded historical component evidence do not establish real task QA, scientific anchors, formal 7h/10h research, real compaction, H20 adaptation or complete GPU Final Trials. The upstream mixed-GPU-list limitation is disclosed; final configuration follows the agreed H20 convention.",
+      "Final GitHub push is reserved for the user; local release status does not imply remote synchronization."
+    ],
+    "manifest_sha256": "12302de44bfbbde7934bdb64ed9e29761dbd55bff7742b412230064a5ca50b17",
+    "schema_version": 2,
+    "validation_scope": "originals and current execution-source binding; TUI observation/authorization reviewed separately"
+  },
+  "release_ready": true,
   "relocated_tests": "588",
   "relocation_without_design_or_pilot_runs": true,
   "relocation_without_host_config_or_auth": true,
@@ -131,7 +297,7 @@
   "runtime_without_development_files": true,
   "schema_version": 2,
   "scope": "tool contracts, not scientific or platform acceptance",
-  "source_manifest_sha256": "58c9cc42e569e56cf79c833055bab2063d0b10e4942d8fdf9f50906207e79c26",
-  "status": "contracts_passed",
+  "source_manifest_sha256": "4faf1b309d82cc9dc45d02407d51e52512826a7c63424007dd9cf9501cc8cdb8",
+  "status": "released",
   "version": "2.1.4"
 }
