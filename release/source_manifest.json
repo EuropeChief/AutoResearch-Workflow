@@ -23,12 +23,12 @@
     {
       "mode": 436,
       "path": "README.md",
-      "sha256": "8af0849b6e333d219c5a3422e20cad2fb54998b6d8be18939beaae28d6855d97"
+      "sha256": "4872c8c4f237fb2db6da33d231cc38b7e1bd6957fc14b4843465a9c71c496973"
     },
     {
       "mode": 436,
       "path": "RELEASE.md",
-      "sha256": "d74f3627d60d94886086c9fd64a7bfcc59e87604ae522c915438912b50412eaa"
+      "sha256": "7e0bcc89220b887ebedae46c9ef7be27a71c2877d11d86ebe0cd7e4910d44dad"
     },
     {
       "mode": 436,
@@ -38,7 +38,7 @@
     {
       "mode": 436,
       "path": "autoresearch_flow/__init__.py",
-      "sha256": "8d30bd7738649226d0f06f5e8e01608aade70d7e24d8265191f0739636b02640"
+      "sha256": "315bc07cb2e5631013bf75b51e46d10c10eb3a32a03beb22b2667e895ff54054"
     },
     {
       "mode": 436,
@@ -143,7 +143,7 @@
     {
       "mode": 436,
       "path": "autoresearch_flow/legacy_qa.py",
-      "sha256": "516ff2c53c2a74542ca255772e53a47839aaeeaa7694f972e328d17196ad60be"
+      "sha256": "5f776580e90ff18c0b12ec2037e3ff484efe04938aa84f82496bc9cc4de2b0ce"
     },
     {
       "mode": 436,
@@ -158,7 +158,7 @@
     {
       "mode": 436,
       "path": "autoresearch_flow/materials_cli.py",
-      "sha256": "82d9e8efe587a467941ebefa6540227cdcc12069798c9e2f0424e351929ab821"
+      "sha256": "2f8106f38f1a835778f3b9b9d444f5ec13a86494e2de239402e6f3766b9bbd69"
     },
     {
       "mode": 436,
@@ -173,12 +173,12 @@
     {
       "mode": 436,
       "path": "autoresearch_flow/package_cli.py",
-      "sha256": "be270447ab7c09e062991ce3845857c6bed435f3b40877f0138ff94b0391a9d6"
+      "sha256": "3398c79975bbb073446a589a5d74cd8b00ce1b9403d4ad092e138b022cc5f84b"
     },
     {
       "mode": 436,
       "path": "autoresearch_flow/package_delivery.py",
-      "sha256": "7d65d4c6564421c9323d71da5588928a0dbcbb9d6d6dfc28a4ac2fa0665f656d"
+      "sha256": "dc69c30fe984ad5148bc1940dfeb5bcb14b1e18d73651b080e64a284ff56bfb1"
     },
     {
       "mode": 436,
@@ -193,7 +193,7 @@
     {
       "mode": 436,
       "path": "autoresearch_flow/package_qa.py",
-      "sha256": "8b494aa7d2279585b12ab6c80831618d27f6efeb05371223c9fd1eb0ff5753d1"
+      "sha256": "dbd85166b817fa549971ef7582bcf62d85ab9ce06678d9e96b15b306de24e6b3"
     },
     {
       "mode": 436,
@@ -333,7 +333,7 @@
     {
       "mode": 436,
       "path": "autoresearch_flow/w4_package.py",
-      "sha256": "134686966e1784e2fc33c5b6c4988242d84b351f646d120bd0196f908099108c"
+      "sha256": "a51ca42df4e1bce9afb37d2671bada2e7db603326f0820d761b91d3618d3cfaa"
     },
     {
       "mode": 436,
@@ -353,17 +353,17 @@
     {
       "mode": 436,
       "path": "docs/legacy-qa.md",
-      "sha256": "c0cde7ab4fae2eb8687baea4d5b14e5ca287d85a70bfdabe8c8d968e9452c577"
+      "sha256": "397d8bec4ed572350ba9fd1d23ef6b17b16c187e9dd91ec1a3578f1c5ea8df63"
     },
     {
       "mode": 436,
       "path": "docs/materials.md",
-      "sha256": "04d916064d8a4418dea8827dba864b4cfbdf4dfd39e9be5385c21d025b38c89c"
+      "sha256": "a4cb7e0eeb48e8811f843564ef67b4848d69d6c745966421151df6bd9b073ff3"
     },
     {
       "mode": 436,
       "path": "docs/packaging.md",
-      "sha256": "180046a25a8cd0b3afb339792b69edd5656cb0ef7798f9b72b125e08268b0a20"
+      "sha256": "c88ff749e270189daecda18a3d335b7e50008d66432f3f66e86139bee9cf69dc"
     },
     {
       "mode": 436,
@@ -398,22 +398,22 @@
     {
       "mode": 436,
       "path": "rules/README.md",
-      "sha256": "93e605b8641da1a9920c9481807e3e7f6952e40adafc8c1495ab429ce5f3869a"
+      "sha256": "ae0d3209707709e8b20707b85eebc5aff4b8c9d932a0a238fc7ff65da637fb13"
     },
     {
       "mode": 436,
       "path": "rules/catalog.json",
-      "sha256": "23d1932bcf1b8cd856873ecbc5741c4fc57710f208e776c927778706ab31dc0c"
+      "sha256": "8f5f9d8ebd9b7d7e7931e6e85dd045bf389a91bebfef655612a24b82754ad2e9"
     },
     {
       "mode": 436,
       "path": "rules/manifest.json",
-      "sha256": "e354b57e002731698a43e28897eaa3f765b23d575f9725ef3a7ef5a494f85f05"
+      "sha256": "827c6aed1d114d9a4fec43619cfcdfbcbf0b261aeb82cbc6c2541fcfbb76ce1f"
     },
     {
       "mode": 436,
       "path": "rules/stage_matrix.json",
-      "sha256": "0eb95112c878864c44d448c74f05adfe339d45c19970df0757772647ac68e31b"
+      "sha256": "3fe6d577c0e890652bbdeee77f2bdbc58b00899536cce467e4b1e51f0cc7449b"
     },
     {
       "mode": 436,
@@ -443,7 +443,7 @@
     {
       "mode": 436,
       "path": "rules/stages/stage-6-delivery-qa.md",
-      "sha256": "a2fe34304fa2ce2c7e3134ab7ef51110659946b51594f7b853e820dfdfa7f015"
+      "sha256": "2247befe94021d8663b6d3a137164920dc7172ec4282cb6d35be588a90f357c8"
     },
     {
       "mode": 436,
@@ -468,7 +468,7 @@
     {
       "mode": 436,
       "path": "skills/autoresearch-delivery/SKILL.md",
-      "sha256": "1190fa75e973be155a6b701ca7e0ef2ac123c91032ddc25dfda07c88409b152f"
+      "sha256": "426d7db0818e97821ed4092288ef8b5d846029226fd85b3dc3b10b8932a898ca"
     },
     {
       "mode": 436,
@@ -736,232 +736,272 @@
       "sha256": "da8b2af2acaef5547eaec2f8001fd188d099a46b70662cf92c2f2cb05f2de189"
     },
     {
-      "mode": 436,
+      "mode": 420,
       "path": "skills/autoresearch-task-qa-legacy-waiver/SKILL.md",
-      "sha256": "6acd1472ceb47c509a52350447e7fec3bef18ebd5d64489179b7c87506915974"
+      "sha256": "db291695e03e33363a5e8eaeb7076e5049ba4650a90fcbe7464d251d22bbf652"
     },
     {
-      "mode": 436,
+      "mode": 420,
       "path": "skills/autoresearch-task-qa-legacy-waiver/agents/openai.yaml",
-      "sha256": "8681112f713d638126fd6cdb6e311cc04035b701b8f9e1121b15e49e7fd697ab"
+      "sha256": "5f91a5d83008c53d30de75a2a12c694413a9d2d18bb232c63acb795556b6092c"
     },
     {
-      "mode": 436,
+      "mode": 420,
       "path": "skills/autoresearch-task-qa-legacy-waiver/references/docker-path-contract.md",
       "sha256": "663185c0e095250a214dabf60a7c7c947442604a036ba9b584964fdfa2f5dcd4"
     },
     {
-      "mode": 436,
+      "mode": 420,
       "path": "skills/autoresearch-task-qa-legacy-waiver/references/exposure-manifest.md",
       "sha256": "8446d9d265ae2e01b2e30ed496708184794b9fd6350bd51cf1b42581d0ae2a5c"
     },
     {
-      "mode": 436,
+      "mode": 420,
+      "path": "skills/autoresearch-task-qa-legacy-waiver/references/format-repair-policy.md",
+      "sha256": "a49fa805c7a9b72236782d5705dd4128bff2a90440b045b1c282531840c31aba"
+    },
+    {
+      "mode": 420,
       "path": "skills/autoresearch-task-qa-legacy-waiver/references/harbor-harness.md",
       "sha256": "d9f1874ebbf4e1f346a3c4b56ff735550a383b44e8501a90a72a493b307c0995"
     },
     {
-      "mode": 436,
+      "mode": 420,
       "path": "skills/autoresearch-task-qa-legacy-waiver/references/implementation-policy.md",
       "sha256": "8a3d0bfa256a920001d464e0613ffd14ecdf82cad0c38e1186e8897280f5d608"
     },
     {
-      "mode": 436,
+      "mode": 420,
       "path": "skills/autoresearch-task-qa-legacy-waiver/references/implementation-report.md",
       "sha256": "c6a7712a3c33585d333be9645677b31f10f7315c14a83470b9a638feaf52b651"
     },
     {
-      "mode": 436,
+      "mode": 420,
       "path": "skills/autoresearch-task-qa-legacy-waiver/references/innerfield-deployment.md",
       "sha256": "2758ee524199cb6f2674a68f3ff40616031a0c150d4c2909bcb31d47d4d89e53"
     },
     {
-      "mode": 436,
-      "path": "skills/autoresearch-task-qa-legacy-waiver/references/legacy-migration-waiver.md",
-      "sha256": "e12bbdfd70fbbb4690a17f813871ced4fcfd135a3e226a6f596f31a2c1f040d6"
-    },
-    {
-      "mode": 436,
+      "mode": 420,
       "path": "skills/autoresearch-task-qa-legacy-waiver/references/legacy-standard-comparison.md",
-      "sha256": "1345a6b33819fa2b2b8734ca71e8ec167bff536afd78eb5edb2128605ae39349"
+      "sha256": "2d4f51930d857bd13d29d0f6f821b3ad061d0cffaf39404aadce8a326143376f"
     },
     {
-      "mode": 436,
+      "mode": 420,
+      "path": "skills/autoresearch-task-qa-legacy-waiver/references/phase2-format-migration.md",
+      "sha256": "fd9205f01f4a042e12bd612895450f4f4397e0deb8b35dfe4047143dc2492865"
+    },
+    {
+      "mode": 420,
       "path": "skills/autoresearch-task-qa-legacy-waiver/references/precheck-policy.md",
       "sha256": "4c84074aa9214f5a6070f038ea1b084d30cd947abac3f4510c1b149432d5550c"
     },
     {
-      "mode": 436,
+      "mode": 420,
       "path": "skills/autoresearch-task-qa-legacy-waiver/references/qa-spec.md",
       "sha256": "a09b981879d31e2aee3ca2fc7d3722c5ca1e3d6eb258251d0084c703472eb841"
     },
     {
-      "mode": 436,
+      "mode": 420,
       "path": "skills/autoresearch-task-qa-legacy-waiver/references/report-schema.md",
       "sha256": "1763499e0f6c4e98b28d23428b9f5c4e2205ec59d90f73588d9205bcca10b720"
     },
     {
-      "mode": 436,
+      "mode": 420,
       "path": "skills/autoresearch-task-qa-legacy-waiver/references/research-quality.md",
       "sha256": "13292e4040045d7da1c098ca544bfd06b9aa65a8ba7e0bdc28d8e6642a144f59"
     },
     {
-      "mode": 436,
+      "mode": 420,
       "path": "skills/autoresearch-task-qa-legacy-waiver/references/runtime-integrity.md",
       "sha256": "7510e39eaaee421e05a39325dc7a34dc8ec7d0b6ce3e674ab364c70763019dfb"
     },
     {
-      "mode": 436,
+      "mode": 420,
       "path": "skills/autoresearch-task-qa-legacy-waiver/references/source-alignment.md",
-      "sha256": "0be156fb4b01ba9736f396875009d8919a411934e62088df4aae598d49c91dbc"
+      "sha256": "3edc85141a1c8f5cc1efac538f05fe76f5c5a54d75301b566d209b0ae131bbf5"
     },
     {
-      "mode": 436,
+      "mode": 420,
+      "path": "skills/autoresearch-task-qa-legacy-waiver/references/standard-coverage.md",
+      "sha256": "18febc2e2a18e42b3fba098815a93abd895693149badb9c7e31daa6a9c647b6f"
+    },
+    {
+      "mode": 420,
       "path": "skills/autoresearch-task-qa-legacy-waiver/references/submission-format.md",
       "sha256": "4cfecb2e4bc64de6c70cac622c0e03b23c6acb4285f59063dd97978a1efce9ad"
     },
     {
-      "mode": 436,
+      "mode": 420,
+      "path": "skills/autoresearch-task-qa-legacy-waiver/references/trajectory-comparability.md",
+      "sha256": "4379154ca8adfb78bca93e47d76021aaf277019a4954631a77c3914159373305"
+    },
+    {
+      "mode": 420,
       "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/audit_collection.py",
       "sha256": "91c6cc24f8d8d7b75adc72e96ad57aef2f4f9fb3fc6ba9f9aeb5e996ae747d39"
     },
     {
-      "mode": 436,
+      "mode": 420,
+      "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/audit_format_repair.py",
+      "sha256": "1a23e6346b6cec50a3c8f96b16f07dcb1bd94255b336821fff677809c65d67f0"
+    },
+    {
+      "mode": 420,
+      "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/audit_legacy_task.py",
+      "sha256": "6932c8b9a9ba6da9deb8613f5f3954834869aeaf0fcc9a819a0c223c8523cabd"
+    },
+    {
+      "mode": 420,
+      "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/audit_standard_with_waivers.py",
+      "sha256": "5c65e2ab2501559d08c8e7f977c8643c79f862e85e40de0954b83bcd633084a2"
+    },
+    {
+      "mode": 420,
       "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/audit_task.py",
       "sha256": "748293b37d0b384501a74a004314375b1b8ee14d111af6220df206d17fed0dcd"
     },
     {
-      "mode": 436,
+      "mode": 420,
       "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/content_gates.py",
       "sha256": "92463886f11e6a114e686df08dae3e95ae873a1a561ab422a5ced4641a257cb7"
     },
     {
-      "mode": 436,
+      "mode": 420,
       "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/deployment_review.py",
       "sha256": "6e1e62a7192539913b296784723c6bcbf0731baaf4b428ad183a311c44b9df4e"
     },
     {
-      "mode": 436,
+      "mode": 420,
       "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/docker_paths.py",
       "sha256": "451bdca24f812c1ee8dea3a446551cfb14715bf4db2fd522bfb8911969a2e0e9"
     },
     {
-      "mode": 436,
+      "mode": 420,
       "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/evidence_refs.py",
       "sha256": "aa32a16411e56e00b7f0e08fa3795d3bc2e35144781c3b9396a7011d762f6b38"
     },
     {
-      "mode": 436,
+      "mode": 420,
       "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/harbor_review.py",
       "sha256": "b8d99764f1bf40dcad40c875212191324778259036ed0e634c662601eacab545"
     },
     {
-      "mode": 436,
+      "mode": 420,
       "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/implementation_review.py",
       "sha256": "f8ec462c968d163a0bb916ac3c753f6ca66f9f9e2179704118d14876b303a797"
     },
     {
-      "mode": 436,
-      "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/legacy_migration_waiver.py",
-      "sha256": "56352c5dfc6adfbdf9e6e35ddb596cab32613e3b0b3144f70877348b3e22f02c"
-    },
-    {
-      "mode": 436,
+      "mode": 420,
       "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/resource_review.py",
       "sha256": "8b262eb93c62c6c542d4f925a062b5410b242fb861371f02b0f369d44ef944df"
     },
     {
-      "mode": 436,
+      "mode": 420,
       "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/submission_format.py",
       "sha256": "0601cfcf871d333f7de77e50899276d21e13e030b7b98f7100e232e477a18959"
     },
     {
-      "mode": 436,
+      "mode": 420,
       "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/task_fingerprint.py",
       "sha256": "3ece294fe70c05e806569953fbe7102014e0b0cec82461822a76106a60976b13"
     },
     {
-      "mode": 436,
+      "mode": 420,
       "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/test_audit_collection.py",
       "sha256": "13ad22952380a7e53d2a0ac1d995a906188f5657a877b30aa477bd5ff4bcb57b"
     },
     {
-      "mode": 436,
+      "mode": 420,
+      "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/test_audit_format_repair.py",
+      "sha256": "93fb10779057ac8f32a5d38362aec569c4d06fc4454a8829d2f02b639b126e75"
+    },
+    {
+      "mode": 420,
+      "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/test_audit_legacy_task.py",
+      "sha256": "f7831f7ad7ce2eef4532e48f9915b2e1da51c67071647fe3ab9b207995f2b45f"
+    },
+    {
+      "mode": 420,
+      "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/test_audit_standard_with_waivers.py",
+      "sha256": "cf4258b01ecf30ce05be7f6cccd9739a6cb5d6ae35b31b1344502c0a24bdebee"
+    },
+    {
+      "mode": 420,
       "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/test_audit_task.py",
       "sha256": "9a523e9540b31aaad0c7c5e736d9ada39225679c37f1a724bb516b9204e99e9b"
     },
     {
-      "mode": 436,
+      "mode": 420,
       "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/test_container_gpu_policy.py",
       "sha256": "fe5651e3cf98ef8c8adab4325e2224831a31c21a023c2c89cfe4fc4b8b2a0dcf"
     },
     {
-      "mode": 436,
+      "mode": 420,
       "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/test_content_gates.py",
       "sha256": "95ca6a2a34fc97a1d64a2a63f534d1ec2ea429edcc9f9b2acd0787279b8ae52b"
     },
     {
-      "mode": 436,
+      "mode": 420,
       "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/test_deployment_review.py",
       "sha256": "46c90cb4e92f148e26f5920f371f84b3b53071d3025c1f35353ed72eb8d736f8"
     },
     {
-      "mode": 436,
+      "mode": 420,
       "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/test_docker_paths.py",
       "sha256": "1dcc4a9b4bb8531c03ea19b0e6bd18e9b268fa4f9aac48c61ef5275ea4d33633"
     },
     {
-      "mode": 436,
+      "mode": 420,
       "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/test_evidence_refs.py",
       "sha256": "85d8bdb1f92bab549c5a424ad7eb10686f3a80b1f0c15d9c5c39e80100f51eb2"
     },
     {
-      "mode": 436,
+      "mode": 420,
       "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/test_harbor_review.py",
       "sha256": "cedada7bfe61a99cf3caef5683f9479db9ccb5d7a8e613abdfe4881cacb6c169"
     },
     {
-      "mode": 436,
+      "mode": 420,
       "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/test_hardware_deployment_integration.py",
       "sha256": "ebeef5a8ae7058dbd2d1c45fc9527708e8f7f5573df9c1a5bfff15b52bd4050c"
     },
     {
-      "mode": 436,
+      "mode": 420,
       "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/test_implementation_review.py",
       "sha256": "2092934a0adc3f40070fe9420e9eb685033261f29660cd16fc1c1c8496b5af88"
     },
     {
-      "mode": 436,
+      "mode": 420,
       "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/test_input_reports.py",
       "sha256": "f32e70aeba3020ddc575ca9296336b42512c12417066e951127e9ed3f7eae730"
     },
     {
-      "mode": 436,
-      "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/test_legacy_migration_waiver.py",
-      "sha256": "0fbbcebc5aafeefa6ffebcc78e6fdbfb6115284c163aabc7811c67e52cc07108"
+      "mode": 420,
+      "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/test_phase2_schema_compatibility.py",
+      "sha256": "e05d15e285fd08e6f4031bc1bf62dfbcd80d7b5873026c3da399025543ff08b4"
     },
     {
-      "mode": 436,
+      "mode": 420,
       "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/test_runtime_integrity.py",
       "sha256": "0c015bcd22dc6c48e737499c8aa4e7508c7aed42c4c96594d118e4264d42967b"
     },
     {
-      "mode": 436,
+      "mode": 420,
       "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/test_runtime_mode_consistency.py",
       "sha256": "d15136901ef41cc6e44a0f5ce03b6bee2e4d6af1e972524207941c07fa1db571"
     },
     {
-      "mode": 436,
+      "mode": 420,
       "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/test_selfcheck_evidence.py",
       "sha256": "e5418f4aa828332ec21f23ace3dc74dc834461397e4b04c68ab9676042c67ed6"
     },
     {
-      "mode": 436,
+      "mode": 420,
       "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/test_submission_format.py",
       "sha256": "a1280db986fc75c98b85025198464065ed19dbadf35adbae0d9706c69e46fcf1"
     },
     {
-      "mode": 436,
+      "mode": 420,
       "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/trajectory_review.py",
       "sha256": "8aab97a1809455f83192c657cc2d45f0432b338320c663715024c9330fb42f14"
     },
@@ -1018,7 +1058,12 @@
     {
       "mode": 436,
       "path": "sources/notices/2026-10-22-qa-waivers.md",
-      "sha256": "2ed2b32e801705a386495fd9ec098adb66d4c5a6082051556974ce287c0fe1ca"
+      "sha256": "4a0ffdbae87757d422d470249c3aef179a4642451b53548f2e611aad8cc6bf3c"
+    },
+    {
+      "mode": 436,
+      "path": "sources/notices/2026-10-23-standard-waivers.md",
+      "sha256": "739110054ba69366c9a9c881d790f888d916083667a2eb02593ad44fc28fe876"
     },
     {
       "mode": 436,
@@ -1034,6 +1079,11 @@
       "mode": 436,
       "path": "sources/originals/review_skill-0.3.10-legacy-waiver.2_1022.zip",
       "sha256": "8c67ea6919842e7d2272ef2506204d8bd29fd13a722b6e02c2970fc58dd56515"
+    },
+    {
+      "mode": 436,
+      "path": "sources/originals/review_skill-0.3.10-standard-waiver.5_1023.zip",
+      "sha256": "8e661e9c3bd8f8a2521aa8b19a4a99cc9c0baf49a5ddbbfe6eeda56d5d812d3b"
     },
     {
       "mode": 436,
@@ -1131,8 +1181,8 @@
       "sha256": "7764de20b77b1e9a2a3b25b1c1b096f95ac29dcdc9dafb17b669e7f0286b236d"
     }
   ],
-  "package_revision": "2.1.3",
+  "package_revision": "2.1.4",
   "schema_version": 2,
   "scope": "runtime allowlist and locked originals; excludes development tests/tools/pilots/maintenance records and local assets",
-  "version": "2.1.3"
+  "version": "2.1.4"
 }

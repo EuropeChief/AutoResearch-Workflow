@@ -1,4 +1,4 @@
 interface:
-  display_name: "AutoResearch 旧题迁移豁免质检"
-  short_description: "保留新版严格原判，逐原因审旧题格式迁移与新增要求豁免"
-  default_prompt: "使用 $autoresearch-task-qa-legacy-waiver 对本轮旧题做只读质检：先按0.3.10生成严格原判，再根据已有新旧标准和迁移证据审豁免；不要求为格式迁移重跑，分别输出已豁免、仍需返修和平台待验证事项。"
+  display_name: "AutoResearch 原标准完整质检与历史豁免"
+  short_description: "原v0.3.10全部检查含NOP，先保留原判，再逐问题豁免"
+  default_prompt: "使用 $autoresearch-task-qa-legacy-waiver 按原v0.3.10执行全部静态检查，包括NOP、三门控、21项、Harbor六项、轨迹行为/分数、资源时长和指纹；使用audit_standard_with_waivers.py先保留原标准明细，再逐原因应用旧题豁免，不运行题包或Harbor。"

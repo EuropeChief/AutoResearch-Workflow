@@ -839,7 +839,7 @@
         5,
         6
       ],
-      "statement": "新题正常完成必要 NOP 并核同次 config.json、result.json、reward、日志和版本；指定旧题按官方 legacy-format-migration-v2 逐原因处理历史缺口，旧标准未要求而从未做 NOP 也可按适用条件审核。无记录时 runtime_status=not_run，不伪造 PASS，真实执行异常仍处理，0 分本身不失败。另须验证目标 Harbor 的有效候选移交、独立 Verifier 与评分链路；NOP 不替代有效候选实跑。无正式 Hidden 权限可用授权同接口自验数据，Oracle 非必交。"
+      "statement": "新题正常完成必要 NOP；已有记录核同 Trial 身份、separate、异常、reward、日志和版本，无记录保留原 fail/not_run。指定旧题按 standard-waiver.5 审具体历史缺口；旧版本失败而当前修正且缺当前 Trial 走官方专门分支，不能把当前坏记录当缺记录豁免。0 分本身不失败；NOP 不替代有效候选移交、独立 Verifier 与评分链路验证。无正式 Hidden 权限可用授权同接口自验数据，Oracle 非必交。"
     },
     {
       "evidence": "启动配置、实际可见集、会话与目录",
@@ -856,7 +856,7 @@
         5,
         6
       ],
-      "statement": "固定 Codex+GPT-5.6 Sol 与 Codex+Seed 2.1 Turbo，同任务/Prompt/公开协议，独立输出。推理档位默认各 provider 实际支持的最高有效档位，不能只把字符串写为 max 或静默降档。"
+      "statement": "保留 Codex CLI，按实际条件配置模型组合和支持的推理档位；两轨独立，并比较 Prompt、任务、Dev、反馈、约束、资源六维。指定旧题的文字等价、获准历史资源差异及证据缺口按各自依据处理；确认的实质条件差异仍失败，不靠改当前题面追溯修复或自动追加两轨重跑。"
     },
     {
       "evidence": "原会话事件、净时长台账、异常与恢复证据",
@@ -873,7 +873,7 @@
         5,
         6
       ],
-      "statement": "两轨默认各至少 10 小时净有效执行；仅不训练/不微调、单轮很短且满足教程全部例外证据时，才可各至少 7h。分别核算，排队/安装/构建故障/阻塞不计；外部异常仅可恢复原会话，不拼接新会话。流程当前是否已支持例外另见冻结政策与实施状态。"
+      "statement": "新题两轨默认各至少 10 小时净有效执行；仅不训练/不微调、单轮很短且满足教程全部例外证据时，才可各至少 7h。分别核算，排队/安装/构建故障/阻塞不计；外部异常仅可恢复原会话，不拼接新会话。指定旧题按 legacy_research_duration_gap 审核历史时长或有效时长证明差异，仍记录真实时长。"
     },
     {
       "evidence": "方法演进、Public/Dev 评分与决策、异常记录",
@@ -890,7 +890,7 @@
         5,
         6
       ],
-      "statement": "每轮是真实方法闭环而非环境排障/重复空转；最终是否超过 B 与轨迹是否有效分别判定，无提升不自动失败且须如实解释。"
+      "statement": "每轮是真实方法闭环而非环境排障/重复空转；最终是否超过 B 与轨迹是否有效分别判定，无提升不自动失败且须如实解释。指定旧题的 historical_agent_runtime_finding 可免本批新增追责/补跑义务，污染成绩仍为 invalid，不能作正式 B/R 正证；当前交付实错、正式 B/R 失效和实质两轨条件差异不免。"
     },
     {
       "evidence": "两份轨迹 JSON、摘要与实际记录",
@@ -907,7 +907,7 @@
         5,
         6
       ],
-      "statement": "Agent 逐轮自写八字段 round/policy_name/method_summary/status/score/failure_reason/retained_best/time，最终两份 JSON 顶层 rounds。score 是 Public/Dev 原始指标，失败未出分为 null；成功 ok 且原因 null；完成时间 YYYY-MM-DD HH:mm:ss，不替代有效时长。不另加日志字段。"
+      "statement": "Agent 逐轮自写八字段 round/policy_name/method_summary/status/score/failure_reason/retained_best/time，最终两份 JSON 顶层 rounds。score 是 Public/Dev 原始指标，失败未出分为 null；成功 ok 且原因 null；完成时间 YYYY-MM-DD HH:mm:ss，不替代有效时长。不另加日志字段。指定旧题的新增字段/版本绑定缺口逐原因处理，不用旧研究与返修包差异覆盖历史研究 A/B 的实质条件差异，不倒填当前哈希。"
     },
     {
       "evidence": "最终源码、复验结果、选择说明",
@@ -982,7 +982,7 @@
       "stages": [
         6
       ],
-      "statement": "最终 QA 只对确定版本提交包取证并使用 schema 6 / innerfield-deployment-v6：先 G01–G03，再 QA01–QA21 和 H01–H06；QA15 资源评估与 H06 NOP 必查。collection 不代表完成，旧报告 PASS 不自动沿用；实际 GPU 可自选，最终配置 H20，真实硬件记录不改写。"
+      "statement": "最终 QA 只对确定版本提交包取证：先 G01–G03，再 QA01–QA21 和 H01–H06；QA15 资源评估与 H06 NOP 必查。普通路径用 schema 6 / innerfield-deployment-v6；指定旧题用 standard-waiver.5 完整入口，消费 stage=standard_review_with_waivers 总报告及实际豁免明细。collection/F 格式子报告不代表完成，旧 PASS 不自动沿用；ERROR 是审核未完成，不直接判专家题目不合格。实际 GPU 可自选，最终配置 H20，真实记录不改写。"
     },
     {
       "evidence": "report.json/md/txt、包哈希、逐项映射",
@@ -1075,12 +1075,12 @@
   ],
   "workflow_notices": [
         {
-          "id": "U-20261022-QA",
+          "id": "U-20261023-QA",
           "source_kind": "user_notice",
-          "notice_text": "全流程保留 GPU 自选及限定换卡补证放宽；指定旧题格式迁移复用官方 legacy-waiver.2，历史指纹、轨迹和 NOP 等按原因审核。",
-          "stages": [2, 3, 5, 6],
+          "notice_text": "全流程保留 GPU 自选及限定换卡补证放宽；指定旧题按官方 standard-waiver.5 完整审查，再逐原因处理历史时长、行为处置、字段、版本、NOP 与平台事项。",
+          "stages": [2, 3, 4, 5, 6],
           "affected_rule_ids": [],
-          "decision": "新题正常留存指纹、轨迹及必要 NOP；仅全流程换卡补证使用提示。指定旧题保留官方严格原判和独立 PASS_WITH_WAIVERS，不直接放宽整项或改写历史；G02 沿既有语义复核处理，不伪造官方 cause。真实错算、任务错配、不实证据、资源超限及实质质量问题仍处理。依据见 sources/notices/2026-10-22-qa-waivers.md。"
+          "decision": "新题正常留证，旧批次适用范围取自用户指定与已有记录；不按题号、日期、缺证自动分类。保留原判、完整总报告与实际豁免明细，F 格式子检查不替代终审。两轨独立与六维可比分开，行为处置获免不使污染成绩有效；当前实错、正式 B/R 失效和科学门槛仍处理。G02 沿既有通知语义复核，不伪造官方 cause。依据见 sources/notices/2026-10-23-standard-waivers.md。"
         },
         {
           "id": "U-20261003-01",

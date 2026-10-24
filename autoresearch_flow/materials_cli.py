@@ -24,12 +24,12 @@ def add_commands(commands):
     p.add_argument("--task-kind", choices=("auto", "cpu", "gpu"), default="auto")
     p = actions.add_parser("fingerprint", help="只读计算官方四项输入指纹，不证明历史运行归属")
     p.add_argument("--harbor-task", type=Path, required=True)
-    p = actions.add_parser("legacy-qa-check", help="重算并核验指定旧题的官方严格报告与豁免结果")
+    p = actions.add_parser("legacy-qa-check", help="复算指定旧题 standard-waiver.5 完整审查与逐原因豁免")
     p.add_argument("--package-root", type=Path, required=True)
-    p.add_argument("--report", type=Path, required=True)
-    p.add_argument("--review", type=Path, required=True)
-    p.add_argument("--worksheet", type=Path, required=True)
-    p.add_argument("--result", type=Path, required=True)
+    p.add_argument("--report", type=Path, required=True, help="原标准 standard/report.json，保留相邻 inventory.json")
+    p.add_argument("--review", type=Path, required=True, help="原标准审核底稿，对应官方 --standard-review")
+    p.add_argument("--worksheet", type=Path, required=True, help="含 standard_resolutions 的 legacy_review.json")
+    p.add_argument("--result", type=Path, required=True, help="官方完整 report.json；不接受格式子报告或旧 waiver_report.json")
 
 
 def dispatch(args):

@@ -13,7 +13,7 @@
 ### M09-S6 — 整理最终八字段轨迹
 
 - 规则来源：`M09`（`rules/README.md#M09`）
-- 当前行动：只对 Agent 生成的真实轮次做允许的格式/摘要修正，输出根 rounds 与八字段完整轨迹。 缺sessions不单独退回；已交记录须审，版本问题归QA21。
+- 当前行动：只对 Agent 生成的真实轮次做允许的格式/摘要修正，输出根 rounds 与八字段轨迹。缺 sessions 不单独退回；已交记录须审，指定旧题的历史字段、时长及版本缺口按 M08/M09 逐原因处理，不补造记录。
 - 所需证据：`trajectory_codex.json`, `trajectory_seed.json`, `trajectory_review`
 - 检查性质：`mixed`；严重性：`hard`
 - 阶段门前阻断：`independent_qa`
@@ -61,7 +61,7 @@
 ### M13-S6 — 独立 QA 后直接交付
 
 - 规则来源：`M13`（`rules/README.md#M13`）
-- 当前行动：由用户在独立会话以最终包为唯一边界完成 QA；适用项通过后直接打三包 ZIP。
+- 当前行动：由用户在独立会话以最终包为唯一边界完成 QA。指定旧题先修格式，再以新版完整总报告及逐原因明细核验；ERROR 回质检补完，F 子报告不替代终审。适用项通过后直接打三包 ZIP，不重复阻断获免历史问题。
 - 所需证据：`independent_qa_report`, `package_archives`, `delivery_index`
 - 检查性质：`mixed`；严重性：`hard`
 - 阶段门前阻断：`independent_qa`
@@ -87,7 +87,7 @@
 ### C03-S6 — 终稿题面与轨迹一致
 
 - 规则来源：`C03`（`rules/README.md#C03`）
-- 当前行动：检查最终 instruction、两轨 prompt、seed/阈值和提交说明之间没有旧题面或相互矛盾。
+- 当前行动：检查最终 instruction、两轨 prompt、seed/阈值和提交说明；以已有材料比较 Prompt、任务、Dev、反馈、约束、资源六维。历史 A/B 实质条件差异仍处理，不能靠改当前题面或旧包迁移豁免追溯消除。
 - 所需证据：`instruction_final`, `prompt_consistency_check`, `legacy_text_scan`
 - 检查性质：`mixed`；严重性：`hard`
 - 阶段门前阻断：`independent_qa`
