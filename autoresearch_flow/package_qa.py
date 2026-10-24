@@ -104,7 +104,7 @@ def accepted(package_root, report_file, snapshot, *, legacy_review=None,
                  "官方旧题复核期间源包发生变化")
         return report, {
             **checked, "report": str(path), "report_sha256": _sha256(path),
-            "correspondence": "official_strict_reconstruction_and_waiver",
+            "correspondence": "official_standard_review_with_waivers",
         }
     try:
         validate_qa_report(report, require_pass=True)

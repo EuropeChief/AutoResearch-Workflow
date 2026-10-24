@@ -16,7 +16,7 @@ def add_commands(commands):
         "--qa-report",
         type=Path,
         required=True,
-        help="包外独立会话的当前完整 report.json",
+        help="包外独立 QA 报告；指定旧题时传新版原标准 standard/report.json",
     )
     p.add_argument(
         "--output-dir",
@@ -25,11 +25,11 @@ def add_commands(commands):
         help="包外附件目录；已有目录内自动生成新批次，不覆盖",
     )
     p.add_argument("--legacy-review", type=Path,
-                   help="指定旧题：官方严格报告对应的包外 review.json")
+                   help="指定旧题：包外原标准 review.json，对应官方 --standard-review")
     p.add_argument("--legacy-worksheet", type=Path,
-                   help="指定旧题：已审核的包外官方豁免底稿")
+                   help="指定旧题：含 standard_resolutions 的包外 legacy_review.json")
     p.add_argument("--legacy-result", type=Path,
-                   help="指定旧题：官方 waiver_report.json；与前两参数同时提供")
+                   help="指定旧题：standard-waiver.5 完整 report.json；与前两参数同时提供")
     p.add_argument("--name", help="完整包语义名称；子仓名固定，不默认添加题号")
     p.add_argument("--upload-limit-bytes", type=int, default=300_000_000)
     p.add_argument(

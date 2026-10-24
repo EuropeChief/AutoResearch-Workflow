@@ -425,6 +425,9 @@ class DeliveryPackage:
             _require(all(Path(ref["path"]).is_file() and _sha256(Path(ref["path"])) == ref["sha256"]
                          for ref in checked["legacy_qa"]["inputs"].values()),
                      "QA_REPORT_DRIFT", "归档期间旧题成对输入发生变化")
+            source_archive = checked["legacy_qa"].get("source_archive")
+            _require(not source_archive or _sha256(Path(source_archive["path"])) == source_archive["sha256"],
+                     "QA_REPORT_DRIFT", "归档期间原质检 ZIP 发生变化")
         _atomic_json(self.directory / "archives_current.json", {"path": str((directory / "archives.json").relative_to(self.root)),
                      "sha256": _sha256(directory / "archives.json")})
         return {"status": "archives_verified", **manifest, "output_directory": str(directory)}

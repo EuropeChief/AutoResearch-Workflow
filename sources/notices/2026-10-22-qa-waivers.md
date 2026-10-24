@@ -1,6 +1,6 @@
 # 全流程通知与指定旧题迁移豁免
 
-2026-10-22 收到项目方 [v0.3.10-legacy-waiver.2 原件](../originals/review_skill-0.3.10-legacy-waiver.2_1022.zip)。原始图片保留为 [可豁免项.jpg](../originals/可豁免项.jpg)。本通知记录用户确认的整合范围，具体旧题原因和条件以[官方政策](../../skills/autoresearch-task-qa-legacy-waiver/references/legacy-migration-waiver.md)及[新旧标准对照](../../skills/autoresearch-task-qa-legacy-waiver/references/legacy-standard-comparison.md)为准。
+2026-10-22 收到项目方 [v0.3.10-legacy-waiver.2 原件](../originals/review_skill-0.3.10-legacy-waiver.2_1022.zip)。原始图片保留为 [可豁免项.jpg](../originals/可豁免项.jpg)。本通知记录当时用户确认的整合范围，历史原因与条件见该原件内 `legacy-migration-waiver.md` 和 `legacy-standard-comparison.md`。当前旧题政策已由 [2026-10-23 接入口径](2026-10-23-standard-waivers.md)更新，以下历史记录保留。
 
 ## 全流程要求
 

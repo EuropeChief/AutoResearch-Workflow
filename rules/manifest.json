@@ -1,9 +1,9 @@
 {
   "catalog": {
     "path": "rules/catalog.json",
-    "sha256": "23d1932bcf1b8cd856873ecbc5741c4fc57710f208e776c927778706ab31dc0c"
+    "sha256": "8f5f9d8ebd9b7d7e7931e6e85dd045bf389a91bebfef655612a24b82754ad2e9"
   },
-  "flow_version": "2.1.3",
+  "flow_version": "2.1.4",
   "schema_version": 1,
   "qa_checks": [
     "B01",
@@ -160,9 +160,9 @@
       "path": "skills/autoresearch-task-qa-legacy-waiver/SKILL.md",
       "priority": 2,
       "scope": "designated-legacy-format-migration",
-      "version": "v0.3.10-legacy-waiver.2",
-      "origin_path": "sources/originals/review_skill-0.3.10-legacy-waiver.2_1022.zip#autoresearch-task-qa-legacy-waiver/SKILL.md",
-      "sha256": "6acd1472ceb47c509a52350447e7fec3bef18ebd5d64489179b7c87506915974"
+      "version": "v0.3.10-standard-waiver.5",
+      "origin_path": "sources/originals/review_skill-0.3.10-standard-waiver.5_1023.zip#autoresearch-task-qa-legacy-waiver/SKILL.md",
+      "sha256": "db291695e03e33363a5e8eaeb7076e5049ba4650a90fcbe7464d251d22bbf652"
     },
     {
       "id": "qa_waiver_integration_notice",
@@ -170,11 +170,19 @@
       "priority": 2,
       "scope": "explicit-notice",
       "version": "2026-10-22",
-      "sha256": "2ed2b32e801705a386495fd9ec098adb66d4c5a6082051556974ce287c0fe1ca"
+      "sha256": "4a0ffdbae87757d422d470249c3aef179a4642451b53548f2e611aad8cc6bf3c"
+    },
+    {
+      "id": "qa_standard_waiver_notice",
+      "path": "sources/notices/2026-10-23-standard-waivers.md",
+      "priority": 2,
+      "scope": "explicit-notice",
+      "version": "2026-10-23",
+      "sha256": "739110054ba69366c9a9c881d790f888d916083667a2eb02593ad44fc28fe876"
     }
   ],
   "qa_revision": "v0.3.10+project-notices.20261022",
-  "package_revision": "2.1.3",
+  "package_revision": "2.1.4",
   "bundled_files": [
     {
       "path": "skills/autoresearch-baseline-quality/SKILL.md",
@@ -190,11 +198,11 @@
     },
     {
       "path": "skills/autoresearch-task-qa-legacy-waiver/SKILL.md",
-      "sha256": "6acd1472ceb47c509a52350447e7fec3bef18ebd5d64489179b7c87506915974"
+      "sha256": "db291695e03e33363a5e8eaeb7076e5049ba4650a90fcbe7464d251d22bbf652"
     },
     {
       "path": "skills/autoresearch-task-qa-legacy-waiver/agents/openai.yaml",
-      "sha256": "8681112f713d638126fd6cdb6e311cc04035b701b8f9e1121b15e49e7fd697ab"
+      "sha256": "5f91a5d83008c53d30de75a2a12c694413a9d2d18bb232c63acb795556b6092c"
     },
     {
       "path": "skills/autoresearch-task-qa-legacy-waiver/references/docker-path-contract.md",
@@ -203,6 +211,10 @@
     {
       "path": "skills/autoresearch-task-qa-legacy-waiver/references/exposure-manifest.md",
       "sha256": "8446d9d265ae2e01b2e30ed496708184794b9fd6350bd51cf1b42581d0ae2a5c"
+    },
+    {
+      "path": "skills/autoresearch-task-qa-legacy-waiver/references/format-repair-policy.md",
+      "sha256": "a49fa805c7a9b72236782d5705dd4128bff2a90440b045b1c282531840c31aba"
     },
     {
       "path": "skills/autoresearch-task-qa-legacy-waiver/references/harbor-harness.md",
@@ -221,12 +233,12 @@
       "sha256": "2758ee524199cb6f2674a68f3ff40616031a0c150d4c2909bcb31d47d4d89e53"
     },
     {
-      "path": "skills/autoresearch-task-qa-legacy-waiver/references/legacy-migration-waiver.md",
-      "sha256": "e12bbdfd70fbbb4690a17f813871ced4fcfd135a3e226a6f596f31a2c1f040d6"
+      "path": "skills/autoresearch-task-qa-legacy-waiver/references/legacy-standard-comparison.md",
+      "sha256": "2d4f51930d857bd13d29d0f6f821b3ad061d0cffaf39404aadce8a326143376f"
     },
     {
-      "path": "skills/autoresearch-task-qa-legacy-waiver/references/legacy-standard-comparison.md",
-      "sha256": "1345a6b33819fa2b2b8734ca71e8ec167bff536afd78eb5edb2128605ae39349"
+      "path": "skills/autoresearch-task-qa-legacy-waiver/references/phase2-format-migration.md",
+      "sha256": "fd9205f01f4a042e12bd612895450f4f4397e0deb8b35dfe4047143dc2492865"
     },
     {
       "path": "skills/autoresearch-task-qa-legacy-waiver/references/precheck-policy.md",
@@ -250,15 +262,35 @@
     },
     {
       "path": "skills/autoresearch-task-qa-legacy-waiver/references/source-alignment.md",
-      "sha256": "0be156fb4b01ba9736f396875009d8919a411934e62088df4aae598d49c91dbc"
+      "sha256": "3edc85141a1c8f5cc1efac538f05fe76f5c5a54d75301b566d209b0ae131bbf5"
+    },
+    {
+      "path": "skills/autoresearch-task-qa-legacy-waiver/references/standard-coverage.md",
+      "sha256": "18febc2e2a18e42b3fba098815a93abd895693149badb9c7e31daa6a9c647b6f"
     },
     {
       "path": "skills/autoresearch-task-qa-legacy-waiver/references/submission-format.md",
       "sha256": "4cfecb2e4bc64de6c70cac622c0e03b23c6acb4285f59063dd97978a1efce9ad"
     },
     {
+      "path": "skills/autoresearch-task-qa-legacy-waiver/references/trajectory-comparability.md",
+      "sha256": "4379154ca8adfb78bca93e47d76021aaf277019a4954631a77c3914159373305"
+    },
+    {
       "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/audit_collection.py",
       "sha256": "91c6cc24f8d8d7b75adc72e96ad57aef2f4f9fb3fc6ba9f9aeb5e996ae747d39"
+    },
+    {
+      "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/audit_format_repair.py",
+      "sha256": "1a23e6346b6cec50a3c8f96b16f07dcb1bd94255b336821fff677809c65d67f0"
+    },
+    {
+      "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/audit_legacy_task.py",
+      "sha256": "6932c8b9a9ba6da9deb8613f5f3954834869aeaf0fcc9a819a0c223c8523cabd"
+    },
+    {
+      "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/audit_standard_with_waivers.py",
+      "sha256": "5c65e2ab2501559d08c8e7f977c8643c79f862e85e40de0954b83bcd633084a2"
     },
     {
       "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/audit_task.py",
@@ -289,10 +321,6 @@
       "sha256": "f8ec462c968d163a0bb916ac3c753f6ca66f9f9e2179704118d14876b303a797"
     },
     {
-      "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/legacy_migration_waiver.py",
-      "sha256": "56352c5dfc6adfbdf9e6e35ddb596cab32613e3b0b3144f70877348b3e22f02c"
-    },
-    {
       "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/resource_review.py",
       "sha256": "8b262eb93c62c6c542d4f925a062b5410b242fb861371f02b0f369d44ef944df"
     },
@@ -307,6 +335,18 @@
     {
       "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/test_audit_collection.py",
       "sha256": "13ad22952380a7e53d2a0ac1d995a906188f5657a877b30aa477bd5ff4bcb57b"
+    },
+    {
+      "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/test_audit_format_repair.py",
+      "sha256": "93fb10779057ac8f32a5d38362aec569c4d06fc4454a8829d2f02b639b126e75"
+    },
+    {
+      "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/test_audit_legacy_task.py",
+      "sha256": "f7831f7ad7ce2eef4532e48f9915b2e1da51c67071647fe3ab9b207995f2b45f"
+    },
+    {
+      "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/test_audit_standard_with_waivers.py",
+      "sha256": "cf4258b01ecf30ce05be7f6cccd9739a6cb5d6ae35b31b1344502c0a24bdebee"
     },
     {
       "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/test_audit_task.py",
@@ -349,8 +389,8 @@
       "sha256": "f32e70aeba3020ddc575ca9296336b42512c12417066e951127e9ed3f7eae730"
     },
     {
-      "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/test_legacy_migration_waiver.py",
-      "sha256": "0fbbcebc5aafeefa6ffebcc78e6fdbfb6115284c163aabc7811c67e52cc07108"
+      "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/test_phase2_schema_compatibility.py",
+      "sha256": "e05d15e285fd08e6f4031bc1bf62dfbcd80d7b5873026c3da399025543ff08b4"
     },
     {
       "path": "skills/autoresearch-task-qa-legacy-waiver/scripts/test_runtime_integrity.py",
@@ -586,7 +626,11 @@
     },
     {
       "path": "sources/notices/2026-10-22-qa-waivers.md",
-      "sha256": "2ed2b32e801705a386495fd9ec098adb66d4c5a6082051556974ce287c0fe1ca"
+      "sha256": "4a0ffdbae87757d422d470249c3aef179a4642451b53548f2e611aad8cc6bf3c"
+    },
+    {
+      "path": "sources/notices/2026-10-23-standard-waivers.md",
+      "sha256": "739110054ba69366c9a9c881d790f888d916083667a2eb02593ad44fc28fe876"
     },
     {
       "path": "sources/originals/AutoResearch 专家线下标注教程V4 副本.zip",
@@ -599,6 +643,10 @@
     {
       "path": "sources/originals/review_skill-0.3.10-legacy-waiver.2_1022.zip",
       "sha256": "8c67ea6919842e7d2272ef2506204d8bd29fd13a722b6e02c2970fc58dd56515"
+    },
+    {
+      "path": "sources/originals/review_skill-0.3.10-standard-waiver.5_1023.zip",
+      "sha256": "8e661e9c3bd8f8a2521aa8b19a4a99cc9c0baf49a5ddbbfe6eeda56d5d812d3b"
     },
     {
       "path": "sources/originals/review_skill-0.3.10_1015.zip",

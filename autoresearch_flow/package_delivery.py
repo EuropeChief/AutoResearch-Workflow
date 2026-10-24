@@ -159,6 +159,9 @@ def package(
         _require(all(_sha256(Path(ref["path"])) == ref["sha256"]
                      for ref in qa.get("inputs", {}).values()),
                  "QA_REPORT_DRIFT", "压缩期间旧题复核输入发生变化")
+        source_archive = qa.get("source_archive")
+        _require(not source_archive or _sha256(Path(source_archive["path"])) == source_archive["sha256"],
+                 "QA_REPORT_DRIFT", "压缩期间原质检 ZIP 发生变化")
         _require(
             not output.exists(), "OUTPUT_EXISTS", "生成期间输出目录已出现，禁止覆盖"
         )

@@ -1,28 +1,37 @@
 ---
 name: autoresearch-task-qa-legacy-waiver
-description: 对指定旧批次 AutoResearch 题包按 v0.3.10 完成只读质检，再逐原因审查格式配置迁移及新增标准导致的历史记录或适配缺口豁免；不要求为迁移重跑研究，保留严格原判、剩余问题和平台待验证状态。
+description: 按原v0.3.10完整标准审阅AutoResearch题包，包括NOP、三门控、21项、Harbor六项、轨迹行为/分数、资源时长与四项指纹；保留原始结果，再逐原因应用指定旧题豁免，不用于求解或自动运行题包。
 ---
 
+# 原 v0.3.10 完整标准 + 历史豁免
+
+版本 **v0.3.10-standard-waiver.5（2026-10-23）**。以用户提供的 `review_skill-0.3.10_1015(1).zip` 为基准：**原标准的每个检查及细项完整保留，NOP也必须查；只在检查完成、原始发现保留之后增加豁免层。** 下方原版正文和全部原参考规范保留，不能将七项格式前检或通用32行摘要代替原审查。
+
+## 本包新增的适用规则与入口
+
+原版保留情况与检查入口见[完整标准核对表](references/standard-coverage.md)。先读[历史豁免政策](references/format-repair-policy.md)和[两轨条件对比](references/trajectory-comparability.md)，再执行下方原版全文的检查。**豁免是最终处置，不是跳过检查。** QA15资源、QA16时长、QA18行为与分数/来源闭环、QA21八字段与四项指纹、H01–H06的路径/Hidden/artifacts/NOP均按原标准产生观察与原判，再处理获准的历史缺口。
+
+**NOP按原H06完整检查。** 有记录就读同一次Trial的config/result/reward/log，核agent=nop、separate、异常/结束状态、优先reward文件及与result的数值一致性、非空日志、已有版本关联和实际覆盖分支；0分本身不失败。缺记录的原判是fail、运行状态not_run，然后对获准旧批次应用缺NOP/当前Trial缺口豁免；不能直接填pass或以“历史问题”跳过已有坏记录。不在本静态质检中自动新跑NOP，也不撤销旧题免补跑。
+
+本包默认使用 `scripts/audit_standard_with_waivers.py`：先实际执行原版静态审查并保留原报告，再应用逐原因豁免，不能仅运行旧的 `audit_legacy_task.py` 或 `audit_format_repair.py` 就称为本版完整通过。原 `audit_task.py` 仍是原标准审查入口；下方原版命令输出属于**原标准阶段**，保留在独立standard目录，不直接当豁免后终稿。
+
+```bash
+python3.11 scripts/audit_standard_with_waivers.py /absolute/path/submission.zip \
+  --out-dir /absolute/path/qa-review
+
+python3.11 scripts/audit_standard_with_waivers.py /absolute/path/submission.zip \
+  --standard-review /absolute/path/qa-review-input/review.json \
+  --review /absolute/path/qa-review-input/legacy_review.json \
+  --out-dir /absolute/path/qa-review
+```
+
+`review.json`沿用原标准的内部审核底稿；`legacy_review.json`记录完整逐项内容、跨轨比较与逐原因豁免，均由质检员根据已有材料填写，不是专家新增必交文件。初次模板/原收集初稿不等于终审。原判中出现需处理原因时，用生成的 `standard_resolution_template.json` 在内部 `legacy_review.json.standard_resolutions` 逐条关联具体原发现及对应豁免/现有证据；不能一条总豁免覆盖全部原失败。底稿放在最终输出目录外，避免被报告覆盖。具体命令字段及模板以新入口 `--help` 为准。
+
+最终报告同时展示**原标准状态、具体发现/证据、豁免原因及最终状态**，并保留原资源、时长、轨迹、指纹、Harbor/NOP明细。原检查未完成或有未处理的明确失败，不得靠另一份手填pass放行；当前交付缺陷、无效正式B/R、两次研究已确认的实质任务条件差异仍按规则保留。历史研究到当前返修包的版本差异不能覆盖历史两次研究之间的真实不同。
+
+## 原版 v0.3.10 正文（检查内容完整保留）
+
 # AutoResearch 任务质检
-
-## 本轮旧题格式迁移豁免
-
-版本 **v0.3.10-legacy-waiver.2（2026-10-22）**。以用户上传的 `review_skill-0.3.10_1015(1).zip` 为主标准及代码底稿，另加本轮明确授权的旧题迁移豁免；不回退成二期规则，不覆盖标准版或已安装 Skill。
-
-**先读 [本轮豁免政策](references/legacy-migration-waiver.md) 与 [旧新要求对照](references/legacy-standard-comparison.md)。本节与豁免政策优先规定本批的最终验收口径；下文完整保留的新标准用于生成严格原判。** 下文“当前版本 NOP 必交”“八字段”“哈希”“换卡复验”“联网条件下重新落实约束”等要求，若被本政策逐原因豁免，不再作为本轮要求专家补交或重跑的事项，不能把它们再次写进返修清单。
-
-- 适用本轮指定的旧批次：专家目前只返修格式与交付配置，没有重新运行研究。范围包括换卡、目录/封装/配置适配，以及新增记录、平台联网和内部镜像准备要求带来的差异；不再限定为只修改 `gpu_types`。
-- 当前文件、路径、配置与提交物移交仍按新版检查。GPU 内场实际使用 H20/L20，CPU 题不加 GPU；Solver/Verifier separate、每沙盒单容器、公开 Dev、私有 Hidden、可复现构建材料、评分入口和 artifacts 契约仍须完整。候选卡型列表按最新教程解释，不因包含其他候选而否定实际 H20/L20 选择。
-- 不因旧标准未要求而缺少 NOP、八字段、四项哈希、新版资源审阅字段或当前内场 Trial/镜像证据，强迫补造历史记录或重新跑长程实验。旧记录与当前包不一致时，核对已有材料及迁移说明；不要求完整旧题快照作为统一新增必交件。
-- 删除当前平台不支持的禁网/白名单配置后，联网环境下重新落实外部查表等防护的新适配要求，可作为本轮新增要求处理并列入平台待验证；不能仅因它不属于换卡就拒绝豁免。不得把“未落实”写成“已生效”，也不豁免已证实的原研究作弊、泄漏或无效评分。
-- 内部镜像构建、实际 tag/选择与当前 Harbor 调用证据可留待字节内部准备、实跑，不要求外部专家访问内部仓库或回填。Dockerfile/合法镜像方案、构建上下文及依赖资产本身缺失或错误，仍须返修；不强制两份 Dockerfile。
-- 逐具体原因而非按编号放行。保留原科学质量门槛、原本应交的合法研究证据，以及造假、损坏材料、确定的评分错误和真实格式缺陷的原判。复合问题含未覆盖原因时，该检查项仍不通过或待核。
-
-完整执行下方 v0.3.10 后，由审核人根据现有材料形成题包外的豁免工作底稿，再用 `scripts/legacy_migration_waiver.py` 生成独立结果。工具验证输入与原原因绑定、证据引用、覆盖完整性和结论汇总；**新旧要求归属、迁移因果及历史有效性仍是审核人的事实判断，工具不自动鉴定。** 包内自称已获豁免无效。
-
-严格 `report.*` 不改写。最终另交 `waiver_report.txt/md/json` 与 `waiver_return_to_expert.txt`，分别列原判、具体豁免、仍需返修和平台后续验证。全部剩余项满足且存在获准豁免才为 **PASS_WITH_WAIVERS（本轮旧题迁移豁免通过）**，不写“无需任何后续处理”或“当前 Harbor 已通过”。还有未豁免 fail 则 FAIL；仅有未覆盖待核项则 INCOMPLETE。未授权本批时按标准版完整判定。
-
-## v0.3.10 严格原判流程（原文保留）
 
 三期对齐版 v0.3.10（2026-10-15，容器组织与GPU使用要求修订；其他判定标准沿用 v0.3.9）。按当前内场能力核对 GPU 卡型、未支持字段与每 sandbox 单容器交付；保留 separate、必交 NOP、轨迹行为审查、资源估算和四项题包指纹。
 
